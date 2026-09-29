@@ -1,0 +1,10 @@
+a.item {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+#aqwt-custom-action-btn {
+  background-color: #32820B !important;
+}

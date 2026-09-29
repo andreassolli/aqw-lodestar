@@ -1,0 +1,114 @@
+.aqwt-tooltip {
+  display: none;
+}
+
+.aqwt-tooltip.visible {
+  position: fixed;
+  z-index: 10000;
+  top: 50%;
+  right: 20px;
+  left: auto;
+  transform: translateY(-50%);
+  width: 340px;
+  max-height: 80vh;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--aqwt-card);
+  color: var(--aqwt-ink);
+  font-size: .9rem;
+  border: 1px solid var(--aqwt-muted);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px var(--aqwt-shadow), 0 0 0 1px var(--aqwt-shadow);
+  pointer-events: none;
+  animation: aqwt-tooltip-in .2s ease-out;
+}
+
+@keyframes aqwt-tooltip-in {
+  from { opacity: 0; transform: translateY(-50%) scale(.97); }
+  to   { opacity: 1; transform: translateY(-50%) scale(1); }
+}
+
+/* Image row */
+.aqwt-tooltip-images {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  width: 100%;
+  max-height: 220px;
+  overflow: hidden;
+  background: var(--aqwt-card);
+}
+
+.aqwt-tooltip-images img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+}
+
+.aqwt-tooltip-images.is-multi img {
+  width: 50%;
+}
+
+/* Text: force readable colors over whatever the host page sets */
+.aqwt-tooltip p,
+.aqwt-tooltip span,
+.aqwt-tooltip strong,
+.aqwt-tooltip b,
+.aqwt-tooltip em,
+.aqwt-tooltip i {
+  color: var(--aqwt-acc) !important;
+  line-height: 1.7;
+}
+
+.aqwt-hover-details {
+  padding: 12px 16px;
+  font-size: .88rem;
+  line-height: 1.5;
+  color: var(--aqwt-ink);
+  background: var(--aqwt-card);
+}
+
+.aqwt-hover-details p {
+  margin: 8px 0 4px;
+}
+
+.aqwt-hover-details p:last-child {
+  margin-bottom: 0;
+}
+
+.aqwt-hover-details ul {
+  margin: 0 0 3px;
+  padding-left: 20px;
+}
+
+.aqwt-hover-details li {
+  margin-bottom: 3px;
+}
+
+.aqwt-tooltip .aqwt-tooltip-title {
+  margin: 4px 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.aqwt-tooltip-title .aqwt-rarity {
+  margin: -2px 0 1px 4px;
+}
+
+/* "Location:", "Price:" etc. */
+.aqwt-hover-details strong,
+.aqwt-hover-details b {
+  color: var(--aqwt-strong) !important;
+  font-weight: 700;
+}
+
+.aqwt-tooltip a {
+  color: var(--aqwt-ring) !important;
+  opacity: .8;
+  text-decoration: underline;
+  text-decoration-color: rgba(126, 184, 255, .3);
+  text-underline-offset: 2px;
+}

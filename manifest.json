@@ -1,0 +1,137 @@
+{
+  "manifest_version": 3,
+  "name": "AQW Lodestar",
+  "version": "1.0.0",
+  "description": "Item previews, merge/quest calculators and a farm list for AQW.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "aqw-lodestar@lodestar.addon",
+      "strict_min_version": "128.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  },
+  "permissions": [
+    "storage",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "*://aqwwiki.wikidot.com/*",
+    "*://account.aq.com/*",
+    "*://aqcloset.com/*",
+    "https://game.aq.com/*",
+    "https://www.artix.com/*"
+  ],
+  "icons": {
+    "16": "icons/lodestar16.png",
+    "48": "icons/lodestar48.png",
+    "128": "icons/lodestar128.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "scripts": [
+      "shared/constants.js",
+      "shared/aqcloset.js",
+      "background.js"
+    ]
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Saved Items"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/*",
+        "fonts/*",
+        "merged_wiki.json"
+      ],
+      "matches": [
+        "*://aqwwiki.wikidot.com/*",
+        "*://account.aq.com/*",
+        "*://aqcloset.com/*"
+      ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://aqwwiki.wikidot.com/*",
+        "*://account.aq.com/*",
+        "*://aqcloset.com/*"
+      ],
+      "js": [
+        "shared/constants.js",
+        "shared/text.js",
+        "shared/messaging.js",
+        "shared/rarity.js",
+        "shared/wiki-parser.js",
+        "shared/aqcloset.js",
+        "shared/farm-entry.js",
+        "content/page.js",
+        "content/hover-tooltip.js",
+        "content/farm-context.js"
+      ],
+      "css": [
+        "content/base.css",
+        "shared/rarity.css",
+        "content/hover-tooltip.css",
+        "content/farm-context.css"
+      ]
+    },
+    {
+      "matches": [
+        "*://aqwwiki.wikidot.com/*",
+        "*://account.aq.com/*"
+      ],
+      "js": [
+        "content/theme.js"
+      ],
+      "css": [
+        "content/theme.css"
+      ]
+    },
+    {
+      "matches": [
+        "*://aqwwiki.wikidot.com/*"
+      ],
+      "js": [
+        "content/merge-calc.js",
+        "content/tlapd-list.js",
+        "content/item-preview.js"
+      ],
+      "css": [
+        "content/merge-calc.css",
+        "content/tlapd-list.css",
+        "content/item-preview.css"
+      ]
+    },
+    {
+      "matches": [
+        "*://account.aq.com/*"
+      ],
+      "js": [
+        "content/account-page.js"
+      ],
+      "css": [
+        "content/account-page.css"
+      ]
+    },
+    {
+      "matches": [
+        "*://aqcloset.com/*"
+      ],
+      "js": [
+        "content/aqcloset-page.js",
+        "content/reorder.js"
+      ],
+      "css": [
+        "content/aqcloset-page.css",
+        "content/reorder.css"
+      ]
+    }
+  ]
+}

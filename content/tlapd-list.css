@@ -1,0 +1,104 @@
+.aqwt-tlapd {
+  margin: 8px 0 16px;
+}
+
+.aqwt-tlapd-button {
+  padding: 6px 16px;
+  border: 1px solid #b8860b;
+  border-radius: 999px;
+  background: #2b1d0e;
+  color: #f5d98b;
+  font-weight: 700;
+  letter-spacing: .5px;
+  cursor: pointer;
+  transition: filter .15s ease;
+}
+
+.aqwt-tlapd-button:hover {
+  filter: brightness(1.2);
+}
+
+.aqwt-tlapd-button:disabled {
+  opacity: .6;
+  cursor: progress;
+}
+
+.aqwt-tlapd-button[aria-expanded="true"] {
+  background: #b8860b;
+  color: #1a1206;
+}
+
+.aqwt-tlapd-status {
+  margin: 12px 0 8px;
+  font-weight: 600;
+}
+
+/* ---- compact cards: same layout as the tooltip, scaled down ---- */
+.aqwt-tlapd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  align-items: start;
+  gap: 8px;
+}
+
+.aqwt-tlapd-card {
+  height: 290px;
+  padding: 3px;
+  border-radius: 10px;
+  font-size: .8rem;
+}
+
+.aqwt-tlapd-card .aqwt-tooltip-images,
+.aqwt-tlapd-card .aqwt-tooltip-images img {
+  max-height: 130px;
+}
+
+.aqwt-tlapd-card .aqwt-tooltip-images img {
+  border-radius: 6px;
+}
+
+/* Details fill whatever the image leaves, and scroll inside the card. */
+.aqwt-tlapd-card .aqwt-hover-details {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  padding: 6px 10px;
+  font-size: .76rem;
+  line-height: 1.4;
+  overflow-y: auto;
+}
+
+.aqwt-tlapd-card p,
+.aqwt-tlapd-card span,
+.aqwt-tlapd-card strong,
+.aqwt-tlapd-card b {
+  line-height: 1.45;
+}
+
+.aqwt-tlapd-card .aqwt-hover-details p {
+  margin: 4px 0 2px;
+}
+
+.aqwt-tlapd-card .aqwt-hover-details ul {
+  padding-left: 16px;
+}
+
+.aqwt-tlapd-card .aqwt-tooltip-title {
+  margin: 2px 0;
+  font-size: .92rem;
+}
+
+.aqwt-tlapd-card .aqwt-rarity {
+  font-size: 10px;
+  padding: 0 3px;
+}
+
+.aqwt-tlapd-card-name {
+  font-size: .92rem;
+  font-weight: 700;
+}
+
+.aqwt-card .aqwt-tlapd-card-status {
+  color: var(--aqwt-muted) !important;
+  font-style: italic;
+}
