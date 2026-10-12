@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 Andreas Solli (Proxy)
+Copyright (c) 2026 Andreas Solli
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,14 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Not covered by this license:
-
-- AdventureQuest Worlds names, artwork and game files, including the item and
-  boost pictures in icons/ that come from the game, belong to Artix
-  Entertainment, LLC. This project is a fan project and isn't affiliated with
-  Artix Entertainment.
-- The Poppins font in fonts/ is by the Indian Type Foundry and is licensed
-  under the SIL Open Font License 1.1 (see fonts/OFL.txt).
