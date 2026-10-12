@@ -1,12 +1,28 @@
+// aqcloset.com: a drag handle (⠿) on every wardrobe panel, so panels can be
+// dragged into any order and into either column. The layout is saved per page
+// (storage key "moduleOrder:<path>") and restored on the next visit.
 (function () {
   const STORAGE_PREFIX = 'moduleOrder:';
   const storageKey = STORAGE_PREFIX + location.pathname;
 
   const SWAP_THRESHOLD = 0.3;
 
+  /**
+   * How a module is identified in the saved layout: its title (without our drag
+   * handle), or for modules without a title, like the preview controls, its id
+   * or its own class ("#id" / ".preview-controls").
+   */
   function keyOf(moduleEl) {
     const h2 = moduleEl.querySelector('h2');
-    return h2 ? h2.textContent.trim() : null;
+    if (h2) {
+      const clone = h2.cloneNode(true);
+      clone.querySelectorAll('.mr-handle').forEach((el) => el.remove());
+      const title = clone.textContent.trim();
+      if (title) return title;
+    }
+    if (moduleEl.id) return `#${moduleEl.id}`;
+    const ownClass = [...moduleEl.classList].find((cls) => cls !== 'module' && !cls.startsWith('mr-'));
+    return ownClass ? `.${ownClass}` : null;
   }
 
   function getColumns() {
@@ -19,7 +35,6 @@
     );
   }
 
-  // --- drag state ---
   let draggingModule = null;
   let placeholder = null;
   let pointerOffsetX = 0;
@@ -174,51 +189,87 @@
     handle.addEventListener('mousedown', (e) => onHandleMouseDown(e, moduleEl));
   }
 
+  // AQCloset re-renders its page after loading (and sometimes later), which puts
+  // the modules back in their default order. So the saved order isn't applied just
+  // once: whenever the modules change, it's re-applied if they've drifted from it.
+
+  const REAPPLY_DELAY_MS = 120;
+  const MAX_REAPPLIES_PER_10S = 8; // safety stop if the page keeps undoing it
+
+  let savedOrder = null; // [[module title, ...] per column], or null
+  let reapplyTimer = null;
+  let recentReapplies = [];
+
+  /** Titles in saved layouts; older versions saved them with the handle glyph. */
+  const cleanKey = (key) => String(key).replace('⠿', '').trim();
+
+  function currentOrder() {
+    return getColumns().map((col) => getModules(col).map(keyOf).filter(Boolean));
+  }
+
   function saveOrder() {
-    const columns = getColumns();
-    const order = columns.map((col) => getModules(col).map(keyOf).filter(Boolean));
-    ext.storage.local.set({ [storageKey]: order });
+    savedOrder = currentOrder();
+    ext.storage.local.set({ [storageKey]: savedOrder });
+    console.debug('AQW Lodestar: saved AQCloset layout', savedOrder);
   }
 
-  function applySavedOrder(callback) {
-    ext.storage.local.get([storageKey], (result) => {
-      const order = result[storageKey];
-      if (order && Array.isArray(order)) {
-        const columns = getColumns();
-        order.forEach((keys, i) => {
-          const column = columns[i];
-          if (!column) return;
-          keys.forEach((key) => {
-            const mod = getModules(column).find((m) => keyOf(m) === key);
-            if (mod) column.appendChild(mod);
-          });
-        });
+  /** True when every saved module present on the page is in its saved column and order. */
+  function matchesSavedOrder() {
+    const columns = currentOrder();
+    const present = new Set(columns.flat());
+    return savedOrder.every((keys, i) => {
+      const wanted = (keys || []).map(cleanKey).filter((key) => present.has(key));
+      const actual = (columns[i] || []).filter((key) => wanted.includes(key));
+      return wanted.length === actual.length && wanted.every((key, j) => key === actual[j]);
+    });
+  }
+
+  /** Moves modules into their saved column and order; modules not in the saved order stay put. */
+  function applySavedOrder() {
+    const columns = getColumns();
+    const byKey = new Map(columns.flatMap(getModules).map((m) => [keyOf(m), m]));
+    savedOrder.forEach((keys, i) => {
+      const column = columns[i];
+      if (!column || !Array.isArray(keys)) return;
+      for (const key of keys) {
+        const mod = byKey.get(cleanKey(key));
+        if (mod) column.appendChild(mod); // works across columns
       }
-      callback();
     });
   }
 
-  function init() {
-    const columns = getColumns();
-    if (columns.length === 0) return;
-
-    applySavedOrder(() => {
-      columns.forEach((column) => {
-        getModules(column).forEach((moduleEl) => addHandle(moduleEl));
-      });
-    });
+  function addHandles() {
+    getColumns().forEach((column) => getModules(column).forEach(addHandle));
   }
 
-  const observer = new MutationObserver(() => {
-    if (document.querySelectorAll('main .module').length > 0) {
-      observer.disconnect();
-      init();
+  function keepLayout() {
+    if (draggingModule || getColumns().length === 0) return;
+
+    if (Array.isArray(savedOrder) && !matchesSavedOrder()) {
+      const now = Date.now();
+      recentReapplies = recentReapplies.filter((t) => now - t < 10000);
+      if (recentReapplies.length < MAX_REAPPLIES_PER_10S) {
+        recentReapplies.push(now);
+        applySavedOrder();
+        console.debug('AQW Lodestar: restored AQCloset layout');
+      } else if (recentReapplies.length === MAX_REAPPLIES_PER_10S) {
+        recentReapplies.push(now);
+        console.warn('AQW Lodestar: AQCloset keeps resetting the module order; stopped restoring for now.');
+      }
     }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  if (document.querySelectorAll('main .module').length > 0) {
-    observer.disconnect();
-    init();
+    addHandles();
   }
+
+  function scheduleKeepLayout() {
+    clearTimeout(reapplyTimer);
+    reapplyTimer = setTimeout(keepLayout, REAPPLY_DELAY_MS);
+  }
+
+  (async () => {
+    const stored = (await ext.storage.local.get(storageKey))[storageKey];
+    savedOrder = Array.isArray(stored) ? stored : null;
+    keepLayout();
+    // Watch the whole body: AQCloset may replace <main> itself when it re-renders.
+    new MutationObserver(scheduleKeepLayout).observe(document.body, { childList: true, subtree: true });
+  })();
 })();

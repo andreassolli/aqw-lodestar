@@ -4,3 +4,4 @@ Boosts.init();
 FarmList.init();
 AddItemModal.init();
 InventoryCheck.init();
+Settings.init();

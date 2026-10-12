@@ -27,13 +27,26 @@ const WikiParser = (() => {
 
   function getTitle(doc) {
     const title = doc.querySelector('#page-title');
-    return title ? title.textContent.trim() : null;
+    if (!title) return null;
+    // On an open page the title also holds the extension's own badge and button.
+    const clone = title.cloneNode(true);
+    clone.querySelectorAll('.aqwt-owned, .aqwt-farm-button, .aqwt-try-on-button').forEach((el) => el.remove());
+    return clone.textContent.trim();
   }
 
   function isNonItemCategory(doc) {
     return [...doc.querySelectorAll('#breadcrumbs a')].some((a) =>
       NON_ITEM_CATEGORIES.includes(a.textContent.trim())
     );
+  }
+
+  /** The wiki homepage, which Wikidot also shows for some page names it can't resolve. */
+  function isStartPage(doc, baseUrl) {
+    let path = '/';
+    try {
+      path = new URL(baseUrl).pathname.toLowerCase().replace(/\/+$/, '') || '/';
+    } catch {}
+    return path === '/' || path === '/start' || !!doc.querySelector('#u-welcome');
   }
 
   function isItemPage(doc) {
@@ -75,6 +88,7 @@ const WikiParser = (() => {
     if (!page || !page.html) return null;
 
     const doc = parseHtml(page.html);
+    if (isStartPage(doc, page.baseUrl)) return null; // unknown page names land on the homepage
     const images = findImages(doc, page.baseUrl);
 
     const looksLikeDisambiguation = !images.length && !isItemPage(doc) && !isNonItemCategory(doc);
@@ -162,8 +176,15 @@ const WikiParser = (() => {
     return null;
   }
 
+  /** The same result as loadItemPage, for a page that's already open (no request). */
+  function fromDocument(doc, baseUrl) {
+    return { doc, baseUrl, images: findImages(doc, baseUrl) };
+  }
+
   return {
     loadItemPage,
+    fromDocument,
+    isItemPage,
     getTitle,
     isNonItemCategory,
     parseTags,

@@ -1,22 +1,51 @@
-// "Items to farm" entries: building them from a wiki link and storing them.
-// Used by the right-click menu (content/farm-context.js) and the popup's "add from link".
+// "Items to farm" entries: building them from a wiki page and storing them.
+// Used by the right-click menu (content/farm-context.js), the add-to-farm
+// buttons (content/farm-buttons.js) and the popup's "add from link".
 
 const FarmEntry = (() => {
+  // crypto.randomUUID only exists on https pages; the wiki is often opened over http.
+  const newId = () =>
+    typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
+  /**
+   * The same wiki page can be reached as http/https, with different letter case
+   * or a trailing slash; compare entries by their page path instead of the raw URL.
+   */
+  function pageKey(url) {
+    try {
+      const parsed = new URL(url);
+      return `${parsed.hostname}${parsed.pathname.replace(/\/+$/, '')}`.toLowerCase();
+    } catch {
+      return String(url);
+    }
+  }
+
   /**
    * @param {string} url - wiki page URL
    * @param {string|null} displayName - link text if known; falls back to the page title
    */
   async function build(url, displayName) {
     const page = await WikiParser.loadItemPage(url);
-    if (!page) return null;
+    return page ? fromPage(page, url, displayName) : null;
+  }
 
+  /** An entry for the wiki page that's open in this tab, without fetching it again. */
+  function buildFromCurrentPage() {
+    const url = `${WIKI_ORIGIN}${location.pathname}`;
+    return fromPage(WikiParser.fromDocument(document, location.href), url, null);
+  }
+
+  /** @param {{doc: Document, images: string[]}} page - from WikiParser */
+  async function fromPage(page, url, displayName) {
     const { doc, images } = page;
     const content = doc.querySelector('#page-content');
     const name = displayName || WikiParser.getTitle(doc) || url;
-    const preview = await Aqcloset.findItemPreview(name);
+    const preview = await Aqcloset.findItemPreview(name, { verify: true }); // saved, so only keep images that exist
 
     return {
-      id: crypto.randomUUID(),
+      id: newId(),
       url,
       text: name,
       type: preview.type,
@@ -40,17 +69,19 @@ const FarmEntry = (() => {
   }
 
   async function contains(url) {
-    return (await loadAll()).some((item) => item.url === url);
+    const key = pageKey(url);
+    return (await loadAll()).some((item) => pageKey(item.url) === key);
   }
 
-  /** @returns {Promise<{ok: boolean, items: object[]}>} ok=false when the URL is already saved */
+  /** @returns {Promise<{ok: boolean, items: object[]}>} ok=false when the page is already saved */
   async function add(entry) {
     const items = await loadAll();
-    if (items.some((item) => item.url === entry.url)) return { ok: false, items };
+    const key = pageKey(entry.url);
+    if (items.some((item) => pageKey(item.url) === key)) return { ok: false, items };
     const next = [...items, entry];
     await saveAll(next);
     return { ok: true, items: next };
   }
 
-  return { build, loadAll, saveAll, contains, add };
+  return { build, buildFromCurrentPage, pageKey, loadAll, saveAll, contains, add };
 })();

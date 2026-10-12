@@ -1,0 +1,53 @@
+.aqwt-owned {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin: 0 3px;
+  vertical-align: middle;
+  border-radius: 50%;
+  background: #2ecc71 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% no-repeat;
+  cursor: help;
+}
+
+/* The badge row after a card title (item-preview.js titleTags): the rarity
+   badge and the checkmark sit together and wrap as one, like tags. */
+.aqwt-tooltip-title .aqwt-title-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.aqwt-tooltip-title .aqwt-title-tags:empty {
+  display: none;
+}
+
+.aqwt-title-tags > .aqwt-rarity,
+.aqwt-title-tags > .aqwt-owned {
+  margin: 0;
+}
+
+/* Wiki page title: a larger checkmark, spaced like the buttons that follow it. */
+#page-title > .aqwt-owned {
+  width: 20px;
+  height: 20px;
+  margin: 0 0 0 10px;
+}
+
+/* AQCloset: owned items get a green border on their image (not on rarity/AC badges).
+   An inset outline, so it isn't clipped and doesn't shift the layout. */
+.object.aqwt-owned-object img:not([src*="/ac.png"]):not([src*="/legend.png"]) {
+  outline: 3px solid #2ecc71;
+  outline-offset: -3px;
+  border-radius: 6px;
+}
+
+/* Item list cards for owned items get a green border (2px, without changing size). */
+.aqwt-card.aqwt-list-card.aqwt-owned-card {
+  border-color: #2ecc71;
+  box-shadow: 0 0 0 1px #2ecc71;
+}

@@ -1,3 +1,5 @@
+// Builds the item preview (images + short wiki details) used by the hover
+// tooltip and the TLAPD list, so both render items identically.
 const ItemPreview = (() => {
   const MAX_SECTIONS = 5;
   const MAX_LIST_ITEMS = 3;
@@ -81,6 +83,21 @@ const ItemPreview = (() => {
     return sections;
   }
 
+  /**
+   * The row of badges after a card title (rarity, owned checkmark): one inline
+   * group, so the badges wrap together like tags instead of each on its own.
+   * owned-marks.js adds its checkmark to the same group.
+   */
+  function titleTags(heading) {
+    let tags = heading.querySelector(':scope > .aqwt-title-tags');
+    if (!tags) {
+      tags = document.createElement('span');
+      tags.className = 'aqwt-title-tags';
+      heading.appendChild(tags);
+    }
+    return tags;
+  }
+
   function buildDetails(content, title, rarity) {
     const details = document.createElement('div');
     details.className = 'aqwt-hover-details';
@@ -89,7 +106,7 @@ const ItemPreview = (() => {
       const heading = document.createElement('p');
       heading.className = 'aqwt-tooltip-title';
       heading.textContent = title;
-      if (rarity) heading.appendChild(createRarityBadge(rarity));
+      if (rarity) titleTags(heading).appendChild(createRarityBadge(rarity));
       details.appendChild(heading);
     }
     if (!content) return details;
@@ -125,17 +142,20 @@ const ItemPreview = (() => {
 
     const [wiki, closet] = await Promise.all([loadWikiPreview(url), closetPromise]);
 
-    // AQCloset thumbnails are cleaner than scraped wiki images, so prefer them.
-    const images = closet.images.length ? closet.images : wiki ? wiki.images : [];
+    // AQCloset thumbnails are cleaner than scraped wiki images, so prefer them;
+    // the wiki images stand in if the thumbnails fail to load.
+    const wikiImages = wiki ? wiki.images : [];
+    const images = closet.images.length ? closet.images : wikiImages;
+    const fallbackImages = closet.images.length ? wikiImages : [];
     const details = wiki ? wiki.details : null;
     const tags = wiki ? wiki.tags : [];
-    return images.length || details ? { images, details, tags } : null;
+    return images.length || details ? { images, fallbackImages, details, tags } : null;
   }
 
   /**
    * Cached; concurrent calls for the same item share one request.
    * @param {{url: string, name: string, pageImages?: string[]}} target
-   * @returns {Promise<{images: string[], details: HTMLElement|null, tags: string[]}|null>}
+   * @returns {Promise<{images: string[], fallbackImages: string[], details: HTMLElement|null, tags: string[]}|null>}
    */
   function load(target) {
     const key = `${target.url}::${target.name || ''}`;
@@ -175,18 +195,33 @@ const ItemPreview = (() => {
 
     if (preview.images.length) {
       const row = document.createElement('div');
-      row.className = 'aqwt-tooltip-images' + (preview.images.length > 1 ? ' is-multi' : '');
-      preview.images.forEach((src) => {
-        const img = document.createElement('img');
-        img.alt = '';
-        img.loading = 'lazy';
-        img.onerror = () => img.remove();
-        img.src = src;
-        row.appendChild(img);
-      });
+      const addImages = (sources) => {
+        row.className = 'aqwt-tooltip-images' + (sources.length > 1 ? ' is-multi' : '');
+        sources.forEach((src) => {
+          const img = document.createElement('img');
+          img.alt = '';
+          img.loading = 'lazy';
+          const fail = () => {
+            img.remove();
+            // All preferred images failed: show the stand-ins once, if there are any.
+            const fallback = preview.fallbackImages || [];
+            if (!row.children.length && fallback.length && !row.dataset.fellBack) {
+              row.dataset.fellBack = '1';
+              addImages(fallback);
+            }
+          };
+          row.appendChild(img);
+          if (ImageProxy.isActive() && ImageProxy.isImgur(src)) {
+            ImageProxy.useProxy(img, src, null, fail); // tries each image proxy before giving up
+          } else {
+            img.onerror = fail;
+            img.src = src;
+          }
+        });
+      };
+      addImages(preview.images);
       container.appendChild(row);
     }
-    // Cloned so the same item can be shown in the tooltip and the list at once.
     if (preview.details) {
       // Cloned so the same item can be shown in the tooltip and the list at once.
       const details = preview.details.cloneNode(true);
@@ -195,5 +230,5 @@ const ItemPreview = (() => {
     }
   }
 
-  return { load, fill };
+  return { load, fill, titleTags };
 })();

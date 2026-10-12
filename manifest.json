@@ -3,19 +3,15 @@
   "name": "AQW Lodestar",
   "version": "1.0.0",
   "description": "Item previews, merge/quest calculators and a farm list for AQW.",
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "aqw-lodestar@lodestar.addon",
-      "strict_min_version": "128.0",
-      "data_collection_permissions": {
-        "required": [
-          "none"
-        ]
-      }
-    }
+  "minimum_chrome_version": "121",
+  "icons": {
+    "16": "icons/lodestar16.png",
+    "48": "icons/lodestar48.png",
+    "128": "icons/lodestar128.png"
   },
   "permissions": [
     "storage",
+    "unlimitedStorage",
     "contextMenus"
   ],
   "host_permissions": [
@@ -23,90 +19,67 @@
     "*://account.aq.com/*",
     "*://aqcloset.com/*",
     "https://game.aq.com/*",
-    "https://www.artix.com/*"
+    "https://www.artix.com/*",
+    "https://raw.githubusercontent.com/*",
+    "https://i.imgur.com/*"
   ],
-  "icons": {
-    "16": "icons/lodestar16.png",
-    "48": "icons/lodestar48.png",
-    "128": "icons/lodestar128.png"
-  },
   "background": {
-    "service_worker": "background.js",
-    "scripts": [
-      "shared/constants.js",
-      "shared/aqcloset.js",
-      "background.js"
-    ]
+    "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Saved Items"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "icons/*",
-        "fonts/*",
-        "merged_wiki.json"
-      ],
-      "matches": [
-        "*://aqwwiki.wikidot.com/*",
-        "*://account.aq.com/*",
-        "*://aqcloset.com/*"
-      ]
+    "default_title": "AQW Lodestar",
+    "default_icon": {
+      "16": "icons/lodestar16.png",
+      "48": "icons/lodestar48.png",
+      "128": "icons/lodestar128.png"
     }
-  ],
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
   "content_scripts": [
     {
       "matches": [
-        "*://aqwwiki.wikidot.com/*",
-        "*://account.aq.com/*",
-        "*://aqcloset.com/*"
+        "*://aqwwiki.wikidot.com/*"
       ],
       "js": [
         "shared/constants.js",
         "shared/text.js",
+        "shared/image-proxy.js",
+        "shared/inventory.js",
         "shared/messaging.js",
         "shared/rarity.js",
         "shared/wiki-parser.js",
         "shared/aqcloset.js",
         "shared/farm-entry.js",
         "content/page.js",
+        "content/item-preview.js",
         "content/hover-tooltip.js",
-        "content/farm-context.js"
+        "content/farm-context.js",
+        "content/owned-marks.js",
+        "content/theme.js",
+        "content/merge-calc.js",
+        "content/wiki-images.js",
+        "content/farm-buttons.js",
+        "content/try-on-buttons.js",
+        "content/item-lists.config.js",
+        "content/item-lists.js",
+        "content/collection-progress.js"
       ],
       "css": [
         "content/base.css",
         "shared/rarity.css",
-        "content/hover-tooltip.css",
-        "content/farm-context.css"
-      ]
-    },
-    {
-      "matches": [
-        "*://aqwwiki.wikidot.com/*",
-        "*://account.aq.com/*"
-      ],
-      "js": [
-        "content/theme.js"
-      ],
-      "css": [
-        "content/theme.css"
-      ]
-    },
-    {
-      "matches": [
-        "*://aqwwiki.wikidot.com/*"
-      ],
-      "js": [
-        "content/merge-calc.js",
-        "content/tlapd-list.js",
-        "content/item-preview.js"
-      ],
-      "css": [
+        "content/item-preview.css",
+        "content/farm-context.css",
+        "content/owned-marks.css",
+        "content/theme.css",
         "content/merge-calc.css",
-        "content/tlapd-list.css",
-        "content/item-preview.css"
+        "content/item-lists.css",
+        "content/collection-progress.css",
+        "content/farm-buttons.css",
+        "content/try-on-buttons.css"
       ]
     },
     {
@@ -114,10 +87,36 @@
         "*://account.aq.com/*"
       ],
       "js": [
-        "content/account-page.js"
+        "shared/constants.js",
+        "shared/text.js",
+        "shared/image-proxy.js",
+        "shared/inventory.js",
+        "shared/messaging.js",
+        "shared/rarity.js",
+        "shared/wiki-parser.js",
+        "shared/aqcloset.js",
+        "shared/farm-entry.js",
+        "content/page.js",
+        "content/item-preview.js",
+        "content/hover-tooltip.js",
+        "content/farm-context.js",
+        "content/owned-marks.js",
+        "content/theme.js",
+        "render/capture.js",
+        "content/inventory-sync.js",
+        "content/account-page.js",
+        "content/inventory-sections.js"
       ],
       "css": [
-        "content/account-page.css"
+        "content/base.css",
+        "shared/rarity.css",
+        "content/item-preview.css",
+        "content/farm-context.css",
+        "content/owned-marks.css",
+        "content/theme.css",
+        "content/inventory-sync.css",
+        "content/account-page.css",
+        "content/inventory-sections.css"
       ]
     },
     {
@@ -125,12 +124,63 @@
         "*://aqcloset.com/*"
       ],
       "js": [
+        "shared/constants.js",
+        "shared/text.js",
+        "shared/image-proxy.js",
+        "shared/inventory.js",
+        "shared/messaging.js",
+        "shared/rarity.js",
+        "shared/wiki-parser.js",
+        "shared/aqcloset.js",
+        "shared/farm-entry.js",
+        "content/page.js",
+        "content/item-preview.js",
+        "content/hover-tooltip.js",
+        "content/farm-context.js",
+        "content/owned-marks.js",
         "content/aqcloset-page.js",
-        "content/reorder.js"
+        "content/reorder.js",
+        "content/aqcloset-import.js"
       ],
       "css": [
+        "content/base.css",
+        "shared/rarity.css",
+        "content/item-preview.css",
+        "content/farm-context.css",
+        "content/owned-marks.css",
         "content/aqcloset-page.css",
-        "content/reorder.css"
+        "content/reorder.css",
+        "content/aqcloset-import.css"
+      ]
+    },
+    {
+      "matches": [
+        "*://account.aq.com/*"
+      ],
+      "js": [
+        "render/main-world.js"
+      ],
+      "world": "MAIN"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/*",
+        "fonts/*"
+      ],
+      "matches": [
+        "*://aqwwiki.wikidot.com/*",
+        "*://account.aq.com/*",
+        "*://aqcloset.com/*"
+      ]
+    },
+    {
+      "resources": [
+        "render/*"
+      ],
+      "matches": [
+        "*://account.aq.com/*"
       ]
     }
   ]

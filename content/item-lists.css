@@ -1,0 +1,162 @@
+.aqwt-lists {
+  margin: 8px 0 16px;
+}
+
+.aqwt-list-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aqwt-list-button {
+  --aqwt-list-color: #b8860b; /* per list: item-lists.config.js "color" */
+  padding: 6px 16px;
+  border: 1px solid var(--aqwt-list-color);
+  border-radius: 999px;
+  background: var(--aqwt-card);
+  background: color-mix(in srgb, var(--aqwt-list-color) 16%, var(--aqwt-card));
+  color: var(--aqwt-ink);
+  color: color-mix(in srgb, var(--aqwt-list-color) 55%, var(--aqwt-ink));
+  font-weight: 700;
+  letter-spacing: .5px;
+  cursor: pointer;
+  transition: filter .15s ease;
+}
+
+.aqwt-list-button:hover {
+  filter: brightness(1.2);
+}
+
+.aqwt-list-button:disabled {
+  opacity: .6;
+  cursor: progress;
+}
+
+.aqwt-list-button[aria-expanded="true"] {
+  background: var(--aqwt-list-color);
+  color: #14110c;
+}
+
+.aqwt-list-status {
+  margin: 12px 0 8px;
+  font-weight: 600;
+  color: var(--aqwt-ink);
+}
+
+/* ---- cards: identical to the hover tooltip (item-preview.css), at its width ---- */
+.aqwt-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 340px);
+  align-items: start;
+  gap: 12px;
+}
+
+/* Every card the same height (padding and border included); long details
+   scroll inside the card. */
+.aqwt-list-card {
+  box-sizing: border-box;
+  height: 605px;
+  background-color: var(--aqwt-card);
+  color: var(--aqwt-ink);
+}
+
+.aqwt-list-card .aqwt-tooltip-images {
+  flex-shrink: 0;
+}
+
+.aqwt-list-card .aqwt-hover-details {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--aqwt-muted) transparent;
+}
+
+/* Pictures and other wide content inside the details (notes, older looks,
+   tables) shrink to the card's width instead of scrolling sideways. */
+.aqwt-list-card .aqwt-hover-details img,
+.aqwt-list-card .aqwt-hover-details video,
+.aqwt-list-card .aqwt-hover-details iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+.aqwt-list-card .aqwt-hover-details table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.aqwt-list-card .aqwt-hover-details * {
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+/* ---- skeletons (loading placeholders) ---- */
+.aqwt-lists {
+  /* shimmer shades, from the text color so they show on light and dark cards */
+  --aqwt-skeleton-base: rgba(127, 127, 127, .12);
+  --aqwt-skeleton-base: color-mix(in srgb, var(--aqwt-ink) 6%, transparent);
+  --aqwt-skeleton-shine: rgba(127, 127, 127, .25);
+  --aqwt-skeleton-shine: color-mix(in srgb, var(--aqwt-ink) 14%, transparent);
+}
+
+.aqwt-skeleton {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--aqwt-skeleton-base) 25%, var(--aqwt-skeleton-shine) 37%, var(--aqwt-skeleton-base) 63%);
+  background-size: 400% 100%;
+  animation: aqwt-skeleton-shimmer 1.4s ease infinite;
+}
+
+@keyframes aqwt-skeleton-shimmer {
+  from { background-position: 100% 50%; }
+  to   { background-position: 0 50%; }
+}
+
+.aqwt-skeleton-image {
+  flex-shrink: 0;
+  height: 220px;
+  border-radius: 8px;
+}
+
+.aqwt-skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.aqwt-skeleton-line {
+  height: 12px;
+}
+
+/* The card title placeholder is a little taller. */
+.aqwt-skeleton-card .aqwt-skeleton-lines:first-child .aqwt-skeleton-line {
+  height: 18px;
+}
+
+/* Image row while its image downloads. */
+.aqwt-list-card .aqwt-tooltip-images.is-loading {
+  min-height: 220px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--aqwt-skeleton-base) 25%, var(--aqwt-skeleton-shine) 37%, var(--aqwt-skeleton-base) 63%);
+  background-size: 400% 100%;
+  animation: aqwt-skeleton-shimmer 1.4s ease infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aqwt-skeleton,
+  .aqwt-list-card .aqwt-tooltip-images.is-loading {
+    animation: none;
+  }
+}
+
+/* Marker that loads the next batch of cards; takes no space. */
+.aqwt-list-sentinel {
+  grid-column: 1 / -1;
+  height: 1px;
+}

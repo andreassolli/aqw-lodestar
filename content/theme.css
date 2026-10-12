@@ -1,4 +1,3 @@
-/* Char Dark Theme */
 body.wiki-theme {
   background-color: var(--aqwt-bg) !important;
   color: var(--aqwt-ink) !important;
@@ -58,7 +57,7 @@ body.wiki-theme .yui-content {
   border-color: var(--aqwt-line) !important;
 }
 
-/* Wiki Dark Theme */
+/* ---- Character page dark theme ---- */
 body.char-theme .img-fluid {
   display: none;
 }
@@ -90,4 +89,24 @@ body.char-theme .card-body a.tag-false-true {
 body.char-theme .card-body a.tag-true-false,
 body.char-theme .card-body a.tag-true-true {
   color: #FFBE63 !important;
+}
+
+
+body.wiki-theme blockquote{
+    background-color: var(--aqwt-bg) !important;
+    border-color: var(--aqwt-line) !important;
+    color: var(--aqwt-ink) !important;
+}
+
+body.wiki-theme .collapsible-block-link{
+    color: var(--aqwt-ink) !important;
+}
+
+body.wiki-theme .flex-container, .info-cell{
+    background-color: var(--aqwt-card) !important;
+    color: var(--aqwt-strong) !important;
+}
+
+body.wiki-theme .post, .post-body{
+    background-color: var(--aqwt-line) !important;
 }

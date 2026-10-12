@@ -1,4 +1,3 @@
-// Which site/page this content script is running on.
 const PAGE = {
   isWiki: location.hostname === 'aqwwiki.wikidot.com',
   isAqcloset: location.hostname === 'aqcloset.com',

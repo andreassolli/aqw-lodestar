@@ -6,7 +6,7 @@ const FarmList = (() => {
 
   const TYPE_ICONS = {
     armor: 'armor.png',
-    sword: 'sword.webp',
+    sword: 'aqwsword.png',
     staff: 'aqwstaff.png',
     wand: 'aqwwand.png',
     dagger: 'aqwdagger.png',
@@ -28,8 +28,6 @@ const FarmList = (() => {
   let mouse = { x: 0, y: 0 };
   let previewEl = null;
   let scrollHintEl = null;
-
-  // ---------- hover image preview ----------
 
   function getPreview() {
     if (!previewEl) {
@@ -59,8 +57,12 @@ const FarmList = (() => {
         const img = document.createElement('img');
         img.alt = '';
         img.onload = positionPreview;
-        img.onerror = () => img.remove();
-        img.src = src;
+        if (ImageProxy.isActive() && ImageProxy.isImgur(src)) {
+          ImageProxy.useProxy(img, src, null, () => img.remove());
+        } else {
+          img.onerror = () => img.remove();
+          img.src = src;
+        }
         return img;
       })
     );
@@ -94,8 +96,6 @@ const FarmList = (() => {
     return [];
   }
 
-  // ---------- "more below" hint ----------
-
   function updateScrollHint() {
     const list = document.getElementById('list');
     if (!scrollHintEl) {
@@ -115,8 +115,6 @@ const FarmList = (() => {
     scrollHintEl.style.top = `${rect.bottom - 20}px`;
   }
 
-  // ---------- rows ----------
-
   function el(tag, className, text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
@@ -126,7 +124,7 @@ const FarmList = (() => {
 
   function priceIcon(price) {
     if (price.includes('Gold')) return iconUrl('goldshop.png');
-    if (price.includes('AC')) return iconUrl('ac.png');
+    if (price.includes('AC')) return iconUrl('AC.png');
     return iconUrl('item.png');
   }
 

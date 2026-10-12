@@ -25,6 +25,7 @@
   --hover-bg: rgba(255, 255, 255, .06);
   --boost-ink: #E3C145;
   --resource-ink: #F6D198;
+  --green: #4ade80;
 }
 
 :root[data-theme="light"] {
@@ -40,6 +41,7 @@
   --hover-bg: #f5f5f5;
   --boost-ink: #9c7a10;
   --resource-ink: #a97a2f;
+  --green: #15803d;
 }
 
 body {
@@ -58,8 +60,8 @@ h2 {
 }
 
 #logo {
-  width: 240px;
-  height: 48px;
+  width: 200px; /* leaves room for the settings and theme buttons */
+  height: 40px;
   margin: 6px 30px 0 10px;
   background: url("/icons/lodestarshadow2.png") no-repeat;
   background-size: cover;
@@ -104,8 +106,114 @@ h2 {
   margin-left: 2px;
 }
 
+button.boost {
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.boost:hover,
+button.boost[aria-expanded="true"] {
+  filter: brightness(1.15);
+}
+
+button.boost:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.boost span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boost.is-empty {
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.boost.is-empty img {
+  opacity: .5;
+}
+
 #resourceBoost {
   color: var(--resource-ink);
+}
+
+#resourceBoost.is-empty {
+  color: var(--muted);
+}
+
+/* "Next boosts" list, opened by clicking a boost badge */
+.boost-schedule {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+}
+
+/* "Active now": the badge's boost, written out in full, as a row like the ones below, in green. */
+.boost-current {
+  margin-bottom: 4px !important;
+}
+
+.boost-schedule-name.is-current {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.boost-schedule-heading {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.boost-schedule ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.boost-schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 11px;
+}
+
+.boost-schedule-row + .boost-schedule-row {
+  border-top: 1px solid var(--line);
+}
+
+.boost-schedule-row img {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.boost-schedule-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boost-schedule-when {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.boost-schedule-row.is-active .boost-schedule-when {
+  color: #2ecc71;
+  font-weight: 600;
+}
+
+.boost-schedule-when.is-unknown {
+  font-style: italic;
 }
 
 #resourceBoost img {
@@ -443,4 +551,173 @@ h2 {
 
 .lip-modal-status-error {
   color: #e05d5d;
+}
+
+/* ---------- "Check bag" result ---------- */
+.check-status {
+  margin: 6px 4px 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.check-status.is-error {
+  color: #e05d5d;
+}
+
+.setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.setting-label {
+  color: var(--muted);
+}
+
+.segmented {
+  display: flex;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+}
+
+.segmented label {
+  flex: 1;
+  cursor: pointer;
+}
+
+.segmented input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmented span {
+  display: block;
+  padding: 5px 8px;
+  border-radius: 999px;
+  text-align: center;
+  transition: background .2s ease, color .2s ease;
+}
+
+.segmented input:checked + span {
+  background: var(--acc);
+  color: var(--acc-ink);
+}
+
+.segmented input:focus-visible + span {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+/* ---------- header buttons (settings, theme) ---------- */
+.header-buttons {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 50;
+  display: flex;
+  gap: 6px;
+}
+
+.header-buttons .header-button {
+  position: static; /* .search-theme positions itself; here the row does */
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .25s ease, transform .25s cubic-bezier(.16, 1, .3, 1), border-color .25s ease, color .25s ease;
+}
+
+.header-buttons .header-button:hover,
+.header-button.is-active {
+  transform: translateY(-1px);
+  border-color: var(--ring);
+}
+
+.header-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.header-button svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- settings view ---------- */
+.settings-view {
+  padding: 4px 12px 14px;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+
+.settings-header h2 {
+  margin: 0;
+}
+
+.settings-group {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.settings-group:last-child {
+  border-bottom: 0;
+}
+
+.settings-group h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.settings-hint {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pill-button {
+  padding: 6px 14px;
+  border: 1px solid var(--acc);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--acc);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+
+.pill-button:hover {
+  background: var(--acc);
+  color: var(--acc-ink);
+}
+
+.pill-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }

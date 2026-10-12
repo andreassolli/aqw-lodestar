@@ -12,3 +12,8 @@
   --aqwt-hover-bg: rgba(255, 255, 255, .06);
   --aqwt-strong: #FF573F;
 }
+body:not(.wiki-theme) .aqwt-lists {
+  --aqwt-bg: #ffffff;  --aqwt-card: #f7f7f5;  --aqwt-ink: #1f1f1f;
+  --aqwt-muted: #9a9a9a;  --aqwt-line: #dddddd;  --aqwt-acc: #1f1f1f;
+  --aqwt-ring: #2f5fd0;  --aqwt-strong: #d63a22;  /* … */
+}

@@ -1,5 +1,3 @@
-/* Rarity badges (shared/rarity.js). Colors use !important so they win over
-   the tooltip's forced text color. */
 .aqwt-rarity {
   display: inline-block;
   vertical-align: middle;

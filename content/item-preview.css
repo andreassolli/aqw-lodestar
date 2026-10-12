@@ -8,7 +8,6 @@
   font-size: .9rem;
   border: 1px solid var(--aqwt-muted);
   border-radius: 12px;
-  height: 400px;
 }
 
 .aqwt-tooltip:not(.visible) {
@@ -27,6 +26,18 @@
   box-shadow: 0 8px 32px var(--aqwt-shadow), 0 0 0 1px var(--aqwt-shadow);
   pointer-events: none;
   animation: aqwt-tooltip-in .2s ease-out;
+}
+
+.aqwt-tooltip.visible.is-anchored {
+  right: auto;
+  transform: none;
+  max-height: calc(100vh - 16px);
+  animation: aqwt-tooltip-pop .15s ease-out;
+}
+
+@keyframes aqwt-tooltip-pop {
+  from { opacity: 0; transform: scale(.97); }
+  to   { opacity: 1; transform: none; }
 }
 
 @keyframes aqwt-tooltip-in {
@@ -49,8 +60,6 @@
   width: 100%;
   max-height: 220px;
   object-fit: contain;
-  border-radius: 8px;
-  background-color: var(--aqwt-muted);
 }
 
 .aqwt-tooltip-images.is-multi img {
@@ -73,8 +82,6 @@
   line-height: 1.5;
   color: var(--aqwt-ink);
   background: var(--aqwt-card);
-  height: 300px;
-  overflow-y: scroll;
 }
 
 .aqwt-hover-details p {
@@ -100,9 +107,7 @@
   font-weight: bold;
 }
 
-.aqwt-tooltip-title .aqwt-rarity {
-  margin: -2px 0 1px 4px;
-}
+/* The rarity badge and owned checkmark sit in .aqwt-title-tags (owned-marks.css). */
 
 /* "Location:", "Price:" etc. */
 .aqwt-hover-details strong,

@@ -1,0 +1,36 @@
+/* The page places categories with a masonry script (absolute top/left), which
+   can't re-run when one collapses. CSS columns reflow by themselves instead.
+   Column counts follow the page's col-12 / col-md-6 / col-lg-4 breakpoints. */
+#inventoryRendered.aqwt-inventory-columns.show {
+  display: block !important; /* Bootstrap .row is flex, which ignores columns */
+  height: auto !important;
+  column-count: 1;
+  column-gap: 0;
+}
+
+@media (min-width: 768px) {
+  #inventoryRendered.aqwt-inventory-columns.show { column-count: 2; }
+}
+
+@media (min-width: 992px) {
+  #inventoryRendered.aqwt-inventory-columns.show { column-count: 3; }
+}
+
+#inventoryRendered.aqwt-inventory-columns > div {
+  position: static !important;
+  width: 100% !important;
+  break-inside: avoid;
+}
+
+.aqwt-section-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.aqwt-section-toggle {
+  margin-right: 6px;
+}
+
+.aqwt-section-collapsed > .card-body {
+  display: none;
+}

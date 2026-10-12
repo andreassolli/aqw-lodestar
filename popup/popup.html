@@ -8,15 +8,24 @@
 </head>
 <body>
   <header id="logo" aria-label="AQW Lodestar"></header>
-
-  <section class="boosts">
-    <h2>Active server boosts</h2>
-    <button class="search-theme" type="button" aria-pressed="false" aria-label="Switch to dark theme">
+  <div class="header-buttons">
+    <button class="header-button" id="settings-toggle" type="button" aria-expanded="false" aria-controls="settings-view" aria-label="Settings" title="Settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <button class="search-theme header-button" type="button" aria-pressed="false" aria-label="Switch to dark theme">
       <svg class="search-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 8.4 8.4 0 1 0 20 14.2"/></svg>
       <svg class="search-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 3.4v2M12 18.6v2M3.4 12h2M18.6 12h2M6 6l1.4 1.4M16.6 16.6 18 18M18 6l-1.4 1.4M7.4 16.6 6 18"/></svg>
     </button>
+  </div>
+
+  <div id="main-view">
+
+  <section class="boosts">
+    <h2>Active server boosts</h2>
     <div class="boostRow" id="boosts"></div>
+    <div class="boost-schedule" id="boost-schedule" hidden></div>
   </section>
+
 
   <div class="separator"></div>
 
@@ -30,6 +39,7 @@
         <span class="search-icon" aria-hidden="true"></span>
       </button>
     </div>
+    <p id="check-status" class="check-status" role="status" hidden></p>
   </div>
 
   <div class="farmHeader">
@@ -44,6 +54,61 @@
   <p id="empty-message" hidden>
     Nothing here yet. Right-click a link and choose <strong>Add to "Items to farm"</strong>.
   </p>
+
+
+  </div>
+
+  <section id="settings-view" class="settings-view" hidden>
+    <div class="settings-header">
+      <button type="button" id="settings-back" class="icon-button" aria-label="Back" title="Back">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <h2>Settings</h2>
+    </div>
+
+    <div class="settings-group">
+      <h3>Tooltip</h3>
+      <div class="setting-row">
+        <span class="setting-label" id="tooltip-placement-label">Position</span>
+        <div class="segmented" role="radiogroup" aria-labelledby="tooltip-placement-label">
+          <label><input type="radio" name="tooltip-placement" value="side" checked><span>Side of screen</span></label>
+          <label><input type="radio" name="tooltip-placement" value="anchored"><span>Above the item</span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Images</h3>
+      <div class="setting-row">
+        <span class="setting-label" id="imgur-images-label">Imgur images</span>
+        <div class="segmented" role="radiogroup" aria-labelledby="imgur-images-label">
+          <label><input type="radio" name="imgur-images" value="auto" checked><span>Automatic</span></label>
+          <label><input type="radio" name="imgur-images" value="replace"><span>Always</span></label>
+          <label><input type="radio" name="imgur-images" value="direct"><span>Off</span></label>
+        </div>
+      </div>
+      <p class="settings-hint">Imgur blocks the UK, and most wiki item pictures are on Imgur. When they're replaced, item pages show the AQCloset picture where AQCloset has the item, and the rest load through an image proxy outside the UK (DuckDuckGo, WordPress, Google or wsrv.nl, whichever works). "Automatic" only does this when Imgur is blocked where you are.</p>
+    </div>
+
+    <div class="settings-group">
+      <h3>AQCloset</h3>
+      <p class="settings-hint">Fill AQCloset's inventory import with your synced inventory, so it can mark what you own. You still press Import on AQCloset yourself.</p>
+      <div class="settings-actions">
+        <button type="button" id="fill-aqcloset" class="pill-button">Fill in on AQCloset</button>
+      </div>
+      <p id="aqcloset-status" class="check-status" role="status" hidden></p>
+    </div>
+
+    <div class="settings-group">
+      <h3>Your data</h3>
+      <p class="settings-hint">Save your farm list, synced inventory, AQCloset layouts and settings to a file, or load them back after reinstalling.</p>
+      <div class="settings-actions">
+        <button type="button" id="export-data" class="pill-button">Export</button>
+        <button type="button" id="import-data" class="pill-button">Import…</button>
+      </div>
+      <p id="settings-status" class="check-status" role="status" hidden></p>
+    </div>
+  </section>
 
   <div id="add-item-modal" class="lip-modal-overlay">
     <div class="lip-modal" role="dialog" aria-modal="true" aria-labelledby="add-item-title">
@@ -60,16 +125,19 @@
   <!-- shared -->
   <script src="../shared/constants.js"></script>
   <script src="../shared/text.js"></script>
+  <script src="../shared/image-proxy.js"></script>
   <script src="../shared/messaging.js"></script>
   <script src="../shared/wiki-parser.js"></script>
   <script src="../shared/aqcloset.js"></script>
   <script src="../shared/farm-entry.js"></script>
+  <script src="../shared/backup.js"></script>
   <!-- popup components -->
   <script src="theme-toggle.js"></script>
   <script src="boosts.js"></script>
   <script src="farm-list.js"></script>
   <script src="add-item-modal.js"></script>
   <script src="inventory-check.js"></script>
+  <script src="settings.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

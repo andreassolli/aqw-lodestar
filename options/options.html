@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AQW Lodestar – Backup</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main>
+    <header>
+      <img src="../icons/lodestar48.png" alt="" width="40" height="40" />
+      <div>
+        <h1>Back up &amp; restore</h1>
+        <p class="lead">Save your Lodestar data to a file, and load it back after reinstalling the extension.</p>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h2>What's saved now</h2>
+      <ul class="summary" id="current-summary"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>Export</h2>
+      <p>Downloads a backup file with your farm list, synced inventory, AQCloset layouts, collapsed sections and settings.</p>
+      <button type="button" id="export-button" class="primary">Download backup</button>
+    </section>
+
+    <section class="panel">
+      <h2>Import</h2>
+      <p>Loads a backup file. Everything in the file replaces what's saved now.</p>
+      <label class="file-button">
+        <input type="file" id="import-file" accept="application/json,.json" />
+        <span>Choose backup file…</span>
+      </label>
+
+      <div id="import-preview" class="preview" hidden>
+        <p id="import-preview-title"></p>
+        <ul class="summary" id="import-summary"></ul>
+        <div class="actions">
+          <button type="button" id="import-cancel">Cancel</button>
+          <button type="button" id="import-confirm" class="primary">Replace with backup</button>
+        </div>
+      </div>
+    </section>
+
+    <p id="status" class="status" role="status" hidden></p>
+  </main>
+
+  <script src="../shared/constants.js"></script>
+  <script src="../shared/backup.js"></script>
+  <script src="backup.js"></script>
+</body>
+</html>

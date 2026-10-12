@@ -1,4 +1,5 @@
-// Applies the popup's dark/light choice to wiki and character pages.
+// Applies the popup's dark/light choice (STORAGE_KEYS.theme) to the wiki and
+// character pages, by toggling a class on <body> that theme.css styles.
 (() => {
   const themeClass = PAGE.isWiki ? 'wiki-theme' : PAGE.isCharPage ? 'char-theme' : null;
   if (!themeClass) return;

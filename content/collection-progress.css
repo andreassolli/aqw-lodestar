@@ -1,0 +1,32 @@
+.aqwt-collection-counter {
+  max-width: 420px;
+  margin: 4px 0 14px;
+  padding: 10px 14px;
+  border: 1px solid rgba(46, 204, 113, .5);
+  border-radius: 10px;
+  background: rgba(46, 204, 113, .08);
+}
+
+.aqwt-collection-counter-text {
+  font-size: 1rem;
+}
+
+.aqwt-collection-counter-bar {
+  height: 6px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(128, 128, 128, .3);
+}
+
+.aqwt-collection-counter-bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #2ecc71;
+  transition: width .3s ease;
+}
+
+body.aqwt-collection-page #page-content .list-pages-box a.aqwt-owned-item {
+  color: #2ecc71 !important;
+}

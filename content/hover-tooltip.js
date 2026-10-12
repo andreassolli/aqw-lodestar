@@ -1,21 +1,31 @@
 // Item preview panel shown while hovering wiki links, inventory rows on
-// account.aq.com, and items on aqcloset.com.
+// account.aq.com, and items on aqcloset.com. Content comes from item-preview.js.
+// Placement follows the popup setting: at the side of the screen, or above the item.
 (() => {
   const HOVER_DELAY_MS = 100;
-  const MAX_SECTIONS = 5;
-  const MAX_LIST_ITEMS = 3;
-  const DETAIL_START_MARKERS = ['Location:', 'Locations:', 'Price:', 'Base Stats:'];
-  const HIDDEN_FIELDS = ['Sellback', 'Description', 'Rarity'];
   const EXCLUDED_LINK_AREAS = 'sub, #top-bar, #side-bar, #breadcrumbs, [data-aqwt-no-tooltip]';
   const BADGE_ICON_FILES = ['ac.png', 'legend.png'];
+  const ANCHOR_GAP = 8; // px between the item and the tooltip
+  const VIEWPORT_MARGIN = 8;
+  const MIN_HEIGHT_ABOVE = 180; // below this much room above the item, show it underneath instead
 
   const panel = document.createElement('div');
-  panel.className = 'aqwt-tooltip';
+  panel.className = 'aqwt-card aqwt-tooltip';
   document.body.appendChild(panel);
 
-  const cache = new Map(); // "url::name" -> preview
   let hoverTimer = null;
   let activeKey = null;
+  let anchorEl = null; // the hovered item, for 'anchored' placement
+  let placement = 'side';
+
+  ext.storage.local.get(STORAGE_KEYS.tooltipPlacement).then((result) => {
+    placement = result[STORAGE_KEYS.tooltipPlacement] || 'side';
+  });
+  ext.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes[STORAGE_KEYS.tooltipPlacement]) {
+      placement = changes[STORAGE_KEYS.tooltipPlacement].newValue || 'side';
+    }
+  });
 
   function isWikiUrl(href) {
     try {
@@ -46,173 +56,88 @@
   function resolveTarget(target) {
     const link = target.closest('a[href]');
     if (link && !link.dataset.aqwtGenerated && isWikiUrl(link.href) && !link.closest(EXCLUDED_LINK_AREAS)) {
-      return { url: link.href, name: getItemLinkLabel(link) };
+      return { el: link, url: link.href, name: getItemLinkLabel(link) };
     }
 
     if (PAGE.isInventory && target.tagName === 'TD' && target.parentElement?.firstElementChild === target) {
       const name = target.textContent.trim();
-      if (name) return { url: wikiUrlFromName(name), name };
+      const url = wikiUrlFromName(name);
+      if (url) return { el: target, url, name };
     }
 
     if (PAGE.isAqcloset && isAqclosetTooltipEnabled()) {
       const object = target.closest('.object');
       const name = object?.querySelector('.label .name')?.textContent.trim();
-      if (name) return { url: wikiUrlFromName(name), name, pageImages: getAqclosetObjectImages(object) };
+      const url = wikiUrlFromName(name);
+      if (url) return { el: object, url, name, pageImages: getAqclosetObjectImages(object) };
     }
 
     return null;
   }
 
-  function isTagsList(el) {
-    const links = el.querySelectorAll('a[href]');
-    return links.length > 0 && [...links].every((a) => (a.getAttribute('href') || '').includes('/system:page-tags/'));
-  }
+  /**
+   * 'anchored' placement: centered above the item. When the tooltip is taller
+   * than the room above, it's shortened to fit there; only when there's almost
+   * no room above (item at the very top of the screen) does it go below.
+   */
+  function positionOnAnchor() {
+    if (!anchorEl || !panel.classList.contains('is-anchored') || !anchorEl.isConnected) return;
+    const item = anchorEl.getBoundingClientRect();
+    // clientWidth/Height exclude scrollbars, unlike innerWidth/Height.
+    const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = document.documentElement.clientHeight;
 
-  /** Page content children, with Male/Female tab panes flattened in so they aren't skipped. */
-  function flattenTabs(content) {
-    return [...content.children].flatMap((child) =>
-      child.classList.contains('yui-navset')
-        ? [...child.querySelectorAll('.yui-content > div')].flatMap((tab) => [...tab.children])
-        : [child]
-    );
-  }
+    // Natural size first. offsetWidth/Height are layout sizes, so the pop-in
+    // animation's scale doesn't distort them.
+    panel.style.maxHeight = '';
+    const width = panel.offsetWidth;
+    const height = panel.offsetHeight;
 
-  /** Drop "<strong>Label:</strong>" fields with no value, unless the value is the list that follows. */
-  function stripEmptyFields(html, nextIsList) {
-    const segments = html.split(/<br\s*\/?>/i);
-    return segments
-      .filter((segment, index) => {
-        const match = segment.match(/<strong>\s*[^<:]+:?\s*<\/strong>([\s\S]*)/i);
-        if (!match) return true;
-        const value = match[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, '').trim();
-        return value !== '' || (index === segments.length - 1 && nextIsList);
-      })
-      .join('<br>');
-  }
-
-  function cleanSection(child, next) {
-    const clone = child.cloneNode(true);
-    let html = clone.innerHTML;
-    for (const field of HIDDEN_FIELDS) {
-      html = html.replace(new RegExp(`<strong>\\s*${field}\\s*:?\\s*</strong>[\\s\\S]*?(<br\\s*/?>|$)`, 'i'), '');
-    }
-
-    const nextIsList = !!next && (next.tagName === 'UL' || next.tagName === 'OL') && !isTagsList(next);
-    clone.innerHTML = stripEmptyFields(html, nextIsList);
-    if (!clone.textContent.trim()) return null;
-
-    if ((clone.tagName === 'UL' || clone.tagName === 'OL') && clone.children.length > MAX_LIST_ITEMS) {
-      while (clone.children.length > MAX_LIST_ITEMS) clone.lastElementChild.remove();
-      const more = document.createElement('li');
-      more.textContent = '...';
-      clone.appendChild(more);
-    }
-    return clone;
-  }
-
-  function collectSections(content) {
-    const children = flattenTabs(content);
-    const sections = [];
-    let started = false;
-
-    for (let i = 0; i < children.length && sections.length < MAX_SECTIONS; i++) {
-      const child = children[i];
-      if (child.tagName === 'HR') break;
-
-      const text = child.textContent.trim();
-      if (!text || text.includes('List of all tags')) continue;
-
-      if (!started) {
-        started =
-          DETAIL_START_MARKERS.some((marker) => text.includes(marker)) ||
-          (child.tagName === 'P' && !!child.querySelector('strong'));
-      }
-      if (!started) continue;
-
-      const lower = text.toLowerCase();
-      if (lower === 'notes:' || lower === 'also see:') break;
-
-      const section = cleanSection(child, children[i + 1]);
-      if (section) sections.push(section);
-    }
-    return sections;
-  }
-
-  function buildDetails(content, title, rarity) {
-    const details = document.createElement('div');
-    details.className = 'aqwt-hover-details';
-
-    if (title) {
-      const heading = document.createElement('p');
-      heading.className = 'aqwt-tooltip-title';
-      heading.textContent = title;
-      if (rarity) heading.appendChild(createRarityBadge(rarity));
-      details.appendChild(heading);
-    }
-    if (!content) return details;
-
-    const sections = collectSections(content);
-    if (sections.length) {
-      details.append(...sections);
+    const roomAbove = item.top - ANCHOR_GAP - VIEWPORT_MARGIN;
+    const roomBelow = viewportHeight - item.bottom - ANCHOR_GAP - VIEWPORT_MARGIN;
+    // max-height applies inside the padding and border, so leave room for them.
+    const style = getComputedStyle(panel);
+    const chrome = ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth']
+      .reduce((sum, prop) => sum + parseFloat(style[prop]), 0);
+    let top;
+    if (height <= roomAbove) {
+      top = item.top - ANCHOR_GAP - height;
+    } else if (roomAbove >= MIN_HEIGHT_ABOVE || roomAbove >= roomBelow) {
+      panel.style.maxHeight = `${Math.max(roomAbove - chrome, 0)}px`;
+      top = VIEWPORT_MARGIN;
     } else {
-      const paragraphs = [...content.querySelectorAll('p')];
-      const fallback = paragraphs.find((p) => p.textContent.includes('Location:')) || paragraphs[2] || paragraphs[1];
-      if (fallback) details.appendChild(fallback.cloneNode(true));
+      panel.style.maxHeight = `${Math.max(roomBelow - chrome, 0)}px`;
+      top = item.bottom + ANCHOR_GAP;
     }
-    return details;
+
+    const left = item.left + item.width / 2 - width / 2;
+    const maxLeft = viewportWidth - width - VIEWPORT_MARGIN;
+    panel.style.top = `${top}px`;
+    panel.style.left = `${Math.max(VIEWPORT_MARGIN, Math.min(left, maxLeft))}px`;
   }
 
-  async function loadWikiPreview(url) {
-    const page = await WikiParser.loadItemPage(url);
-    if (!page) return null;
+  // Images loading in change the tooltip's height; keep it lined up with the item.
+  new ResizeObserver(positionOnAnchor).observe(panel);
+  window.addEventListener('scroll', positionOnAnchor, true);
 
-    const { doc, images } = page;
-    if (!images.length && WikiParser.isNonItemCategory(doc)) return null;
-
-    const content = doc.querySelector('#page-content');
-    const rarity = getRarity({
-      rarity: WikiParser.extractField(content, 'Rarity'),
-      tags: WikiParser.parseTags(doc),
-    });
-    return { images, details: buildDetails(content, WikiParser.getTitle(doc), rarity) };
-  }
-
-  async function loadPreview({ url, name, pageImages }) {
-    const closetPromise = pageImages && pageImages.length
-      ? Promise.resolve({ images: pageImages })
-      : Aqcloset.findItemPreview(name);
-
-    const [wiki, closet] = await Promise.all([loadWikiPreview(url), closetPromise]);
-
-    // AQCloset thumbnails are cleaner than scraped wiki images, so prefer them.
-    const images = closet.images.length ? closet.images : wiki ? wiki.images : [];
-    const details = wiki ? wiki.details : null;
-    return images.length || details ? { images, details } : null;
-  }
-
-  function show(preview) {
-    panel.replaceChildren();
-
-    if (preview.images.length) {
-      const row = document.createElement('div');
-      row.className = 'aqwt-tooltip-images' + (preview.images.length > 1 ? ' is-multi' : '');
-      preview.images.forEach((src) => {
-        const img = document.createElement('img');
-        img.alt = '';
-        img.onerror = () => img.remove();
-        img.src = src;
-        row.appendChild(img);
-      });
-      panel.appendChild(row);
+  function show(preview, el) {
+    ItemPreview.fill(panel, preview);
+    anchorEl = el;
+    const anchored = placement === 'anchored' && !!el;
+    panel.classList.toggle('is-anchored', anchored);
+    if (!anchored) {
+      panel.style.top = '';
+      panel.style.left = '';
+      panel.style.maxHeight = '';
     }
-    if (preview.details) panel.appendChild(preview.details);
-
     panel.classList.add('visible');
+    positionOnAnchor();
   }
 
   function hide() {
     clearTimeout(hoverTimer);
     activeKey = null;
+    anchorEl = null;
     panel.classList.remove('visible');
     panel.replaceChildren();
   }
@@ -227,16 +152,9 @@
     clearTimeout(hoverTimer);
 
     hoverTimer = setTimeout(async () => {
-      try {
-        if (!cache.has(key)) {
-          const preview = await loadPreview(target);
-          if (!preview) return;
-          cache.set(key, preview);
-        }
-        if (activeKey === key) show(cache.get(key)); // skip if the cursor already left
-      } catch (err) {
-        console.error('Hover preview error:', err);
-      }
+      const preview = await ItemPreview.load(target);
+      if (!preview || activeKey !== key) return; // nothing to show, or the cursor already left
+      show(preview, target.el);
     }, HOVER_DELAY_MS);
   });
 

@@ -34,8 +34,6 @@
     totals[name] = (totals[name] || 0) + qty;
   };
 
-  // ---------- parsing ----------
-
   function parseMergeRequirements(inventory, filterAC, filterLegend) {
     const requiredTotals = {};
     let countItems = 0;
@@ -98,8 +96,6 @@
 
     return { requiredTotals, countItems: 1, questTitle };
   }
-
-  // ---------- rendering ----------
 
   function filterCheckbox(id, label, checked) {
     return `
@@ -222,8 +218,6 @@
 
     attachTabSwitching(navList, contentList);
   }
-
-  // ---------- controller ----------
 
   function createCalculator(inventory) {
     const state = { filterAC: false, filterLegend: false, multiplier: 1 };
