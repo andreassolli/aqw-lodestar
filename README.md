@@ -1,4 +1,7 @@
 # AQW Lodestar
+[![Latest release](https://img.shields.io/github/v/release/andreassolli/aqw-lodestar)](https://github.com/andreassolli/aqw-lodestar/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/andreassolli/aqw-lodestar)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/andreassolli/aqw-lodestar?style=flat)](https://github.com/andreassolli/aqw-lodestar/stargazers)
 
 A browser extension for AdventureQuest Worlds players. It adds item previews,
 owned-item checkmarks, a farm list, server boosts, merge and quest calculators,
