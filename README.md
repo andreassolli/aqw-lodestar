@@ -1,6 +1,6 @@
 # AQW Lodestar
 [![Latest release](https://img.shields.io/github/v/release/andreassolli/aqw-lodestar)](https://github.com/andreassolli/aqw-lodestar/releases/latest)
-[![License: MIT](https://img.shields.io/github/license/andreassolli/aqw-lodestar)](LICENSE)
+[![License: MIT](https://img.shields.io/github/license/andreassolli/aqw-lodestar?v=2)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/andreassolli/aqw-lodestar?style=flat)](https://github.com/andreassolli/aqw-lodestar/stargazers)
 
 A browser extension for AdventureQuest Worlds players. It adds item previews,
@@ -409,3 +409,10 @@ for anything shown at icon size) and use `ext.runtime.getURL('icons/…')`.
   older places) so they never clash with the sites' own.
 - Never send user data anywhere. Anything new that contacts a site must be added
   to the privacy policy and to the permission notes above.
+
+## License
+
+The code is under the [MIT License](LICENSE): anyone may use, copy, change and
+share it, as long as they keep the copyright notice. AdventureQuest Worlds
+artwork and names belong to Artix Entertainment, and the Poppins font has its
+own license (`fonts/OFL.txt`); neither is covered by the MIT License.
