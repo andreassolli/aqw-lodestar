@@ -1,0 +1,91 @@
+# Builds the desktop app for Mac, Windows and Linux on GitHub's own machines.
+#
+# Push a tag that starts with "desktop-v" (e.g. desktop-v1.0.0) and the
+# installers are attached to a GitHub release for that tag. You can also run it
+# by hand from the Actions tab ("Run workflow"); the files then appear under the
+# run's Artifacts instead.
+
+name: Desktop app
+
+on:
+  push:
+    tags: ['desktop-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            script: dist:mac
+            files: |
+              desktop/dist/*.dmg
+              desktop/dist/*.zip
+          - os: windows-latest
+            script: dist:win
+            files: |
+              desktop/dist/*.exe
+          - os: ubuntu-latest
+            script: dist:linux
+            files: |
+              desktop/dist/*.AppImage
+              desktop/dist/*.deb
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: npm install
+
+      - run: npm run ${{ matrix.script }}
+        env:
+          # No paid signing certificates: don't look for any (the Mac app is
+          # ad-hoc signed by build/adhoc-sign.cjs instead).
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lodestar-${{ matrix.os }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/desktop-v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: AQW Lodestar Desktop ${{ github.ref_name }}
+          files: artifacts/*
+          body: |
+            The Lodestar popup as a desktop app, with an option to stay on top of other windows.
+
+            **Mac:** download the `.dmg`, open it and drag AQW Lodestar to Applications.
+            The first time, right-click the app and choose Open (or allow it under
+            System Settings → Privacy & Security → Open Anyway).
+
+            **Windows:** download `setup-x64.exe` (or `setup-arm64.exe` for ARM PCs), or the
+            `portable.exe` that runs without installing. If Windows shows "Windows protected
+            your PC", choose More info → Run anyway.
+
+            **Linux:** on Ubuntu, Debian or Mint, install the `.deb`
+            (`sudo apt install ./aqw-lodestar_*.deb`). On other distributions use the `.AppImage`:
+            make it executable (`chmod +x AQW-Lodestar-*.AppImage`) and open it (it needs
+            `libfuse2`, which some distributions don't include by default).
