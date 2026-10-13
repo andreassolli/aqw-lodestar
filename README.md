@@ -1,18 +1,19 @@
 # AQW Lodestar
 
 **Browser extension**
+
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/ebaiceinineljleohmdapccokleconkk?label=Chrome&logo=googlechrome&logoColor=white&color=4285F4)](https://chromewebstore.google.com/detail/aqw-lodestar/ebaiceinineljleohmdapccokleconkk)
-[![Chrome users](https://img.shields.io/chrome-web-store/users/ebaiceinineljleohmdapccokleconkk?label=users&color=4285F4)](https://chromewebstore.google.com/detail/aqw-lodestar/ebaiceinineljleohmdapccokleconkk)
-[![Firefox Add-on](https://img.shields.io/amo/v/aqw-lodestar?label=Firefox&logo=firefoxbrowser&logoColor=white&color=FF7139)](https://addons.mozilla.org/firefox/addon/aqw-lodestar/)
 [![Extension release](https://img.shields.io/github/v/release/andreassolli/aqw-lodestar?filter=v%2A&label=extension)](https://github.com/andreassolli/aqw-lodestar/releases?q=v1&expanded=true)
 
 **Desktop app**
+
 [![Desktop release](https://img.shields.io/github/v/release/andreassolli/aqw-lodestar?filter=desktop-v%2A&label=desktop&color=c0392b)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
 [![macOS](https://img.shields.io/badge/macOS-Apple%20silicon%20%26%20Intel-000000?logo=apple&logoColor=white)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
 [![Windows](https://img.shields.io/badge/Windows-x64%20%26%20ARM-0078D6?logo=windows&logoColor=white)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
 [![Linux](https://img.shields.io/badge/Linux-AppImage%20%26%20.deb-FCC624?logo=linux&logoColor=black)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
 
 **Project**
+
 [![Downloads](https://img.shields.io/github/downloads/andreassolli/aqw-lodestar/total?label=downloads)](https://github.com/andreassolli/aqw-lodestar/releases)
 [![License: MIT](https://img.shields.io/github/license/andreassolli/aqw-lodestar?v=2)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/andreassolli/aqw-lodestar?style=flat)](https://github.com/andreassolli/aqw-lodestar/stargazers)
