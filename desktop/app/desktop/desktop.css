@@ -1,0 +1,180 @@
+/* Desktop app tweaks on top of the extension's popup.css. */
+
+/* The popup is a fixed 300 px; the app window can be any width. */
+body {
+  width: auto;
+  min-width: 300px;
+}
+
+
+/* Settings that only matter on web pages, which the app doesn't have:
+   tooltip position, and filling in AQCloset's import in a browser tab. */
+.settings-group:has(input[name="tooltip-placement"]),
+.settings-group:has(#fill-aqcloset) {
+  display: none;
+}
+
+/* The pin button sits in the top row, right of the logo. */
+.pin-corner {
+  position: absolute;
+  top: 9px;
+  right: 12px;
+}
+
+/* Without plugin pages, Settings and the theme switch sit beside the logo too:
+   left of the pin, with the logo narrowing in a narrow window. */
+.tabbar:has(.tabs.is-single) {
+  right: 52px;
+}
+
+.is-desktop:has(.tabs.is-single) #logo {
+  width: min(200px, calc(100vw - 150px));
+  background-size: contain;
+  background-position: left center;
+}
+
+/* The pin button, lit up while the window stays on top. */
+#pin-toggle svg {
+  transition: transform .25s cubic-bezier(.16, 1, .3, 1);
+}
+
+#pin-toggle.is-pinned {
+  border-color: var(--acc);
+  background: var(--acc);
+  color: var(--acc-ink);
+}
+
+#pin-toggle.is-pinned svg {
+  transform: rotate(-30deg);
+}
+
+/* "Other copies found" under Import from Chrome. */
+.import-other {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.import-other select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+}
+
+.import-other[hidden] {
+  display: none;
+}
+
+#import-chrome:disabled {
+  opacity: .6;
+  cursor: progress;
+}
+
+/* Plugin pages in the tab row: an icon file shown in the tab's text colour. */
+.tab-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  background: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+}
+
+/* Plugin pages: the same space under the tab row as the Farm page. */
+.plugin-page {
+  padding-top: 16px;
+}
+
+/* Settings → Plugins */
+.plugin-list {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.plugin-item {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.plugin-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.plugin-version {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.plugin-description {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.plugin-state {
+  margin: 6px 0 0;
+  font-size: 11px;
+}
+
+.plugin-state.is-on {
+  color: var(--green);
+}
+
+.plugin-state.is-off {
+  color: var(--muted);
+}
+
+.plugin-state.is-pending {
+  color: var(--boost-ink);
+}
+
+.plugin-state.is-error {
+  color: #ef4444;
+}
+
+.plugin-actions {
+  margin-top: 8px;
+}
+
+.plugin-action {
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+.plugin-empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.plugin-restart {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--boost-ink);
+  border-radius: 10px;
+  color: var(--boost-ink);
+  font-size: 12px;
+}
+
+.plugin-restart[hidden] {
+  display: none;
+}

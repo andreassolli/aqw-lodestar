@@ -16,12 +16,17 @@ try-on links and more to three sites:
 Plus the **toolbar popup**: active server boosts and when they're next, *Check bag*,
 the *Items to Farm* list, a dark/light switch and settings.
 
+The popup also comes as a **desktop app** for Mac, Windows and Linux that can
+stay on top of every other window, the game included. See
+[Desktop app](#desktop-app).
+
 It runs in **Chrome** (and other Chromium browsers: Edge, Brave, Opera) **121+**
 and **Firefox 140+**, from one code base.
 
 There's no bundler, no framework and no `npm install`: every file is plain
 JavaScript/CSS that the browser loads as it is. The only tool is a small Node
-script that packages the two store versions.
+script that packages the two store versions. (The desktop app in `desktop/` is
+the exception: it's built with Electron, so it has its own `npm install`.)
 
 ---
 
@@ -35,6 +40,7 @@ script that packages the two store versions.
 - [Messages to the background](#messages-to-the-background)
 - [Chrome and Firefox differences](#chrome-and-firefox-differences)
 - [Building and releasing](#building-and-releasing)
+- [Desktop app](#desktop-app)
 - [Common changes](#common-changes)
 - [Debugging](#debugging)
 - [Code style](#code-style)
@@ -119,6 +125,7 @@ render/                Character image download (account.aq.com)
 
 popup/                 The toolbar popup
   popup.html / popup.js  Page and entry point
+  tabs.js              The tab row: Farm and other pages, Settings, theme switch
   boosts.js            Active server boosts and the boost schedule
   inventory-check.js   "Check bag"
   farm-list.js         Items to Farm
@@ -130,6 +137,10 @@ popup/                 The toolbar popup
 options/               The backup page (opened from Settings)
 icons/                 Toolbar icons (lodestar16/48/128) and pictures used in pages and the popup
 fonts/                 Poppins (popup, backup page, AQCloset additions)
+
+desktop/               The desktop app (Electron), running the popup above; see desktop/README.md
+  plugins/             Desktop plugins, downloaded separately (ultra-assistant: boss callouts)
+.github/workflows/     desktop.yml builds the desktop app's installers and plugin zips on GitHub
 ```
 
 Every file starts with a comment saying what it does; read that first.
@@ -352,11 +363,87 @@ Both stores ask why each permission is needed:
 
 ---
 
+## Desktop app
+
+`desktop/` turns the toolbar popup into an app for **Mac, Windows and Linux**,
+with the same server boosts, *Check bag*, *Items to Farm* list, *Add item from
+link*, dark/light switch and backups. What it adds:
+
+- **Stay on top:** keeps the window above every other window, including the
+  game. Use the pin button in the header, *Settings → Window*, *View → Stay on
+  Top*, or ⌘⇧T / Ctrl+Shift+T. It's remembered along with the window's size and
+  position.
+- **Menu bar / tray icon:** a compass in the Mac menu bar (system tray on
+  Windows and Linux) that shows or hides the window. Right-click it for
+  *Stay on Top* and *Quit*.
+- **Import from Chrome:** *Settings → Browser extension* copies the farm list,
+  synced inventory and settings from the extension in Chrome, Edge, Brave,
+  Vivaldi, Opera or Arc in one click. It reads the extension's storage straight
+  from the browser profile, so the extension needs no changes. It only copies
+  from the browser to the app. Firefox users move data with a backup file
+  (*Export* in the extension, *Import…* in the app).
+
+- **Plugins:** extra features installed separately from *Settings → Plugins*,
+  each a zip from the release. A plugin can run code in the app's background
+  and add its own tab next to *Farm*. The first is the
+  [Ultra Assistant](desktop/plugins/ultra-assistant/README.md), which watches
+  the game's traffic during ultra boss fights and shows who should Taunt or Zone
+  next. How to write and build plugins:
+  [desktop/README.md → Plugins](desktop/README.md#plugins).
+
+The app runs **this repository's own popup code**: `desktop/scripts/copy-extension.mjs`
+copies `popup/`, `shared/`, `options/`, `icons/`, `fonts/` and `background.js`
+into the app at build time, and the extension's `background.js` runs in the
+app's main process. So a change to the popup reaches the app the next time it's
+built. Web-page features (tooltips, right-click menus and so on) aren't part of
+the app.
+
+### Running and building it
+
+Needs Node 22 (Electron's installer has trouble with Node 24).
+
+```sh
+cd desktop
+npm install
+npm start          # copies the popup files in and opens the app
+npm run dist:mac   # or dist:win / dist:linux: installers in desktop/dist/
+```
+
+To release, raise `"version"` in `desktop/package.json` and push a tag starting
+with `desktop-v` (for example `git tag desktop-v1.0.0 && git push origin desktop-v1.0.0`).
+The *Desktop app* workflow (`.github/workflows/desktop.yml`) builds on GitHub's
+Mac, Windows and Linux machines and attaches the installers to a release:
+
+| File | For |
+| --- | --- |
+| `AQW-Lodestar-<version>-mac-universal.dmg` | Mac (Apple Silicon and Intel) |
+| `AQW-Lodestar-<version>-setup-x64.exe` / `-setup-arm64.exe` | Windows installer |
+| `AQW-Lodestar-<version>-portable.exe` | Windows, without installing |
+| `aqw-lodestar_<version>_<arch>.deb` | Ubuntu, Debian, Mint |
+| `AQW-Lodestar-<version>-x86_64.AppImage` | Other Linux distributions |
+
+The builds aren't signed with a paid certificate, so the first launch asks for
+confirmation: on a Mac, right-click → *Open* (or *System Settings → Privacy &
+Security → Open Anyway*); on Windows, *More info → Run anyway*.
+
+[`desktop/README.md`](desktop/README.md) has the details: how each file works,
+where the app keeps its data, the install screens and icons, and signing.
+
+---
+
 ## Common changes
 
 **Add an event list** to *Search Items by Tag*: add an entry to `ITEM_LISTS` in
 `content/item-lists.config.js`. The comment at the top explains every field; tag
 names are the wiki's own (listed at the bottom of every item page).
+
+**Add a page to the popup:** add a tab button to `.tabs` in
+`popup/popup.html` (`role="tab"`, `data-tab="<name>"`, `aria-controls="<panel id>"`)
+and a `<section id="<panel id>" class="tab-panel" role="tabpanel" hidden>` for its
+content; `popup/tabs.js` does the rest. The page then shows in the extension
+and the desktop app. (With only *Farm*, the tab row is hidden.) For a page only
+in the desktop app, make it a plugin instead
+([desktop/README.md → Plugins](desktop/README.md#plugins)).
 
 **Add or adjust a boost type:** `GROUPS` at the top of `popup/boosts.js`. An
 event counts for a type when one of its `keywords` is in the calendar title

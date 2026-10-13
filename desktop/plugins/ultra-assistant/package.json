@@ -1,0 +1,10 @@
+{
+  "name": "lodestar-plugin-ultra-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ultra Assistant plugin for the AQW Lodestar desktop app.",
+  "license": "MIT",
+  "dependencies": {
+    "cap": "^0.2.1"
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "name": "aqw-lodestar-desktop",
+  "productName": "AQW Lodestar",
+  "version": "1.0.0",
+  "description": "The AQW Lodestar popup as a desktop app: server boosts, Check bag and the farm list, with an option to stay on top of other windows.",
+  "author": "Andreas Solli",
+  "license": "MIT",
+  "homepage": "https://github.com/andreassolli/aqw-lodestar",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "copy": "node scripts/copy-extension.mjs",
+    "start": "npm run copy && electron .",
+    "start:no-plugins": "npm run copy && electron . --no-plugins",
+    "dist": "npm run copy && electron-builder --publish never",
+    "dist:mac": "npm run copy && electron-builder --mac --publish never",
+    "dist:win": "npm run copy && electron-builder --win --publish never",
+    "dist:linux": "npm run copy && electron-builder --linux --publish never",
+    "plugin:build": "node scripts/build-plugin.mjs",
+    "plugins:dev": "node scripts/build-plugin.mjs --dev"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.2.1",
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.lodestar.aqw-lodestar",
+    "productName": "AQW Lodestar",
+    "copyright": "Copyright © 2026 Andreas Solli",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "storage.js",
+      "background-host.js",
+      "chrome-import.js",
+      "zip.js",
+      "plugin-host.js",
+      "app/**/*",
+      "package.json"
+    ],
+    "artifactName": "AQW-Lodestar-${version}-${os}-${arch}.${ext}",
+    "afterPack": "build/adhoc-sign.cjs",
+    "mac": {
+      "category": "public.app-category.games",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "title": "AQW Lodestar",
+      "background": "build/background.png",
+      "iconSize": 96,
+      "iconTextSize": 13,
+      "contents": [
+        {
+          "x": 180,
+          "y": 205,
+          "type": "file"
+        },
+        {
+          "x": 480,
+          "y": 205,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "AQW Lodestar",
+      "artifactName": "AQW-Lodestar-${version}-setup-${arch}.${ext}",
+      "installerSidebar": "build/installerSidebar.bmp",
+      "installerHeader": "build/installerHeader.bmp",
+      "include": "build/installer.nsh",
+      "runAfterFinish": true
+    },
+    "portable": {
+      "artifactName": "AQW-Lodestar-${version}-portable.${ext}"
+    },
+    "linux": {
+      "category": "Game",
+      "synopsis": "AQW server boosts, Check bag and farm list, always on top",
+      "maintainer": "Andreas Solli <itssolli@gmail.com>",
+      "executableName": "aqw-lodestar",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "appImage": {
+      "artifactName": "AQW-Lodestar-${version}-${arch}.${ext}"
+    },
+    "deb": {
+      "artifactName": "aqw-lodestar_${version}_${arch}.${ext}"
+    }
+  }
+}

@@ -1,0 +1,160 @@
+/* The Ultra tab (page.html). */
+
+.attack-pattern-header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.attack-pattern-header h2 {
+    margin: 0;
+}
+
+.attack-pattern-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+    width: 100%;
+}
+
+.attack-pattern-selector label {
+    font-size: 12px;
+    opacity: 0.75;
+}
+
+.attack-pattern-selector select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--foreground-70, #666);
+    border-radius: 6px;
+    background: var(--background, #fff);
+    color: var(--foreground, #222);
+    font: inherit;
+    cursor: pointer;
+}
+
+.attack-pattern {
+    border: 2px solid var(--foreground-70, #666);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.attack-pattern .pattern-section {
+    display: flex;
+    align-items: stretch;
+}
+
+.attack-pattern .section-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    flex: 0 0 76px;
+    box-sizing: border-box;
+    border-right: 2px solid var(--foreground-70, #666);
+}
+
+.attack-pattern .section-label p {
+    width: 100%;
+    margin: 0;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.attack-pattern .intro-label {
+    border-bottom: 2px solid var(--foreground-70, #666);
+}
+
+.attack-pattern .section-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.attack-pattern .attack {
+    margin: 0;
+    padding: 12px 8px;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.attack-pattern .attack + .attack {
+    border-top: 1px solid rgb(255 255 255 / 12%);
+}
+
+.attack-pattern .attack.normal {
+    background: transparent;
+    color: var(--foreground, inherit);
+}
+
+.attack-pattern .attack.truth {
+    background: #c026d3;
+    color: #fff;
+}
+
+.attack-pattern .attack.listen {
+    background: #0284c7;
+    color: #fff;
+}
+
+.attack-pattern .attack.zone {
+    background: #b91c1c;
+    color: #fff;
+}
+
+/* Highlight the boss's spoken dialogue. */
+.attack-pattern .attack.truth,
+.attack-pattern .attack.listen,
+.attack-pattern .attack.zone {
+    color: #facc15;
+}
+
+/* Keep the Intro and Loop labels visually distinct. */
+.attack-pattern .loop-label {
+    border-top: 2px solid var(--foreground-70, #666);
+}
+
+/* Small popup windows */
+@media (max-width: 360px) {
+    .attack-pattern-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .attack-pattern-selector {
+        width: 100%;
+    }
+
+    .attack-pattern .section-label {
+        flex-basis: 60px;
+        padding: 8px 4px;
+    }
+
+    .attack-pattern .attack {
+        padding: 10px 6px;
+        font-size: 12px;
+    }
+}
+
+/* Whether the plugin is listening to the game (from main.js). */
+.ultra-status {
+    margin: -6px 0 12px;
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.ultra-status.is-listening {
+    color: var(--green);
+}
+
+.ultra-status.is-error {
+    color: #ef4444;
+}

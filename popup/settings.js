@@ -1,14 +1,8 @@
-// Settings view, opened with the gear button: tooltip position and data backup.
+// Settings view: tooltip position, Imgur images, AQCloset import and data
+// backup. Opening and closing it (the gear button, Back) is handled by
+// popup/tabs.js, like the other pages.
 const Settings = (() => {
   let els;
-
-  function showSettings(open) {
-    els.main.hidden = open;
-    els.view.hidden = !open;
-    els.toggle.setAttribute('aria-expanded', String(open));
-    els.toggle.classList.toggle('is-active', open);
-    if (open) els.back.focus();
-  }
 
   function setStatus(message, isError = false) {
     els.status.hidden = !message;
@@ -82,18 +76,8 @@ const Settings = (() => {
 
   function init() {
     els = {
-      main: document.getElementById('main-view'),
-      view: document.getElementById('settings-view'),
-      toggle: document.getElementById('settings-toggle'),
-      back: document.getElementById('settings-back'),
       status: document.getElementById('settings-status'),
     };
-
-    els.toggle.addEventListener('click', () => showSettings(els.view.hidden));
-    els.back.addEventListener('click', () => {
-      showSettings(false);
-      els.toggle.focus();
-    });
 
     initTooltipPlacement();
     initImgurImages();

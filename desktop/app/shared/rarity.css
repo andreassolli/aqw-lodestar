@@ -1,0 +1,22 @@
+.aqwt-rarity {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 0 4px;
+  margin: 0 2px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.aqwt-rarity.aqwt-rarity--rare        { color: #32820B !important; background-color: #C3E1B4; }
+.aqwt-rarity.aqwt-rarity--pseudo-rare { color: #37AA00 !important; background-color: #E8FFE5; }
+.aqwt-rarity.aqwt-rarity--seasonal    { color: #FF0066 !important; background-color: #ECC8D6; }
+.aqwt-rarity.aqwt-rarity--lqs         { color: #C34900 !important; background-color: #F3BD9D; }
+.aqwt-rarity.aqwt-rarity--legendary   { color: #0022BE !important; background-color: #B7C4FF; }
+.aqwt-rarity.aqwt-rarity--upgrade     { color: #0083C0 !important; background-color: #CCEBF9; }
+.aqwt-rarity.aqwt-rarity--benevolent  { color: #009C6D !important; background-color: #D0FFF0; }
+.aqwt-rarity.aqwt-rarity--champion    { color: #AB0C00 !important; background-color: #F39A94; }
+.aqwt-rarity.aqwt-rarity--collector   { color: #715600 !important; background-color: #FFD85D; }
+.aqwt-rarity.aqwt-rarity--secret      { color: #5A00CA !important; background-color: #CAA9F3; }

@@ -1,0 +1,202 @@
+.search-row{
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.search-vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.search-icon{
+    width: 24px;
+    height:24px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    flex-shrink: 0;
+    display: inline-block;
+    background-image: url("/icons/aqwbag.png");
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  inline-size: min(30rem,100%);
+  min-block-size: max(40px, 44px);
+  padding-inline: 1rem .28rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(0,0,0,.15);
+  transition: box-shadow .22s, border-color .22s, translate .22s, background .25s ease;
+}
+
+.search-bar:hover {
+  box-shadow: 0 6px 18px -10px var(--shadow);
+}
+
+.search-bar:focus-within {
+  border-color: var(--acc);
+  box-shadow: 0 10px 26px -14px var(--shadow), 0 0 0 4px rgba(37,99,235,.16);
+  translate: 0 -1px;
+}
+
+.search-ico {
+  inline-size: 19px;
+  block-size: 19px;
+  flex: none;
+  color: var(--muted);
+}
+
+.search-input {
+  flex: 1;
+  min-inline-size: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: 400 .96rem/1 inherit;
+}
+
+.search-input::placeholder {
+  color: var(--muted);
+}
+
+.search-input:focus {
+  outline: none;
+}
+
+.search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  flex: none;
+  min-block-size: 34px;
+  padding-inline: .85rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--acc);
+  color: var(--acc-ink);
+  cursor: pointer;
+  font: 600 .87rem/1 inherit;
+  transition: filter .18s, scale .12s, background .25s ease, color .25s ease;
+}
+
+.search-submit:hover {
+  filter: brightness(1.25);
+}
+
+.search-submit:active {
+  scale: .96;
+}
+
+.search-submit:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.search-submit svg {
+  inline-size: 17px;
+  block-size: 17px;
+}
+
+.search-label {
+  display: grid;
+  grid-template-columns: 0fr;
+  transition: grid-template-columns .28s cubic-bezier(.2,.9,.25,1);
+}
+
+.search-label > span {
+  min-inline-size: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.search-bar:focus-within .search-label,
+.search-bar:hover .search-label {
+  grid-template-columns: 1fr;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-bar,
+  .search-submit,
+  .search-label {
+    transition: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .search-bar,
+  .search-submit {
+    border: 1px solid CanvasText;
+  }
+}
+
+.search-theme {
+  position: absolute;
+  inset-block-start: clamp(.75rem,2vw,1.25rem);
+  inset-inline-end: clamp(.75rem,2vw,1.25rem);
+  z-index: 50;
+  inline-size: 2.2rem;
+  block-size: 2.2rem;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: var(--card);
+  transition: background .25s ease, transform .25s cubic-bezier(.16,1,.3,1), border-color .25s ease, color .25s ease;
+}
+
+.search-theme:hover {
+  transform: translateY(-1px);
+  border-color: var(--ring);
+}
+
+.search-theme:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.search-theme svg {
+  grid-area: 1/1;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.search-sun {
+  display: none;
+}
+
+.search-theme[aria-pressed="true"] .search-sun {
+  display: block;
+}
+
+.search-theme[aria-pressed="true"] .search-moon {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-theme {
+    transition: none;
+  }
+
+  .search-theme:hover {
+    transform: none;
+  }
+}

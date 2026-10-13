@@ -1,0 +1,16 @@
+{
+  "id": "ultra-assistant",
+  "name": "Ultra Assistant",
+  "version": "1.0.0",
+  "description": "Watches the game's traffic during ultra boss fights and shows who should Taunt or Zone next, in a notification at the top of the screen. Also shows each boss's attack pattern.",
+  "author": "Andreas Solli",
+  "apiVersion": 1,
+  "main": "main.js",
+  "page": {
+    "title": "Ultra",
+    "icon": "page/icon.svg",
+    "html": "page/page.html",
+    "css": "page/page.css",
+    "script": "page/page.js"
+  }
+}

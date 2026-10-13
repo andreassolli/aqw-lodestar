@@ -60,9 +60,9 @@ h2 {
 }
 
 #logo {
-  width: 200px; /* leaves room for the settings and theme buttons */
+  width: 200px;
   height: 40px;
-  margin: 6px 30px 0 10px;
+  margin: 6px 10px 0;
   background: url("/icons/lodestarshadow2.png") no-repeat;
   background-size: cover;
 }
@@ -232,7 +232,7 @@ button.boost:focus-visible {
 .button-group {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .icon-button {
@@ -612,22 +612,103 @@ button.boost:focus-visible {
   outline-offset: 1px;
 }
 
-/* ---------- header buttons (settings, theme) ---------- */
-.header-buttons {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 50;
+/* ---------- tab row: page tabs, then Settings and the theme switch ---------- */
+.tabbar {
   display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 0;
+}
+
+/* The page tabs, in the same pill style as the settings switches. */
+.tabs {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+}
+
+.tab {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+
+.tab span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab.is-active {
+  background: var(--acc);
+  color: var(--acc-ink);
+}
+
+/* Only one page (the extension, or the app without plugin pages): no tabs to
+   pick, so Settings and the theme switch go back up beside the logo. */
+.tabs.is-single {
+  display: none;
+}
+
+.tabbar:has(.tabs.is-single) {
+  position: absolute;
+  top: 9px;
+  right: 12px;
+  padding: 0;
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+/* Round buttons: Settings and the theme switch right of the tabs, and the
+   farm list's add and clear buttons. */
+.header-buttons {
+  display: flex;
+  flex: none;
   gap: 6px;
 }
 
-.header-buttons .header-button {
+.header-buttons .header-button,
+.button-group .header-button {
   position: static; /* .search-theme positions itself; here the row does */
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 34px;
+  height: 34px;
   padding: 0;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -638,6 +719,7 @@ button.boost:focus-visible {
 }
 
 .header-buttons .header-button:hover,
+.button-group .header-button:hover,
 .header-button.is-active {
   transform: translateY(-1px);
   border-color: var(--ring);
@@ -656,6 +738,17 @@ button.boost:focus-visible {
   stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* ---------- pages added as tabs ---------- */
+.tab-page {
+  padding: 0 12px 14px;
+}
+
+.tab-page-hint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 /* ---------- settings view ---------- */
