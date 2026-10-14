@@ -7,7 +7,10 @@
 //     Electron access), with activate(api) / deactivate() functions;
 //   - "page": an HTML fragment, CSS and a script, shown as a tab in the popup.
 //
-// Installed plugins live in <app data>/plugins/<id>/. When running from source
+// Installed plugins live in <app data>/plugins/<id>/. Some plugins come with the
+// app (built in: the "extraResources" in package.json put them in the app's
+// resources/plugins/); they can be turned off but not removed, and installing a
+// newer version of one from a zip replaces it. When running from source
 // (npm start), desktop/plugins/<id>/ is loaded too, so plugins can be developed
 // in the repository. Installing, removing, enabling and disabling all take
 // effect on the next start: a running plugin can't be unloaded safely, and on
@@ -31,12 +34,13 @@ const PLATFORM_NAMES = { darwin: 'Mac', win32: 'Windows', linux: 'Linux' };
  * @param {string} options.pluginsDir   installed plugins (<app data>/plugins)
  * @param {string} options.dataDir      plugin data folders (<app data>/plugin-data)
  * @param {string[]} [options.devDirs]  extra folders of plugins (desktop/plugins when running from source)
+ * @param {string[]} [options.bundledDirs]  folders of plugins that come with the app (built in)
  * @param {string} options.appVersion
  * @param {string} options.electronVersion
  * @param {string} [options.platform]
  * @param {string} [options.arch]
  */
-function createPluginHost({ pluginsDir, dataDir, devDirs = [], appVersion, electronVersion, platform = process.platform, arch = process.arch }) {
+function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [], appVersion, electronVersion, platform = process.platform, arch = process.arch }) {
   const stagedDir = path.join(pluginsDir, '.staged');
   const stateFile = path.join(pluginsDir, 'plugins.json');
   fs.mkdirSync(pluginsDir, { recursive: true });
@@ -48,9 +52,9 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], appVersion, elect
   function readState() {
     try {
       const state = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
-      return { disabled: state.disabled || [], remove: state.remove || [] };
+      return { disabled: state.disabled || [], enabled: state.enabled || [], remove: state.remove || [] };
     } catch {
-      return { disabled: [], remove: [] };
+      return { disabled: [], enabled: [], remove: [] };
     }
   }
 
@@ -97,6 +101,16 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], appVersion, elect
     if (state.remove.length) writeState({ ...state, remove: [] });
   }
 
+  /** -1, 0 or 1, comparing "1.2.0"-style versions number by number. */
+  function compareVersions(a, b) {
+    const pa = String(a || '0').split('.').map((n) => parseInt(n, 10) || 0);
+    const pb = String(b || '0').split('.').map((n) => parseInt(n, 10) || 0);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) > (pb[i] || 0) ? 1 : -1;
+    }
+    return 0;
+  }
+
   /** Finds every plugin folder and reads its plugin.json. */
   function scan() {
     plugins.clear();
@@ -104,6 +118,7 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], appVersion, elect
     const sources = [
       ...devDirs.map((dir) => [dir, 'development']),
       [pluginsDir, 'installed'],
+      ...bundledDirs.map((dir) => [dir, 'built-in']),
     ];
     for (const [root, source] of sources) {
       let names = [];
@@ -122,9 +137,24 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], appVersion, elect
           plugins.set(`invalid:${dir}`, { id: name, name, dir, source, status: 'error', error: err.message, manifest: null });
           continue;
         }
-        if (plugins.has(manifest.id)) continue; // the development copy wins over an installed one
+        const existing = plugins.get(manifest.id);
+        if (existing) {
+          // The development copy wins over the others. An installed copy wins over
+          // the built-in one unless the app has since brought a newer version.
+          const builtInIsNewer =
+            source === 'built-in' && existing.source === 'installed' && compareVersions(manifest.version, existing.manifest?.version) > 0;
+          if (!builtInIsNewer) {
+            if (source === 'built-in') existing.builtIn = true; // removing the installed copy goes back to this one
+            continue;
+          }
+        }
         const problem = incompatibility(manifest);
-        const enabled = !state.disabled.includes(manifest.id);
+        // Plugins start on, unless plugin.json says "defaultEnabled": false (a
+        // built-in plugin people turn on themselves). Turning one on or off is
+        // remembered either way.
+        const enabled = state.disabled.includes(manifest.id)
+          ? false
+          : state.enabled.includes(manifest.id) || manifest.defaultEnabled !== false;
         plugins.set(manifest.id, {
           id: manifest.id,
           name: manifest.name,
@@ -135,6 +165,7 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], appVersion, elect
           status: problem ? 'incompatible' : enabled ? 'not-loaded' : 'disabled',
           error: problem,
           module: null,
+          builtIn: source === 'built-in' || Boolean(existing?.builtIn),
         });
       }
     }
@@ -261,6 +292,7 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], appVersion, elect
       version: record.manifest?.version || '',
       description: record.manifest?.description || '',
       source: record.source,
+      builtIn: Boolean(record.builtIn),
       enabled: record.enabled ?? false,
       status: record.status,
       error: record.error || null,
@@ -298,6 +330,9 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], appVersion, elect
           html: url(page.html),
           css: url(page.css),
           script: url(page.script),
+          // true, or { width, height } for the window's first size: adds the
+          // "Open in its own window" button to the plugin's tab.
+          popout: page.popout || false,
         };
       });
   }
@@ -356,16 +391,26 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], appVersion, elect
 
     // Installing again undoes a pending removal, and a fresh install starts enabled.
     const state = readState();
-    writeState({ disabled: state.disabled.filter((id) => id !== manifest.id), remove: state.remove.filter((id) => id !== manifest.id) });
+    writeState({
+      disabled: state.disabled.filter((id) => id !== manifest.id),
+      enabled: [...new Set([...state.enabled, manifest.id])],
+      remove: state.remove.filter((id) => id !== manifest.id),
+    });
     return { id: manifest.id, name: manifest.name, version: manifest.version || '', replaces: plugins.has(manifest.id) };
   }
 
   function setEnabled(id, enabled) {
     const state = readState();
     const disabled = new Set(state.disabled);
-    if (enabled) disabled.delete(id);
-    else disabled.add(id);
-    writeState({ ...state, disabled: [...disabled] });
+    const turnedOn = new Set(state.enabled);
+    if (enabled) {
+      disabled.delete(id);
+      turnedOn.add(id);
+    } else {
+      disabled.add(id);
+      turnedOn.delete(id);
+    }
+    writeState({ ...state, disabled: [...disabled], enabled: [...turnedOn] });
     const record = plugins.get(id);
     if (record) record.enabled = enabled;
   }
@@ -374,6 +419,7 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], appVersion, elect
   function remove(id) {
     const record = plugins.get(id);
     if (record && record.source === 'development') throw new Error('plugins in desktop/plugins can only be disabled; delete the folder to remove one');
+    if (record && record.source === 'built-in') throw new Error(`${record.name} comes with Lodestar; it can be turned off but not removed`);
     fs.rmSync(path.join(stagedDir, id), { recursive: true, force: true });
     const state = readState();
     if (record) writeState({ ...state, remove: [...new Set([...state.remove, id])] });

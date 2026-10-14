@@ -1,0 +1,18 @@
+{
+  "id": "class-enhancements",
+  "name": "Class Enhancements",
+  "version": "1.0.0",
+  "description": "The class enhancement guide from aqw.app: pick a class to see its weapon, class, helm and cape enhancements, elixir, tonic and consumable, in general and for specific bosses.",
+  "author": "Andreas Solli",
+  "apiVersion": 1,
+  "defaultEnabled": false,
+  "main": "main.js",
+  "page": {
+    "title": "Classes",
+    "icon": "page/icon.svg",
+    "html": "page/page.html",
+    "css": "page/page.css",
+    "script": "page/page.js",
+    "popout": { "width": 720, "height": 620 }
+  }
+}

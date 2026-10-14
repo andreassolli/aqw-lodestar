@@ -12,6 +12,7 @@
 
 .attack-pattern-header h2 {
     margin: 0;
+    padding-right: 40px; /* room for the "open in its own window" button */
 }
 
 .attack-pattern-selector {

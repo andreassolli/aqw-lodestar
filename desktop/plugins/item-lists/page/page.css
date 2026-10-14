@@ -1,0 +1,149 @@
+/* The Lists tab: the extension's item list styles (content/item-lists.css and
+   friends, loaded by page.js), adjusted for the app. */
+
+.item-lists-head h2 {
+  margin: 0 0 4px;
+  padding-right: 40px; /* room for the "open in its own window" button */
+}
+
+.item-lists-hint {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Follow the app's dark/light theme. (On the wiki, these colours follow the
+   wiki's theme; the extra .aqwt-lists makes this win over that rule.) */
+.plugin-page .aqwt-lists.aqwt-lists {
+  --aqwt-bg: var(--bg);
+  --aqwt-card: var(--card);
+  --aqwt-ink: var(--ink);
+  --aqwt-muted: var(--muted);
+  --aqwt-line: var(--line);
+  --aqwt-acc: var(--acc);
+  --aqwt-ring: var(--ring);
+  --aqwt-hover-bg: var(--hover-bg);
+  margin: 0;
+  font-size: 13px;
+}
+
+/* A dropdown (page.js) instead of the row of list buttons. */
+.plugin-page .aqwt-list-buttons {
+  display: none;
+}
+
+.item-lists-select {
+  --list-color: var(--line); /* the chosen list's colour (page.js) */
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--list-color);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.item-lists-select:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+/* The wiki shows cards at the tooltip's fixed 340 px; here they fill the
+   window: one column in the narrow app window, more in a wide popout. */
+.plugin-page .aqwt-list-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+}
+
+.plugin-page .aqwt-list-status {
+  font-size: 12px;
+}
+
+/* Keep the card title (and its rarity badge) clear of the Try on / farm buttons
+   in the card's top right corner. */
+.plugin-page .aqwt-list-card .aqwt-tooltip-title {
+  padding-right: 72px;
+}
+
+/* Importing the inventory (page.js), with the Owned list. */
+.inventory-import {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  font-size: 12px;
+}
+
+.inventory-import summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.inventory-import-when {
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.inventory-import-steps {
+  margin: 8px 0;
+  padding-left: 18px;
+  line-height: 1.5;
+}
+
+.inventory-import-steps a {
+  color: var(--acc);
+}
+
+.inventory-import code,
+.inventory-import kbd {
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px;
+}
+
+.inventory-import-text {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px;
+  resize: vertical;
+}
+
+.inventory-import-text:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.inventory-import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.inventory-import-file {
+  cursor: pointer;
+}
+
+.inventory-import-status {
+  color: var(--muted);
+}
+
+.inventory-import-status.is-error {
+  color: #d04b4b;
+}

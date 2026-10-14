@@ -65,6 +65,7 @@
         "content/farm-buttons.js",
         "content/try-on-buttons.js",
         "content/item-lists.config.js",
+        "content/item-list-view.js",
         "content/item-lists.js",
         "content/collection-progress.js"
       ],
@@ -91,6 +92,7 @@
         "shared/text.js",
         "shared/image-proxy.js",
         "shared/inventory.js",
+        "shared/inventory-import.js",
         "shared/messaging.js",
         "shared/rarity.js",
         "shared/wiki-parser.js",

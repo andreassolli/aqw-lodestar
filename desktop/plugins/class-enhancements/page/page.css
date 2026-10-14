@@ -1,0 +1,455 @@
+/* The Classes tab (page.html, page.js). Uses the app's colours (--bg, --card,
+   --ink, --muted, --line, --ring), so it follows the dark/light theme. */
+
+.ce-head h2 {
+  margin: 0 0 4px;
+  padding-right: 40px; /* room for the "open in its own window" button */
+}
+
+.ce-hint {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ce-hint a {
+  color: inherit;
+}
+
+.ce-root {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- icons ---------- */
+
+.ce-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+}
+
+.ce-icon img {
+  max-width: 20px;
+  max-height: 20px;
+  object-fit: contain;
+}
+
+.ce-icon svg,
+.ce-search-icon svg,
+.ce-search-chevron svg,
+.ce-search-current svg,
+.ce-boss-mark svg,
+.ce-refresh svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- class search ---------- */
+
+.ce-search-box {
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+}
+
+.ce-search {
+  position: relative;
+}
+
+.ce-search-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border-radius: 7px;
+  cursor: text;
+}
+
+.ce-search.is-open .ce-search-field,
+.ce-search-field:hover {
+  background: var(--hover-bg, rgba(127, 127, 127, .08));
+}
+
+.ce-search-icon,
+.ce-search-chevron {
+  display: grid;
+  color: var(--muted);
+}
+
+.ce-search-chevron svg {
+  transition: transform .2s ease;
+}
+
+.ce-search.is-open .ce-search-chevron svg {
+  transform: rotate(180deg);
+}
+
+.ce-search-input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ce-search.is-open .ce-search-input {
+  font-weight: 400;
+}
+
+.ce-search-input::placeholder {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.ce-search-field:focus-within {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.ce-search-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: -4px;
+  left: -4px;
+  max-height: min(320px, 60vh);
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .28);
+  list-style: none;
+  animation: ce-pop .16s ease-out;
+}
+
+@keyframes ce-pop {
+  from { opacity: 0; transform: translateY(-4px) scale(.98); }
+}
+
+.ce-search-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ce-search-option.is-active {
+  background: var(--acc);
+  color: var(--acc-ink);
+}
+
+.ce-search-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ce-search-name mark {
+  background: none;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ce-search-current {
+  display: grid;
+}
+
+.ce-search-empty {
+  padding: 14px 8px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ---------- class card ---------- */
+
+.ce-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+/* Side by side once there's room (a wide window or the popout), like md: on the website. */
+@container (min-width: 560px) {
+  .ce-card {
+    flex-direction: row;
+    gap: 24px;
+  }
+
+  .ce-card-info,
+  .ce-card-media {
+    flex: 1 1 50%;
+    min-width: 0;
+  }
+
+  .ce-card-image {
+    max-height: 420px;
+  }
+}
+
+.ce-card-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.ce-sep {
+  height: 1px;
+  margin: 8px 0;
+  border: 0;
+  background: var(--line);
+}
+
+/* boss buttons */
+.ce-bosses {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.ce-boss {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 12px 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(127, 127, 127, .14);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: color .25s ease, border-color .25s ease;
+}
+
+.ce-boss:hover {
+  border-color: var(--muted);
+}
+
+.ce-boss.is-selected {
+  border-color: transparent;
+  background: transparent;
+  color: #fff;
+}
+
+.ce-boss:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.ce-boss-mark {
+  display: grid;
+}
+
+.ce-bosses.is-locked .ce-boss {
+  cursor: default;
+}
+
+/* The green pill behind the chosen boss; page.js moves it to the button. */
+.ce-boss-pill {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  border-radius: 999px;
+  background: linear-gradient(to right, #16a34a, #15803d);
+  pointer-events: none;
+  transition: transform .55s cubic-bezier(.34, 1.3, .64, 1), width .55s cubic-bezier(.34, 1.3, .64, 1), height .3s ease;
+}
+
+.ce-boss-pill.no-motion {
+  transition: none;
+}
+
+/* loadout rows */
+.ce-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.ce-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.ce-row.is-top {
+  align-items: flex-start;
+}
+
+.ce-row-label {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.ce-row-value {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 1.5em;
+  margin: 0;
+  overflow: hidden;
+  text-align: right;
+}
+
+/* The old and new value share one grid cell while one slides out and the other in. */
+.ce-value {
+  grid-area: 1 / 1;
+  align-self: center;
+  justify-self: end;
+  white-space: pre-wrap;
+}
+
+.ce-value.is-entering {
+  animation: ce-in .4s cubic-bezier(.22, 1.2, .36, 1) both;
+}
+
+.ce-value.is-leaving {
+  animation: ce-out .3s ease-in both;
+}
+
+@keyframes ce-in {
+  from { opacity: 0; transform: translateX(24px); }
+}
+
+@keyframes ce-out {
+  to { opacity: 0; transform: translateX(-24px); }
+}
+
+/* class picture */
+.ce-card-media {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.ce-card-image {
+  display: block;
+  max-width: 100%;
+  max-height: 300px; /* under the loadout in a narrow window */
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.ce-card-media.is-loading {
+  min-height: 200px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(127, 127, 127, .08), rgba(127, 127, 127, .18), rgba(127, 127, 127, .08));
+  background-size: 200% 100%;
+  animation: ce-shimmer 1.2s linear infinite;
+}
+
+.ce-card-media.is-loading .ce-card-image {
+  opacity: 0;
+}
+
+.ce-card-media.is-missing {
+  display: none; /* no picture for this class */
+}
+
+@keyframes ce-shimmer {
+  to { background-position: -200% 0; }
+}
+
+/* footer */
+.ce-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.ce-footer.is-stale {
+  color: #d08a2b;
+}
+
+.ce-refresh {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ce-refresh svg {
+  width: 13px;
+  height: 13px;
+}
+
+.ce-refresh:hover {
+  color: var(--ink);
+}
+
+.ce-refresh:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+.ce-error p {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ce-value.is-entering,
+  .ce-value.is-leaving,
+  .ce-search-list {
+    animation: none;
+  }
+
+  .ce-boss-pill {
+    transition: none;
+  }
+}

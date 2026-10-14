@@ -15,8 +15,10 @@ const EXTENSION = join(DESKTOP, '..');
 const APP = join(DESKTOP, 'app');
 
 // From the extension. background.js runs in the app's main process (see
-// background-host.js); options/ is the backup import page.
-const FROM_EXTENSION = ['popup', 'shared', 'options', 'icons', 'fonts', 'background.js', 'LICENSE'];
+// background-host.js); options/ is the backup import page; content/ is the
+// extension's page scripts, which plugin pages can load (the Item Lists plugin
+// uses the event item lists from there).
+const FROM_EXTENSION = ['popup', 'shared', 'options', 'content', 'icons', 'fonts', 'background.js', 'LICENSE'];
 const SKIP = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini']);
 
 // Retries: on a Mac, Finder can drop a .DS_Store into the folder while it's being deleted.

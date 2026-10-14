@@ -237,6 +237,17 @@ const FarmList = (() => {
     });
 
     FarmEntry.loadAll().then(render);
+
+    // Items added elsewhere while this is open: the add buttons on item list
+    // cards (the desktop app's Lists tab, or its popout window), the right-click
+    // menu, another window. Changes made here come back too; those are skipped
+    // so the list isn't redrawn (and its scroll position lost) for nothing.
+    ext.storage.onChanged.addListener((changes, area) => {
+      const change = changes[STORAGE_KEYS.farmItems];
+      if (area !== 'local' || !change) return;
+      const next = change.newValue || [];
+      if (JSON.stringify(next) !== JSON.stringify(items)) render(next);
+    });
   }
 
   return { init, render };

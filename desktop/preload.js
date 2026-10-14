@@ -102,6 +102,8 @@ contextBridge.exposeInMainWorld('lodestarPlugins', {
   remove: (id) => unwrap(ipcRenderer.invoke('plugins:remove', id)),
   keep: (id) => unwrap(ipcRenderer.invoke('plugins:keep', id)),
   openFolder: () => ipcRenderer.invoke('plugins:open-folder'),
+  /** Opens a plugin's page in its own window (plugin.json: "page": { "popout": true }). */
+  popout: (id) => unwrap(ipcRenderer.invoke('plugins:popout', id)),
   restart: () => ipcRenderer.invoke('plugins:restart'),
   /** Calls the handler a plugin registered with api.page.handle(channel, ...) and returns its answer. */
   invoke: (id, channel, data) => unwrap(ipcRenderer.invoke('plugin:invoke', id, channel, data)),

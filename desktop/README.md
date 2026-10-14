@@ -18,9 +18,10 @@ it opens that menu on any click, as most Linux desktops only allow a menu
 there.) The icons are in `renderer/tray/`: `trayTemplate.png` is the black Mac
 version, which macOS recolours for light and dark menu bars.
 
-Extra features come as **plugins**, installed separately from *Settings →
-Plugins* (see [Plugins](#plugins)). The first one is the
-[Ultra Assistant](plugins/ultra-assistant/README.md).
+Extra features come as **plugins** (see [Plugins](#plugins)):
+- [Item Lists](plugins/item-lists/README.md): the wiki's event item lists in their own tab or window. Comes with the app.
+- [Class Enhancements](plugins/class-enhancements/README.md): aqw.app's class guide (enhancements and consumables per class and boss). Comes with the app, turned off.
+- [Ultra Assistant](plugins/ultra-assistant/README.md): boss callouts during ultra fights. Installed separately from *Settings → Plugins*.
 
 ## How it works
 
@@ -29,7 +30,7 @@ to date:
 
 | File | What it does |
 | --- | --- |
-| `scripts/copy-extension.mjs` | Copies `popup/`, `shared/`, `options/`, `icons/`, `fonts/` and `background.js` from the extension into `desktop/app/`, and adds the desktop extras to the popup and backup pages. Runs before every `npm start` and build. |
+| `scripts/copy-extension.mjs` | Copies `popup/`, `shared/`, `options/`, `content/`, `icons/`, `fonts/` and `background.js` from the extension into `desktop/app/`, and adds the desktop extras to the popup and backup pages. Runs before every `npm start` and build. |
 | `main.js` | The window, the stay-on-top setting, the menu, and serving `app/` at `app://lodestar/`. Links open in the default browser. |
 | `preload.js` | Gives the pages the extension API they expect (`browser.storage`, `browser.runtime.sendMessage`, `browser.tabs.create`) and passes each call to `main.js`. |
 | `background-host.js` | Runs the extension's `background.js` (plus the shared files it imports) in the main process, so wiki pages, the boost calendar, Check bag and try-on work exactly as in the extension. |
@@ -38,7 +39,7 @@ to date:
 | `plugin-host.js` | Plugins: finds, installs, starts, turns off and removes them (see [Plugins](#plugins)). |
 | `zip.js` | Reads plugin zips when installing, and writes them when building. |
 | `renderer/` | Desktop-only additions: the pin button, the Window setting, wording without browser tabs, and `plugins.js` (plugin tabs and *Settings → Plugins*). |
-| `plugins/` | Plugins, each in its own folder. Not part of the app download. |
+| `plugins/` | Plugins, each in its own folder. Separate downloads, except the built-in ones listed under `build.extraResources` in `package.json`. |
 
 So a change to the popup in the extension is picked up by the app the next time
 it's built. Don't edit `desktop/app/`: it's generated and git ignores it.
@@ -85,6 +86,20 @@ Plugins add features that not everyone wants in the standard app, such as
 features that need extra permissions or native code. They're separate
 downloads, and the app works the same without them.
 
+**Built-in plugins** come with the app instead: *Item Lists* (on) and *Class
+Enhancements* (off until turned on). They're
+listed under `build.extraResources` in `desktop/package.json`, which copies
+them into the app's `resources/plugins/` folder. In *Settings → Plugins* they
+say "comes with Lodestar", and can be turned off but not removed. To build
+another one in, add its folder there the same way (only plugins without npm
+dependencies; one with native code has to stay a separate download per platform).
+A plugin whose `plugin.json` has `"defaultEnabled": false` starts turned off;
+once someone turns any plugin on or off, that choice is kept.
+
+A built-in plugin can still be updated without a new app: installing a newer
+zip of it replaces it (*Use built-in version* goes back). When a later app
+brings a newer version than the installed zip, the app's version is used.
+
 ### Using them
 
 *Settings → Plugins* lists what's installed:
@@ -98,8 +113,11 @@ downloads, and the app works the same without them.
   data folder (see below). Each plugin's own files and settings are in
   `plugin-data/<id>/` next to it.
 
-A plugin with a page gets a tab next to *Farm*. With no plugin pages, the tab
-row is hidden and Settings and the theme switch sit next to the logo, as before.
+A plugin with a page gets a tab next to *Farm*, and the tabs, Settings and the
+theme switch get a row of their own under the logo, which then grows to fill
+its row up to the pin. With no plugin pages (Item Lists turned off and nothing
+installed), the tab row is hidden and Settings and the theme switch sit next to
+the logo, as before.
 
 A plugin built for another platform, another processor or an older Lodestar is
 refused when installing, with the reason (for example "built for Windows;
@@ -140,6 +158,18 @@ A plugin is a folder in `desktop/plugins/<id>/` with a `plugin.json`:
   shown in the tab's text colour. Without one, the tab gets a puzzle piece.
   The page can use the popup's colour variables (`--ink`, `--muted`, `--card`,
   `--line`, `--acc`, `--green`) to follow the dark/light theme.
+- `page.popout` (optional): `true`, or `{ "width": 760, "height": 860 }` for
+  the window's first size. Adds an *Open in its own window* button to the top
+  right of the page, which opens it in a separate window: the same page without
+  the logo and tabs. The window remembers its size and position, stays on top
+  when the main window does, and closes with the app.
+- The page runs inside the popup, so the popup's scripts are there to use:
+  `browser`/`ext` (storage, `runtime.sendMessage` to the background),
+  `fetchPage`, `fetchText`, `queryItemCatalog`, `Aqcloset`, `FarmEntry` and the
+  rest of `popup/popup.html`. The extension's page scripts are in the app too,
+  at `/content/...` and `/shared/...`, for a page to load (the Item Lists plugin
+  loads the item lists from there). Load each file only once: loading a script
+  the popup already has would declare its names twice.
 - npm dependencies go in the plugin's own `package.json`.
 
 `main` exports `activate(api)`, called when Lodestar starts, and optionally
@@ -185,6 +215,9 @@ npm start
 
 Run `plugins:dev` again after changing a plugin's dependencies. Changes to its
 files show after restarting the app.
+
+To run the base app with no plugins at all (neither installed ones nor those in
+`desktop/plugins/`), use `npm run start:no-plugins`.
 
 ### Building plugin zips
 

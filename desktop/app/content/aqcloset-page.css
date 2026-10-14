@@ -1,0 +1,63 @@
+.toggle-tooltip {
+  position: relative;
+  margin-left: auto;
+  font-family: 'Poppins', system-ui, sans-serif;
+}
+
+.toggle-tooltip input[type="checkbox"] {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.toggle-tooltip label {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.toggle-tooltip label::before {
+  content: '';
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 21px;
+  border-radius: 20px;
+  background: #ccc;
+  transition: .1s ease-in;
+}
+
+.toggle-tooltip label::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 5px #0002;
+  transition: .2s ease-in;
+}
+
+.toggle-tooltip input[type="checkbox"]:hover + label::after {
+  box-shadow: 0 2px 15px 0 #0002, 0 3px 8px 0 #0001;
+}
+
+.toggle-tooltip input[type="checkbox"]:checked + label::before {
+  background: #376fcb;
+}
+
+.toggle-tooltip input[type="checkbox"]:checked + label::after {
+  left: 20px;
+  background: #4285F4;
+}
+
+.toggle-tooltip span {
+  padding-left: 6px;
+}

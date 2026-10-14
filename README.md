@@ -22,11 +22,11 @@ A browser extension for AdventureQuest Worlds players. It adds item previews,
 owned-item checkmarks, a farm list, server boosts, merge and quest calculators,
 try-on links and more to three sites:
 
-| Site | What Lodestar adds |
-| --- | --- |
+| Site                               | What Lodestar adds                                           |
+| ---------------------------------- | ------------------------------------------------------------ |
 | **AQW Wiki** (aqwwiki.wikidot.com) | Hover tooltips on item links, owned checkmarks, "Add to farm list" and "Try on" buttons on item pages, a Calculator tab on merge shops, a turn-in calculator on quests, event item lists on *Search Items by Tag*, collection progress, a dark theme, Imgur picture fixes |
-| **account.aq.com** | Inventory sync (inventory + bank), rarity badges, owned checkmarks, tooltips, foldable inventory categories, "open outfit in AQCloset", character image download (including an HD render with a transparent background), a dark theme |
-| **AQCloset** (aqcloset.com) | Drag-to-reorder wardrobe panels, tooltips (with an on/off switch), owned borders, right-click menus, filling AQCloset's inventory import from the synced inventory |
+| **account.aq.com**                 | Inventory sync (inventory + bank), rarity badges, owned checkmarks, tooltips, foldable inventory categories, "open outfit in AQCloset", character image download (including an HD render with a transparent background), a dark theme |
+| **AQCloset** (aqcloset.com)        | Drag-to-reorder wardrobe panels, tooltips (with an on/off switch), owned borders, right-click menus, filling AQCloset's inventory import from the synced inventory |
 
 Plus the **toolbar popup**: active server boosts and when they're next, *Check bag*,
 the *Items to Farm* list, a dark/light switch and settings.
@@ -121,7 +121,8 @@ content/               Content scripts, injected into the three sites
   try-on-buttons.js/.css "Try on" buttons
   merge-calc.js/.css     Merge shop and quest calculators
   item-lists.config.js   The event item lists (edit this to add lists)
-  item-lists.js/.css     The item list buttons and cards
+  item-list-view.js      The item list buttons and cards (also used by the desktop app's Item Lists plugin)
+  item-lists.js/.css     Places the item lists on the Search Items by Tag page; their styles
   collection-progress.js/.css  Owned counter on collection lists
   wiki-images.js         Item picture swap where Imgur is blocked
   ── account.aq.com only ──
@@ -154,7 +155,7 @@ icons/                 Toolbar icons (lodestar16/48/128) and pictures used in pa
 fonts/                 Poppins (popup, backup page, AQCloset additions)
 
 desktop/               The desktop app (Electron), running the popup above; see desktop/README.md
-  plugins/             Desktop plugins, downloaded separately (ultra-assistant: boss callouts)
+  plugins/             Desktop plugins, downloaded separately (ultra-assistant: boss callouts; item-lists: the event item lists)
 .github/workflows/     desktop.yml builds the desktop app's installers and plugin zips on GitHub
 ```
 
@@ -169,12 +170,12 @@ Every file starts with a comment saying what it does; read that first.
 An extension runs in several separate places that can't see each other's
 variables:
 
-| Context | Files | Can do |
-| --- | --- | --- |
-| **Background** | `background.js` + the shared files it imports | Cross-origin requests to any site in `host_permissions`, context menus, opening tabs. No DOM (`document`, `window`): in Chrome it's a service worker. |
-| **Content scripts** | `content/*`, `render/capture.js`, `shared/*` | Read and change the page. Requests to other sites go through the background. |
-| **Page world** | `render/main-world.js` | Runs inside the page's own JavaScript (`"world": "MAIN"`), only to use the page's Ruffle Flash player. Talks to content scripts with `window.postMessage`. |
-| **Popup / backup page** | `popup/*`, `options/*`, `shared/*` | Extension pages. |
+| Context                 | Files                                         | Can do                                                       |
+| ----------------------- | --------------------------------------------- | ------------------------------------------------------------ |
+| **Background**          | `background.js` + the shared files it imports | Cross-origin requests to any site in `host_permissions`, context menus, opening tabs. No DOM (`document`, `window`): in Chrome it's a service worker. |
+| **Content scripts**     | `content/*`, `render/capture.js`, `shared/*`  | Read and change the page. Requests to other sites go through the background. |
+| **Page world**          | `render/main-world.js`                        | Runs inside the page's own JavaScript (`"world": "MAIN"`), only to use the page's Ruffle Flash player. Talks to content scripts with `window.postMessage`. |
+| **Popup / backup page** | `popup/*`, `options/*`, `shared/*`            | Extension pages.                                             |
 
 ### Plain scripts, shared globals
 
@@ -216,7 +217,7 @@ with the **same names** that do the work directly, so shared files such as
   menu (`background.js` → `farm-context.js`), the buttons (`farm-buttons.js`)
   or the popup (`add-item-modal.js`), and shown by `popup/farm-list.js`. Every
   view updates through `storage.onChanged`.
-- **Item lists:** `item-lists.js` asks the background for the items matching a
+- **Item lists:** `item-list-view.js` (placed on the page by `item-lists.js`) asks the background for the items matching a
   list's filter (`queryItemCatalog`), draws cards straight from the catalog, then
   fills in full tooltip details as cards scroll into view.
 - **Server boosts:** `popup/boosts.js` reads the Artix calendar page, finds boost
@@ -229,15 +230,15 @@ with the **same names** that do the work directly, so shared files such as
 
 ## Where the data comes from
 
-| Source | Used for | Fetched by |
-| --- | --- | --- |
+| Source                                                       | Used for                                                     | Fetched by                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | **Item catalog**: `ITEM_CATALOG_URL` in `shared/constants.js` (raw.githubusercontent.com/andreassolli/lodestar-updates) | Item lists, rarity badges on character pages, "Owned items" cards, Imgur test pictures | `background.js`, at most once a day, kept in storage. It's rebuilt daily from the wiki by a GitHub Actions workflow in the **lodestar-updates** repository. |
-| **Wiki item pages** (aqwwiki.wikidot.com) | Tooltip details, farm entries, card details | `background.js` (`fetchPage`), cached 5 minutes |
-| **AQCloset API** (aqcloset.com/api) | Item thumbnails, try-on links, character outfits | `shared/aqcloset.js` through `fetchText` |
-| **Artix calendar** (www.artix.com/calendar) | Server boosts | `popup/boosts.js` through `fetchText`, cached 12 hours |
-| **account.aq.com** | The logged-in player's inventory (Sync), a character's public inventory (Check bag) | `inventory-sync.js` (with the page's own login) and `popup/inventory-check.js` |
-| **game.aq.com** | A character's id for Check bag, game files for the HD render | `popup/inventory-check.js`, the Flash player |
-| **i.imgur.com** | Checking whether Imgur is blocked here | `background.js`, every 15 minutes at most |
+| **Wiki item pages** (aqwwiki.wikidot.com)                    | Tooltip details, farm entries, card details                  | `background.js` (`fetchPage`), cached 5 minutes              |
+| **AQCloset API** (aqcloset.com/api)                          | Item thumbnails, try-on links, character outfits             | `shared/aqcloset.js` through `fetchText`                     |
+| **Artix calendar** (www.artix.com/calendar)                  | Server boosts                                                | `popup/boosts.js` through `fetchText`, cached 12 hours       |
+| **account.aq.com**                                           | The logged-in player's inventory (Sync), a character's public inventory (Check bag) | `inventory-sync.js` (with the page's own login) and `popup/inventory-check.js` |
+| **game.aq.com**                                              | A character's id for Check bag, game files for the HD render | `popup/inventory-check.js`, the Flash player                 |
+| **i.imgur.com**                                              | Checking whether Imgur is blocked here                       | `background.js`, every 15 minutes at most                    |
 
 Nothing is ever sent to a server of ours: there isn't one. Everything the
 extension saves stays in the browser's extension storage.
@@ -249,21 +250,21 @@ extension saves stays in the browser's extension storage.
 Everything is in `storage.local` (`ext.storage.local`). The key names live in
 `STORAGE_KEYS` in `shared/constants.js`; use those, never the strings.
 
-| Key | Holds | In backups |
-| --- | --- | --- |
-| `farmItems` | The farm list | yes |
-| `username` | The character name from *Check bag* (used for try-on) | yes |
-| `theme` | `'dark'` / `'light'` | yes |
-| `inventory`, `inventorySyncedAt` | The synced inventory and when it was synced | yes |
-| `tooltipPlacement` | `'side'` / `'anchored'` | yes |
-| `imgurImages` | `'auto'` / `'replace'` / `'direct'` | yes |
-| `collapsedInventorySections` | Folded character page categories | yes |
-| `moduleOrder:<path>` | AQCloset panel layouts (not in STORAGE_KEYS; see reorder.js) | yes |
-| `itemCatalog` | The daily item catalog | no (downloaded again) |
-| `boostSchedule` | Parsed boost calendar | no |
-| `imgurCheck` | Last "is Imgur blocked here?" result | no |
-| `imgurProxyPreferred` | The image proxy that last worked (in image-proxy.js) | yes |
-| `boostCache`, `resourceCache` | Old caches, only removed on start | no |
+| Key                              | Holds                                                        | In backups            |
+| -------------------------------- | ------------------------------------------------------------ | --------------------- |
+| `farmItems`                      | The farm list                                                | yes                   |
+| `username`                       | The character name from *Check bag* (used for try-on)        | yes                   |
+| `theme`                          | `'dark'` / `'light'`                                         | yes                   |
+| `inventory`, `inventorySyncedAt` | The synced inventory and when it was synced                  | yes                   |
+| `tooltipPlacement`               | `'side'` / `'anchored'`                                      | yes                   |
+| `imgurImages`                    | `'auto'` / `'replace'` / `'direct'`                          | yes                   |
+| `collapsedInventorySections`     | Folded character page categories                             | yes                   |
+| `moduleOrder:<path>`             | AQCloset panel layouts (not in STORAGE_KEYS; see reorder.js) | yes                   |
+| `itemCatalog`                    | The daily item catalog                                       | no (downloaded again) |
+| `boostSchedule`                  | Parsed boost calendar                                        | no                    |
+| `imgurCheck`                     | Last "is Imgur blocked here?" result                         | no                    |
+| `imgurProxyPreferred`            | The image proxy that last worked (in image-proxy.js)         | yes                   |
+| `boostCache`, `resourceCache`    | Old caches, only removed on start                            | no                    |
 
 Which keys are left out of backups is decided by `SKIPPED_KEYS` in
 `shared/backup.js`. A new setting is backed up automatically; a new cache should
@@ -278,15 +279,15 @@ default storage quota.
 
 Handled in `MESSAGE_HANDLERS` in `background.js`:
 
-| `type` | Sent by | Does |
-| --- | --- | --- |
-| `FETCH_PAGE` | `fetchPage()` | Fetches an HTML page → `{ html, baseUrl }` or `{ error }` |
-| `FETCH_TEXT` | `fetchText()` | Fetches any text → string or `null` |
-| `QUERY_ITEMS` | `queryItemCatalog()` | Items matching a list filter, from the catalog, inventory or farm list |
-| `LOOKUP_ITEMS` | `lookupItems()` | Rarity and tags for items by name / wiki path (character page badges) |
-| `TRY_ON` | `tryOnItem()` | Opens AQCloset wearing the saved character's outfit plus an item |
-| `OPEN_WARDROBE` | account-page.js | Opens a character's outfit in AQCloset |
-| `CHECK_IMGUR` | image-proxy.js | Whether Imgur is blocked here |
+| `type`          | Sent by              | Does                                                         |
+| --------------- | -------------------- | ------------------------------------------------------------ |
+| `FETCH_PAGE`    | `fetchPage()`        | Fetches an HTML page → `{ html, baseUrl }` or `{ error }`    |
+| `FETCH_TEXT`    | `fetchText()`        | Fetches any text → string or `null`                          |
+| `QUERY_ITEMS`   | `queryItemCatalog()` | Items matching a list filter, from the catalog, inventory or farm list |
+| `LOOKUP_ITEMS`  | `lookupItems()`      | Rarity and tags for items by name / wiki path (character page badges) |
+| `TRY_ON`        | `tryOnItem()`        | Opens AQCloset wearing the saved character's outfit plus an item |
+| `OPEN_WARDROBE` | account-page.js      | Opens a character's outfit in AQCloset                       |
+| `CHECK_IMGUR`   | image-proxy.js       | Whether Imgur is blocked here                                |
 
 And from the background to a tab: `GET_LINK_TEXT` and `SAVE_TO_FARM` (right-click
 menu, handled in `farm-context.js`); from the popup to an AQCloset tab:
@@ -334,12 +335,12 @@ node scripts/build.mjs
 
 It checks that every file the manifests mention exists, then writes:
 
-| Output | Use |
-| --- | --- |
-| `dist/chrome/` | Load unpacked in Chrome to test the exact package |
-| `dist/firefox/` | Load in `about:debugging` to test the exact package |
-| `dist/aqw-lodestar-chrome-<version>.zip` | Upload to the Chrome Web Store |
-| `dist/aqw-lodestar-firefox-<version>.zip` | Upload to addons.mozilla.org |
+| Output                                    | Use                                                 |
+| ----------------------------------------- | --------------------------------------------------- |
+| `dist/chrome/`                            | Load unpacked in Chrome to test the exact package   |
+| `dist/firefox/`                           | Load in `about:debugging` to test the exact package |
+| `dist/aqw-lodestar-chrome-<version>.zip`  | Upload to the Chrome Web Store                      |
+| `dist/aqw-lodestar-firefox-<version>.zip` | Upload to addons.mozilla.org                        |
 
 Only the extension's own folders go in (`INCLUDE` in the script): not this
 README, `scripts/`, `dist/` or dotfiles like `.DS_Store`.
@@ -358,16 +359,16 @@ README, `scripts/`, `dist/` or dotfiles like `.DS_Store`.
 
 Both stores ask why each permission is needed:
 
-| Permission | Why |
-| --- | --- |
-| `storage` | Saves the farm list, synced inventory, settings and caches |
-| `unlimitedStorage` | The daily item catalog is larger than the default quota |
-| `contextMenus` | "Add to Items to farm" and "Try on item" on right-click |
+| Permission                                        | Why                                                          |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| `storage`                                         | Saves the farm list, synced inventory, settings and caches   |
+| `unlimitedStorage`                                | The daily item catalog is larger than the default quota      |
+| `contextMenus`                                    | "Add to Items to farm" and "Try on item" on right-click      |
 | aqwwiki.wikidot.com, account.aq.com, aqcloset.com | The sites the extension adds features to; also reads wiki item pages for tooltips |
-| game.aq.com | Looks up a character for Check bag; game files for the HD render |
-| www.artix.com | Reads the event calendar for server boosts |
-| raw.githubusercontent.com | Downloads the daily item catalog |
-| i.imgur.com | Checks whether Imgur pictures are blocked in the user's country |
+| game.aq.com                                       | Looks up a character for Check bag; game files for the HD render |
+| www.artix.com                                     | Reads the event calendar for server boosts                   |
+| raw.githubusercontent.com                         | Downloads the daily item catalog                             |
+| i.imgur.com                                       | Checks whether Imgur pictures are blocked in the user's country |
 
 - **Data collection:** none. Firefox's manifest says so
   (`data_collection_permissions`). In the Chrome Web Store's *Privacy* tab, state
@@ -403,7 +404,8 @@ link*, dark/light switch and backups. What it adds:
   and add its own tab next to *Farm*. The first is the
   [Ultra Assistant](desktop/plugins/ultra-assistant/README.md), which watches
   the game's traffic during ultra boss fights and shows who should Taunt or Zone
-  next. How to write and build plugins:
+  next, and [Item Lists](desktop/plugins/item-lists/README.md), the event item
+  lists from the wiki in their own tab or window. How to write and build plugins:
   [desktop/README.md → Plugins](desktop/README.md#plugins).
 
 The app runs **this repository's own popup code**: `desktop/scripts/copy-extension.mjs`
@@ -429,13 +431,13 @@ with `desktop-v` (for example `git tag desktop-v1.0.0 && git push origin desktop
 The *Desktop app* workflow (`.github/workflows/desktop.yml`) builds on GitHub's
 Mac, Windows and Linux machines and attaches the installers to a release:
 
-| File | For |
-| --- | --- |
-| `AQW-Lodestar-<version>-mac-universal.dmg` | Mac (Apple Silicon and Intel) |
-| `AQW-Lodestar-<version>-setup-x64.exe` / `-setup-arm64.exe` | Windows installer |
-| `AQW-Lodestar-<version>-portable.exe` | Windows, without installing |
-| `aqw-lodestar_<version>_<arch>.deb` | Ubuntu, Debian, Mint |
-| `AQW-Lodestar-<version>-x86_64.AppImage` | Other Linux distributions |
+| File                                                        | For                           |
+| ----------------------------------------------------------- | ----------------------------- |
+| `AQW-Lodestar-<version>-mac-universal.dmg`                  | Mac (Apple Silicon and Intel) |
+| `AQW-Lodestar-<version>-setup-x64.exe` / `-setup-arm64.exe` | Windows installer             |
+| `AQW-Lodestar-<version>-portable.exe`                       | Windows, without installing   |
+| `aqw-lodestar_<version>_<arch>.deb`                         | Ubuntu, Debian, Mint          |
+| `AQW-Lodestar-<version>-x86_64.AppImage`                    | Other Linux distributions     |
 
 The builds aren't signed with a paid certificate, so the first launch asks for
 confirmation: on a Mac, right-click → *Open* (or *System Settings → Privacy &

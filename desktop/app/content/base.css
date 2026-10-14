@@ -1,0 +1,19 @@
+/* Palette for everything the extension injects into pages. Prefixed so it
+   can't collide with the host site's own CSS variables. */
+:root {
+  --aqwt-bg: #1A1A1A;
+  --aqwt-card: #272D2E;
+  --aqwt-ink: #ffffff;
+  --aqwt-muted: #9C9C9C;
+  --aqwt-line: #3A3A3A;
+  --aqwt-acc: #f1f5f9;
+  --aqwt-ring: #7aa2ff;
+  --aqwt-shadow: rgba(0, 0, 0, .5);
+  --aqwt-hover-bg: rgba(255, 255, 255, .06);
+  --aqwt-strong: #FF573F;
+}
+body:not(.wiki-theme) .aqwt-lists {
+  --aqwt-bg: #ffffff;  --aqwt-card: #f7f7f5;  --aqwt-ink: #1f1f1f;
+  --aqwt-muted: #9a9a9a;  --aqwt-line: #dddddd;  --aqwt-acc: #1f1f1f;
+  --aqwt-ring: #2f5fd0;  --aqwt-strong: #d63a22;  /* … */
+}

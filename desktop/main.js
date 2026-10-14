@@ -50,6 +50,7 @@ if (!gotLock) {
 let mainWindow = null;
 let tray = null;
 let backupWindow = null;
+const pluginWindows = new Map(); // plugin id -> its popout window
 let storage = null;
 let background = null;
 let plugins = null;
@@ -103,13 +104,63 @@ function setPinned(pinned) {
 
   // 'floating' sits above normal windows. On the Mac the window also joins every
   // Space, including a full-screen game or browser, so it doesn't vanish there.
-  mainWindow.setAlwaysOnTop(pinned, pinned ? 'floating' : 'normal');
-  if (IS_MAC) mainWindow.setVisibleOnAllWorkspaces(pinned, { visibleOnFullScreen: true });
+  // Plugin pages opened in their own window stay on top along with it.
+  for (const window of [mainWindow, ...pluginWindows.values()]) applyPinned(window, pinned);
 
   mainWindow.webContents.send('window:pinned', pinned);
   const item = Menu.getApplicationMenu()?.getMenuItemById('stay-on-top');
   if (item) item.checked = pinned;
   updateTrayMenu();
+}
+
+function applyPinned(window, pinned) {
+  window.setAlwaysOnTop(pinned, pinned ? 'floating' : 'normal');
+  if (IS_MAC) window.setVisibleOnAllWorkspaces(pinned, { visibleOnFullScreen: true });
+}
+
+/**
+ * A plugin page in a window of its own (the popout button on its tab): the same
+ * popup page, showing only that plugin's tab. Size and position are remembered
+ * per plugin, and it stays on top when the main window does.
+ */
+function openPluginWindow(id) {
+  const existing = pluginWindows.get(id);
+  if (existing) {
+    if (existing.isMinimized()) existing.restore();
+    existing.focus();
+    return;
+  }
+  const page = plugins.pages().find((p) => p.id === id);
+  if (!page) throw new Error(`plugin ${id} has no page`);
+
+  const saved = (windowState.popouts || {})[id] || {};
+  const size = typeof page.popout === 'object' ? page.popout : {};
+  const win = new BrowserWindow({
+    title: `${page.title} – AQW Lodestar`,
+    x: saved.x,
+    y: saved.y,
+    width: saved.width || size.width || 760,
+    height: saved.height || size.height || 820,
+    minWidth: 320,
+    minHeight: 300,
+    backgroundColor: '#1A1A1A',
+    autoHideMenuBar: true,
+    icon: IS_MAC ? undefined : APP_ICON,
+    webPreferences: webPreferences(),
+  });
+  pluginWindows.set(id, win);
+  guardNavigation(win.webContents);
+  if (windowState.pinned) applyPinned(win, true);
+
+  const remember = () => {
+    if (win.isMinimized() || win.isFullScreen()) return;
+    windowState.popouts = { ...(windowState.popouts || {}), [id]: win.getNormalBounds() };
+    saveWindowState();
+  };
+  win.on('resize', remember);
+  win.on('move', remember);
+  win.on('closed', () => pluginWindows.delete(id));
+  win.loadURL(`${POPUP_URL}?popout=${encodeURIComponent(`plugin-${id}`)}`);
 }
 
 function showWindow() {
@@ -354,6 +405,7 @@ function registerPluginIpc() {
   ipcMain.handle('plugins:remove', result((_event, id) => plugins.remove(id)));
   ipcMain.handle('plugins:keep', result((_event, id) => plugins.keep(id)));
   ipcMain.handle('plugins:open-folder', () => shell.openPath(pluginsDir));
+  ipcMain.handle('plugins:popout', result((_event, id) => openPluginWindow(id)));
   ipcMain.handle('plugins:restart', () => {
     app.relaunch();
     app.quit();
@@ -372,6 +424,9 @@ function startPlugins() {
     dataDir: path.join(app.getPath('userData'), 'plugin-data'),
     // Running from source: also load the plugins in desktop/plugins.
     devDirs: app.isPackaged ? [] : [path.join(__dirname, 'plugins')],
+    // Plugins that come with the app (package.json → build.extraResources). From
+    // source, desktop/plugins already has them.
+    bundledDirs: app.isPackaged ? [path.join(process.resourcesPath, 'plugins')] : [],
     appVersion: app.getVersion(),
     electronVersion: process.versions.electron,
   });

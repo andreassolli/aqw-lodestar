@@ -11,6 +11,10 @@
     "icon": "page/icon.svg",
     "html": "page/page.html",
     "css": "page/page.css",
-    "script": "page/page.js"
+    "script": "page/page.js",
+    "popout": {
+      "width": 380,
+      "height": 760
+    }
   }
 }

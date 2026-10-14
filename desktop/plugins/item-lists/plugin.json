@@ -1,0 +1,16 @@
+{
+  "id": "item-lists",
+  "name": "Item Lists",
+  "version": "1.0.0",
+  "description": "The event item lists from the wiki's Search Items by Tag page (Frostval, Mogloween, your owned items, your farm list and more) in their own tab, or a window of their own.",
+  "author": "Andreas Solli",
+  "apiVersion": 1,
+  "page": {
+    "title": "Lists",
+    "icon": "page/icon.svg",
+    "html": "page/page.html",
+    "css": "page/page.css",
+    "script": "page/page.js",
+    "popout": { "width": 760, "height": 860 }
+  }
+}

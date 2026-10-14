@@ -27,7 +27,7 @@
   "build": {
     "appId": "com.lodestar.aqw-lodestar",
     "productName": "AQW Lodestar",
-    "copyright": "Copyright © 2026 Andreas Solli",
+    "copyright": "Copyright \u00a9 2026 Andreas Solli",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -137,6 +137,25 @@
     },
     "deb": {
       "artifactName": "aqw-lodestar_${version}_${arch}.${ext}"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "plugins/item-lists",
+        "to": "plugins/item-lists",
+        "filter": [
+          "**/*",
+          "!README.md"
+        ]
+      },
+      {
+        "from": "plugins/class-enhancements",
+        "to": "plugins/class-enhancements",
+        "filter": [
+          "**/*",
+          "!README.md",
+          "!site/**"
+        ]
+      }
+    ]
   }
 }

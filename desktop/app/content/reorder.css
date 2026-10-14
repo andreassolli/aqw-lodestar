@@ -1,0 +1,37 @@
+.mr-handle {
+  display: inline-block;
+  margin-right: 8px;
+  font-size: .9em;
+  opacity: .5;
+  cursor: grab;
+  user-select: none;
+}
+
+.mr-handle:hover {
+  opacity: 1;
+}
+
+.mr-placeholder {
+  box-sizing: border-box;
+  border: 2px dashed rgba(128, 128, 128, .6);
+  border-radius: 4px;
+}
+
+.mr-dragging {
+  position: fixed;
+  z-index: 9999;
+  margin: 0 !important;
+  opacity: .95;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
+  pointer-events: none;
+  cursor: grabbing;
+}
+
+.mr-dragging.mr-settling {
+  transition: left .18s ease, top .18s ease;
+}
+
+body.mr-drag-active {
+  cursor: grabbing;
+  user-select: none;
+}
