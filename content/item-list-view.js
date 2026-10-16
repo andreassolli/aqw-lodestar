@@ -96,6 +96,128 @@ const ItemListView = (() => {
     }
   }
 
+  // ---------- filter: AC / Member / neither, and owned items ----------
+
+  // Every list starts with everything shown (every box ticked). The choice is
+  // kept (one for all lists) in storage, so the wiki and the desktop app each
+  // remember theirs.
+  const DEFAULT_FILTER = { ac: true, member: true, neither: true, showOwned: true };
+  const FILTER_ICON =
+    '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/></svg>';
+
+  /** A saved filter, with the defaults for anything missing (and the old "hideOwned" switch turned around). */
+  function readFilter(saved) {
+    const filter = { ...DEFAULT_FILTER, ...(saved || {}) };
+    if (saved && saved.showOwned === undefined && saved.hideOwned !== undefined) filter.showOwned = !saved.hideOwned;
+    delete filter.hideOwned;
+    return filter;
+  }
+
+  /** Which of the filter's groups an item is in, from its wiki tags ("legend" is the wiki's Member tag). */
+  function itemGroups(item) {
+    const tags = item.tags || [];
+    const ac = tags.includes('ac');
+    const member = tags.includes('legend');
+    return { ac, member, neither: !ac && !member };
+  }
+
+  /**
+   * Whether the filter shows an item: it's in a ticked group (an item tagged both
+   * AC and Member shows when either is ticked), and, with "Show owned items"
+   * unticked, it isn't owned (matched like the owned checkmarks).
+   */
+  function passesFilter(item, filter, owned, { ownedApplies = true } = {}) {
+    const groups = itemGroups(item);
+    if (!((groups.ac && filter.ac) || (groups.member && filter.member) || (groups.neither && filter.neither))) return false;
+    if (!filter.showOwned && ownedApplies && owned.size && owned.has(normalizeItemName(item.name))) return false;
+    return true;
+  }
+
+  /**
+   * The filter button and its menu of checkboxes. The button's badge is the
+   * number of ticked boxes.
+   * @param {(filter) => void} onChange
+   * @returns {{element: HTMLElement, set(filter, info): void}}
+   */
+  function createFilterControl(onChange, { needsInventory } = {}) {
+    const root = el('div', 'aqwt-filter');
+    const button = el('button', 'aqwt-filter-button');
+    button.type = 'button';
+    button.setAttribute('aria-haspopup', 'true');
+    button.setAttribute('aria-expanded', 'false');
+    button.innerHTML = `${FILTER_ICON}<span class="aqwt-filter-label">Filter</span><span class="aqwt-filter-count"></span>`;
+
+    const menu = el('div', 'aqwt-filter-menu');
+    menu.hidden = true;
+    menu.setAttribute('role', 'group');
+    menu.setAttribute('aria-label', 'Filter the list');
+    menu.innerHTML = `
+      <p class="aqwt-filter-heading">Show</p>
+      <label class="aqwt-filter-option"><input type="checkbox" name="ac"> <span>AC items</span></label>
+      <label class="aqwt-filter-option"><input type="checkbox" name="member"> <span>Member items</span></label>
+      <label class="aqwt-filter-option"><input type="checkbox" name="neither"> <span>Neither (free for everyone)</span></label>
+      <div class="aqwt-filter-owned">
+        <hr class="aqwt-filter-sep">
+        <label class="aqwt-filter-option"><input type="checkbox" name="showOwned"> <span>Show owned items</span></label>
+        <p class="aqwt-filter-note" hidden></p>
+      </div>
+      <button type="button" class="aqwt-filter-reset">Show everything</button>`;
+    root.append(button, menu);
+
+    let filter = { ...DEFAULT_FILTER };
+    const boxes = Object.fromEntries([...menu.querySelectorAll('input')].map((input) => [input.name, input]));
+    const ownedSection = menu.querySelector('.aqwt-filter-owned');
+    const note = menu.querySelector('.aqwt-filter-note');
+    const count = button.querySelector('.aqwt-filter-count');
+
+    function setOpen(open) {
+      menu.hidden = !open;
+      button.setAttribute('aria-expanded', String(open));
+      root.classList.toggle('is-open', open);
+    }
+
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setOpen(menu.hidden);
+    });
+    document.addEventListener('click', (e) => {
+      if (!menu.hidden && !root.contains(e.target)) setOpen(false);
+    });
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !menu.hidden) {
+        setOpen(false);
+        button.focus();
+      }
+    });
+    menu.addEventListener('change', (e) => {
+      if (!e.target.name) return;
+      onChange({ ...filter, [e.target.name]: e.target.checked });
+    });
+    menu.querySelector('.aqwt-filter-reset').addEventListener('click', () => onChange({ ...DEFAULT_FILTER }));
+
+    return {
+      element: root,
+      /** @param {{hasInventory: boolean, ownedList: boolean}} info */
+      set(next, { hasInventory, ownedList }) {
+        filter = next;
+        for (const [name, box] of Object.entries(boxes)) box.checked = Boolean(filter[name]);
+        // "Show owned items" isn't offered on the Owned list (they're all owned), and
+        // needs a synced inventory to tell owned items apart.
+        ownedSection.hidden = ownedList;
+        boxes.showOwned.disabled = !hasInventory;
+        note.hidden = hasInventory;
+        note.textContent = needsInventory || 'Sync your inventory on account.aq.com to use this.';
+
+        const offered = Object.keys(boxes).filter((name) => !(name === 'showOwned' && ownedList));
+        const ticked = offered.filter((name) => filter[name]).length;
+        count.textContent = ticked;
+        root.classList.toggle('is-active', ticked < offered.length);
+        button.title = `Filter: ${ticked} of ${offered.length} ticked`;
+        button.setAttribute('aria-label', button.title);
+      },
+    };
+  }
+
   /** "Location: <links>" for one location, or "Locations:" and a short list. */
   function locationSection(locations) {
     const linksFor = (location) => {
@@ -233,7 +355,7 @@ const ItemListView = (() => {
   /**
    * The list buttons and the results area, ready to be placed on a page.
    * Each call is independent (its own loading queue and observers).
-   * @param {{lists?: object[], messages?: {noInventory?: string}}} [options]
+   * @param {{lists?: object[], messages?: {noInventory?: string, needsInventory?: string}}} [options]
    *   the lists to offer (default: ITEM_LISTS), and wording to use instead of the
    *   extension's (the desktop app has no Sync button, for one)
    * @returns {HTMLElement} the .aqwt-lists element
@@ -269,7 +391,9 @@ const ItemListView = (() => {
       wrapper.innerHTML = `
         <div class="aqwt-list-buttons"></div>
         <section class="aqwt-list-results" hidden>
-          <p class="aqwt-list-status" role="status"></p>
+          <div class="aqwt-list-head">
+            <p class="aqwt-list-status" role="status"></p>
+          </div>
           <div class="aqwt-list-grid"></div>
         </section>`;
 
@@ -297,6 +421,32 @@ const ItemListView = (() => {
     let openList = null;
     let requestId = 0;
     let pendingItems = []; // matching items not turned into cards yet
+    let shownList = null; // { list, items, updatedAt }: the open list, before filtering
+    let filter = { ...DEFAULT_FILTER };
+    let owned = new Map();
+
+    const filterControl = createFilterControl((next) => {
+      filter = next;
+      ext.storage.local.set({ [STORAGE_KEYS.itemListFilter]: filter }).catch(() => {});
+      refreshFilter();
+    }, { needsInventory: messages.needsInventory });
+    // In the results' heading by default; the desktop app moves it beside its list picker.
+    ui.wrapper.querySelector('.aqwt-list-head').append(filterControl.element);
+    ui.wrapper.filterControl = filterControl.element;
+
+    function refreshFilter() {
+      filterControl.set(filter, { hasInventory: owned.size > 0, ownedList: shownList?.list.source === 'inventory' });
+      if (shownList) renderList();
+    }
+
+    ext.storage.local.get(STORAGE_KEYS.itemListFilter).then((result) => {
+      filter = readFilter(result[STORAGE_KEYS.itemListFilter]);
+      refreshFilter();
+    });
+    watchOwnedItems((map) => {
+      owned = map;
+      refreshFilter();
+    });
 
     // A marker after the last card; when it nears the screen, the next batch is added.
     const sentinel = el('div', 'aqwt-list-sentinel');
@@ -338,6 +488,7 @@ const ItemListView = (() => {
       queue.clear();
       cardObserver.disconnect();
       pendingItems = [];
+      shownList = null;
       ui.grid.replaceChildren(...Array.from({ length: SKELETON_CARDS }, skeletonCard));
       ui.grid.setAttribute('aria-busy', 'true');
       ui.status.textContent = 'Loading list…';
@@ -365,15 +516,30 @@ const ItemListView = (() => {
         return;
       }
 
+      shownList = { list, items, updatedAt };
+      refreshFilter();
+    }
+
+    /** The open list's items that pass the filter, as cards, and the count above them. */
+    function renderList() {
+      const { list, items, updatedAt } = shownList;
+      queue.clear();
+      cardObserver.disconnect();
+      const visible = items.filter((item) => passesFilter(item, filter, owned, { ownedApplies: list.source !== 'inventory' }));
+
       const updated = formatDate(updatedAt);
-      const count = items.length.toLocaleString();
       const noun = { inventory: 'owned item', farm: 'item on your farm list' }[list.source] || `${list.label} item`;
       const plural = items.length === 1 ? noun : noun.replace(/item/, 'items');
-      ui.status.textContent = `${count} ${plural}` + (updated ? ` · catalog updated ${updated}` : '');
+      const count =
+        visible.length === items.length
+          ? `${items.length.toLocaleString()} ${plural}`
+          : `${visible.length.toLocaleString()} of ${items.length.toLocaleString()} ${plural} shown`;
+      ui.status.textContent = count + (updated ? ` · catalog updated ${updated}` : '');
 
-      pendingItems = items.slice();
+      pendingItems = visible;
       ui.grid.replaceChildren(sentinel);
-      renderNextBatch();
+      if (!visible.length && items.length) ui.grid.replaceChildren(el('p', 'aqwt-list-empty', 'Nothing here matches the filter.'));
+      else renderNextBatch();
     }
 
     ui.buttons.addEventListener('click', (e) => {
@@ -384,7 +550,8 @@ const ItemListView = (() => {
       if (openList === list.id) {
         requestId++;
         queue.clear();
-        setOpen(null); // clicking the open list closes it
+        shownList = null;
+          setOpen(null); // clicking the open list closes it
       } else {
         showList(list);
       }

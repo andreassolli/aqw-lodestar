@@ -43,13 +43,185 @@
   color: var(--aqwt-ink);
 }
 
+/* ---- heading above the cards: the count, and the filter (item-list-view.js) ---- */
+.aqwt-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+
+.aqwt-list-head .aqwt-list-status {
+  margin: 0;
+}
+
+.aqwt-filter {
+  position: relative;
+}
+
+.aqwt-filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--aqwt-line);
+  border-radius: 999px;
+  background: var(--aqwt-card);
+  color: var(--aqwt-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aqwt-filter-button:hover,
+.aqwt-filter.is-open .aqwt-filter-button {
+  border-color: var(--aqwt-acc);
+}
+
+.aqwt-filter-button:focus-visible {
+  outline: 2px solid var(--aqwt-ring, var(--aqwt-acc));
+  outline-offset: 2px;
+}
+
+.aqwt-filter-button svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.aqwt-filter.is-active .aqwt-filter-button {
+  border-color: var(--aqwt-acc);
+  color: var(--aqwt-acc);
+}
+
+.aqwt-filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--aqwt-acc);
+  color: var(--aqwt-card);
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+
+
+.aqwt-filter-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 240px;
+  padding: 10px 12px;
+  border: 1px solid var(--aqwt-line);
+  border-radius: 10px;
+  background: var(--aqwt-card);
+  color: var(--aqwt-ink);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .3);
+  font-size: 13px;
+  text-align: left;
+}
+
+.aqwt-filter-heading {
+  margin: 0 0 4px;
+  color: var(--aqwt-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+.aqwt-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+/* The farm list's round checkboxes (icons/circle.png, circlecheck.png). */
+.aqwt-filter-option input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border: 0;
+  background: transparent var(--aqwt-icon-circle) no-repeat center / contain;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.aqwt-filter-option input:checked {
+  background-image: var(--aqwt-icon-circlecheck);
+}
+
+.aqwt-filter-option input:focus-visible {
+  border-radius: 50%;
+  outline: 2px solid var(--aqwt-ring, var(--aqwt-acc));
+  outline-offset: 2px;
+}
+
+.aqwt-filter-option:has(input:disabled) {
+  opacity: .5;
+  cursor: default;
+}
+
+.aqwt-filter-sep {
+  height: 1px;
+  margin: 6px 0;
+  border: 0;
+  background: var(--aqwt-line);
+}
+
+.aqwt-filter-note {
+  margin: 2px 0 0 26px;
+  color: var(--aqwt-muted);
+  font-size: 11px;
+}
+
+.aqwt-filter-reset {
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--aqwt-acc);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.aqwt-filter-reset:hover {
+  text-decoration: underline;
+}
+
+.aqwt-list-empty {
+  grid-column: 1 / -1;
+  margin: 8px 0;
+  color: var(--aqwt-muted);
+}
+
 /* ---- cards: identical to the hover tooltip (item-preview.css), at its width ---- */
 .aqwt-list-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 340px);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   align-items: start;
   gap: 12px;
 }
+
+
 
 /* Every card the same height (padding and border included); long details
    scroll inside the card. */

@@ -3,6 +3,7 @@
 **Browser extension**
 
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/ebaiceinineljleohmdapccokleconkk?label=Chrome&logo=googlechrome&logoColor=white&color=4285F4)](https://chromewebstore.google.com/detail/aqw-lodestar/ebaiceinineljleohmdapccokleconkk)
+[![Firefox Add-ons](https://img.shields.io/amo/v/aqw-lodestar?label=Firefox&logo=firefoxbrowser&logoColor=white&color=FF7139)](https://addons.mozilla.org/en-US/firefox/addon/aqw-lodestar/)
 [![Extension release](https://img.shields.io/github/v/release/andreassolli/aqw-lodestar?filter=v%2A&label=extension)](https://github.com/andreassolli/aqw-lodestar/releases?q=v1&expanded=true)
 
 **Desktop app**
@@ -36,7 +37,9 @@ stay on top of every other window, the game included. See
 [Desktop app](#desktop-app).
 
 It runs in **Chrome** (and other Chromium browsers: Edge, Brave, Opera) **121+**
-and **Firefox 140+**, from one code base.
+and **Firefox 140+**, from one code base. Install it from the
+[Chrome Web Store](https://chromewebstore.google.com/detail/aqw-lodestar/ebaiceinineljleohmdapccokleconkk)
+or [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/aqw-lodestar/).
 
 There's no bundler, no framework and no `npm install`: every file is plain
 JavaScript/CSS that the browser loads as it is. The only tool is a small Node
@@ -103,6 +106,7 @@ shared/                Used in more than one context (pages, popup, background)
   wiki-parser.js       Fetching and parsing wiki item pages
   aqcloset.js          AQCloset API: item search, thumbnails, wardrobe links
   inventory.js         The synced inventory as an "owned" lookup (watchOwnedItems)
+  inventory-import.js  Reads account.aq.com's inventory data (Sync button, desktop paste import)
   farm-entry.js        Building and saving farm list entries
   image-proxy.js       Replacing Imgur pictures where Imgur is blocked
   rarity.js / .css     Rarity badges (Rare, Seasonal, ...)
@@ -121,7 +125,7 @@ content/               Content scripts, injected into the three sites
   try-on-buttons.js/.css "Try on" buttons
   merge-calc.js/.css     Merge shop and quest calculators
   item-lists.config.js   The event item lists (edit this to add lists)
-  item-list-view.js      The item list buttons and cards (also used by the desktop app's Item Lists plugin)
+  item-list-view.js      The item list buttons, filter and cards (also used by the desktop app's Item Lists plugin)
   item-lists.js/.css     Places the item lists on the Search Items by Tag page; their styles
   collection-progress.js/.css  Owned counter on collection lists
   wiki-images.js         Item picture swap where Imgur is blocked
@@ -155,7 +159,7 @@ icons/                 Toolbar icons (lodestar16/48/128) and pictures used in pa
 fonts/                 Poppins (popup, backup page, AQCloset additions)
 
 desktop/               The desktop app (Electron), running the popup above; see desktop/README.md
-  plugins/             Desktop plugins, downloaded separately (ultra-assistant: boss callouts; item-lists: the event item lists)
+  plugins/             Desktop plugins: item-lists and class-enhancements come with the app; ultra-assistant (boss callouts) is a separate download
 .github/workflows/     desktop.yml builds the desktop app's installers and plugin zips on GitHub
 ```
 
@@ -209,7 +213,8 @@ with the **same names** that do the work directly, so shared files such as
   through the background (`wiki-parser.js`) and AQCloset thumbnails
   (`aqcloset.js`), and `ItemPreview.fill()` draws the card.
 - **Owned items:** `inventory-sync.js` saves the inventory when the button is
-  pressed. `shared/inventory.js` turns it into a name → count lookup and tells
+  pressed, reading the response with `shared/inventory-import.js` (the desktop
+  app uses the same file for an inventory pasted in). `shared/inventory.js` turns it into a name → count lookup and tells
   subscribers when it changes (`watchOwnedItems`). `owned-marks.js`,
   `merge-calc.js`, `collection-progress.js` and the item lists read it. Names
   are always compared with `normalizeItemName()` so every feature agrees.
@@ -219,7 +224,11 @@ with the **same names** that do the work directly, so shared files such as
   view updates through `storage.onChanged`.
 - **Item lists:** `item-list-view.js` (placed on the page by `item-lists.js`) asks the background for the items matching a
   list's filter (`queryItemCatalog`), draws cards straight from the catalog, then
-  fills in full tooltip details as cards scroll into view.
+  fills in full tooltip details as cards scroll into view. The *Filter* button
+  above the cards narrows a list to AC items, Member items (the wiki's `legend`
+  tag) and/or neither, and can leave out owned items; the choice is saved for
+  every list. "Event Hub" is left out of the card locations (it's on nearly every
+  seasonal item).
 - **Server boosts:** `popup/boosts.js` reads the Artix calendar page, finds boost
   events by keywords in their titles, and caches them for 12 hours.
 - **Character image:** `account-page.js` either captures the Flash canvas already
@@ -259,6 +268,7 @@ Everything is in `storage.local` (`ext.storage.local`). The key names live in
 | `tooltipPlacement`               | `'side'` / `'anchored'`                                      | yes                   |
 | `imgurImages`                    | `'auto'` / `'replace'` / `'direct'`                          | yes                   |
 | `collapsedInventorySections`     | Folded character page categories                             | yes                   |
+| `itemListFilter`                 | The item lists' filter (AC / Member / neither, owned items)  | yes                   |
 | `moduleOrder:<path>`             | AQCloset panel layouts (not in STORAGE_KEYS; see reorder.js) | yes                   |
 | `itemCatalog`                    | The daily item catalog                                       | no (downloaded again) |
 | `boostSchedule`                  | Parsed boost calendar                                        | no                    |
@@ -352,8 +362,10 @@ README, `scripts/`, `dist/` or dotfiles like `.DS_Store`.
 2. `node scripts/build.mjs`
 3. Test `dist/chrome/` and `dist/firefox/` once each.
 4. Upload the zips:
-   - Chrome Web Store Developer Dashboard → the item → *Package* → *Upload new package*.
-   - addons.mozilla.org Developer Hub → the add-on → *Upload New Version*.
+   - [Chrome Web Store](https://chromewebstore.google.com/detail/aqw-lodestar/ebaiceinineljleohmdapccokleconkk):
+     Developer Dashboard → the item → *Package* → *Upload new package*.
+   - [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/aqw-lodestar/):
+     Developer Hub → the add-on → *Upload New Version*.
 
 ### Store listing notes
 
@@ -399,13 +411,19 @@ link*, dark/light switch and backups. What it adds:
   from the browser to the app. Firefox users move data with a backup file
   (*Export* in the extension, *Import…* in the app).
 
-- **Plugins:** extra features installed separately from *Settings → Plugins*,
-  each a zip from the release. A plugin can run code in the app's background
-  and add its own tab next to *Farm*. The first is the
-  [Ultra Assistant](desktop/plugins/ultra-assistant/README.md), which watches
-  the game's traffic during ultra boss fights and shows who should Taunt or Zone
-  next, and [Item Lists](desktop/plugins/item-lists/README.md), the event item
-  lists from the wiki in their own tab or window. How to write and build plugins:
+- **Plugins:** extra features with a tab of their own next to *Farm*, managed
+  in *Settings → Plugins*. Two come with the app:
+  - [Item Lists](desktop/plugins/item-lists/README.md): the wiki's event item
+    lists, with the same filter, in their own tab or window. The *Owned items*
+    list takes an inventory pasted from account.aq.com, since the app has no
+    Sync button.
+  - [Class Enhancements](desktop/plugins/class-enhancements/README.md): the
+    class guide from aqw.app (turned off until you turn it on).
+
+  Others are a zip from the release, installed with *Install plugin…*: the
+  [Ultra Assistant](desktop/plugins/ultra-assistant/README.md) watches the
+  game's traffic during ultra boss fights and shows who should Taunt or Zone
+  next. How to write and build plugins:
   [desktop/README.md → Plugins](desktop/README.md#plugins).
 
 The app runs **this repository's own popup code**: `desktop/scripts/copy-extension.mjs`

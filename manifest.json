@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AQW Lodestar",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Item previews, merge/quest calculators and a farm list for AQW.",
   "minimum_chrome_version": "121",
   "icons": {
