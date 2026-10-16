@@ -10,6 +10,12 @@ remembers your last one) to see every item in
 it as a card with pictures, rarity, location and price, with *Try on* and *Add
 to farm list* buttons and checkmarks on what you own.
 
+The **filter icon** beside the dropdown narrows a list to AC items, Member items
+and/or items that are neither, and *Show owned items* can be unticked to leave
+out what you own (once your inventory is imported, see below; it isn't offered
+on the Owned list). The number on the icon is how many boxes are ticked. It's the same filter as the *Filter* button
+on the wiki, and the choice is remembered for every list.
+
 Locations leave out **Event Hub** (the game menu that lists every event): it's on
 almost every seasonal item, so it only takes up room. The wiki's lists do the same.
 

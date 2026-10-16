@@ -14,7 +14,8 @@
 
 /* Follow the app's dark/light theme. (On the wiki, these colours follow the
    wiki's theme; the extra .aqwt-lists makes this win over that rule.) */
-.plugin-page .aqwt-lists.aqwt-lists {
+.plugin-page .aqwt-lists.aqwt-lists,
+.plugin-page .aqwt-filter.aqwt-filter {
   --aqwt-bg: var(--bg);
   --aqwt-card: var(--card);
   --aqwt-ink: var(--ink);
@@ -23,6 +24,9 @@
   --aqwt-acc: var(--acc);
   --aqwt-ring: var(--ring);
   --aqwt-hover-bg: var(--hover-bg);
+}
+
+.plugin-page .aqwt-lists.aqwt-lists {
   margin: 0;
   font-size: 13px;
 }
@@ -146,4 +150,62 @@
 
 .inventory-import-status.is-error {
   color: #d04b4b;
+}
+
+/* The list picker and the filter icon beside it (page.js). */
+.item-lists-picker {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.item-lists-picker .item-lists-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.plugin-page .aqwt-filter.is-icon .aqwt-filter-button {
+  position: relative;
+  justify-content: center;
+  width: 36px;
+  height: 100%;
+  min-height: 34px;
+  padding: 0;
+  border-color: var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+}
+
+.plugin-page .aqwt-filter.is-icon .aqwt-filter-button:hover,
+.plugin-page .aqwt-filter.is-icon.is-open .aqwt-filter-button {
+  border-color: var(--muted);
+}
+
+.plugin-page .aqwt-filter.is-icon.is-active .aqwt-filter-button {
+  border-color: var(--acc);
+}
+
+.plugin-page .aqwt-filter.is-icon .aqwt-filter-button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.plugin-page .aqwt-filter.is-icon .aqwt-filter-label {
+  display: none;
+}
+
+/* The number of ticked boxes as a small badge on the icon's corner. */
+.plugin-page .aqwt-filter.is-icon .aqwt-filter-count {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 10px;
+}
+
+.plugin-page .aqwt-filter-menu {
+  font-size: 12px;
 }

@@ -17,6 +17,7 @@ const STORAGE_KEYS = {
   imgurImages: 'imgurImages', // 'auto' (replace when Imgur is blocked here) | 'replace' (always) | 'direct' (never)
   imgurCheck: 'imgurCheck', // last "is Imgur blocked here?" result: { at, blocked }
   collapsedInventorySections: 'collapsedInventorySections', // section names hidden on char pages
+  itemListFilter: 'itemListFilter', // item lists: { ac, member, neither, showOwned } (content/item-list-view.js)
 };
 
 const WIKI_ORIGIN = 'http://aqwwiki.wikidot.com';

@@ -220,7 +220,10 @@
       STYLES.forEach(loadStyle);
       for (const src of SCRIPTS) await loadScript(src); // in order: each builds on the ones before
       const view = ItemListView.create({
-        messages: { noInventory: 'No inventory yet. Import it with the steps above.' },
+        messages: {
+          noInventory: 'No inventory yet. Import it with the steps above.',
+          needsInventory: 'Import your inventory first (choose Owned items).',
+        },
       });
       const owned = () => view.querySelector('.aqwt-list-button[data-list="owned"]');
       // Shows the Owned list again with the new inventory (closing and reopening it).
@@ -236,7 +239,13 @@
         attributes: true,
         attributeFilter: ['aria-expanded'],
       });
-      root.replaceChildren(listPicker(view), importer.element, view);
+      // The list picker with the filter beside it, as an icon (moved from the
+      // view's results heading, where the wiki shows it as a "Filter" button).
+      const pickerRow = document.createElement('div');
+      pickerRow.className = 'item-lists-picker';
+      view.filterControl.classList.add('is-icon');
+      pickerRow.append(listPicker(view), view.filterControl);
+      root.replaceChildren(pickerRow, importer.element, view);
     } catch (err) {
       root.textContent = `Couldn't load the item lists: ${err.message}`;
     }

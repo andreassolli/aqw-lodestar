@@ -1,340 +1,540 @@
-# AQW Lodestar Desktop
+# AQW Lodestar
 
-The extension's popup as its own app for Mac, Windows and Linux: active server boosts
-and when they're next, *Check bag*, the *Items to Farm* list, *Add item from
-link*, the dark/light switch and backups. It can **stay on top of every other
-window**, so the boosts and your farm list stay in view while you play.
+**Browser extension**
 
-Turn "stay on top" on or off with:
-- the pin button at the top of the window,
-- *Settings → Window → Stay on top*,
-- *View → Stay on Top* in the menu, or **⌘⇧T** (Mac) / **Ctrl+Shift+T** (Windows and Linux).
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/ebaiceinineljleohmdapccokleconkk?label=Chrome&logo=googlechrome&logoColor=white&color=4285F4)](https://chromewebstore.google.com/detail/aqw-lodestar/ebaiceinineljleohmdapccokleconkk)
+[![Firefox Add-ons](https://img.shields.io/amo/v/aqw-lodestar?label=Firefox&logo=firefoxbrowser&logoColor=white&color=FF7139)](https://addons.mozilla.org/en-US/firefox/addon/aqw-lodestar/)
+[![Extension release](https://img.shields.io/github/v/release/andreassolli/aqw-lodestar?filter=v%2A&label=extension)](https://github.com/andreassolli/aqw-lodestar/releases?q=v1&expanded=true)
 
-The app remembers it, along with the window's size and position.
+**Desktop app**
 
-A compass in the menu bar (Mac) or system tray (Windows, Linux) shows or hides
-the window with a click; right-click it for *Stay on Top* and *Quit*. (On Linux
-it opens that menu on any click, as most Linux desktops only allow a menu
-there.) The icons are in `renderer/tray/`: `trayTemplate.png` is the black Mac
-version, which macOS recolours for light and dark menu bars.
+[![Desktop release](https://img.shields.io/github/v/release/andreassolli/aqw-lodestar?filter=desktop-v%2A&label=desktop&color=c0392b)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
+[![macOS](https://img.shields.io/badge/macOS-Apple%20silicon%20%26%20Intel-000000?logo=apple&logoColor=white)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
+[![Windows](https://img.shields.io/badge/Windows-x64%20%26%20ARM-0078D6?logo=windows&logoColor=white)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
+[![Linux](https://img.shields.io/badge/Linux-AppImage%20%26%20.deb-FCC624?logo=linux&logoColor=black)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
 
-Extra features come as **plugins** (see [Plugins](#plugins)):
-- [Item Lists](plugins/item-lists/README.md): the wiki's event item lists in their own tab or window. Comes with the app.
-- [Class Enhancements](plugins/class-enhancements/README.md): aqw.app's class guide (enhancements and consumables per class and boss). Comes with the app, turned off.
-- [Ultra Assistant](plugins/ultra-assistant/README.md): boss callouts during ultra fights. Installed separately from *Settings → Plugins*.
+**Project**
 
-## How it works
+[![Downloads](https://img.shields.io/github/downloads/andreassolli/aqw-lodestar/total?label=downloads)](https://github.com/andreassolli/aqw-lodestar/releases)
+[![License: MIT](https://img.shields.io/github/license/andreassolli/aqw-lodestar?v=2)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/andreassolli/aqw-lodestar?style=flat)](https://github.com/andreassolli/aqw-lodestar/stargazers)
 
-The app runs **the extension's own code**. There's no second copy to keep up
-to date:
+A browser extension for AdventureQuest Worlds players. It adds item previews,
+owned-item checkmarks, a farm list, server boosts, merge and quest calculators,
+try-on links and more to three sites:
 
-| File | What it does |
-| --- | --- |
-| `scripts/copy-extension.mjs` | Copies `popup/`, `shared/`, `options/`, `content/`, `icons/`, `fonts/` and `background.js` from the extension into `desktop/app/`, and adds the desktop extras to the popup and backup pages. Runs before every `npm start` and build. |
-| `main.js` | The window, the stay-on-top setting, the menu, and serving `app/` at `app://lodestar/`. Links open in the default browser. |
-| `preload.js` | Gives the pages the extension API they expect (`browser.storage`, `browser.runtime.sendMessage`, `browser.tabs.create`) and passes each call to `main.js`. |
-| `background-host.js` | Runs the extension's `background.js` (plus the shared files it imports) in the main process, so wiki pages, the boost calendar, Check bag and try-on work exactly as in the extension. |
-| `storage.js` | Stands in for `storage.local`: one JSON file per key in the app's data folder. |
-| `chrome-import.js` | *Import from Chrome*: finds and reads the extension's data in Chromium browsers' profiles. |
-| `plugin-host.js` | Plugins: finds, installs, starts, turns off and removes them (see [Plugins](#plugins)). |
-| `zip.js` | Reads plugin zips when installing, and writes them when building. |
-| `renderer/` | Desktop-only additions: the pin button, the Window setting, wording without browser tabs, and `plugins.js` (plugin tabs and *Settings → Plugins*). |
-| `plugins/` | Plugins, each in its own folder. Separate downloads, except the built-in ones listed under `build.extraResources` in `package.json`. |
+| Site                               | What Lodestar adds                                           |
+| ---------------------------------- | ------------------------------------------------------------ |
+| **AQW Wiki** (aqwwiki.wikidot.com) | Hover tooltips on item links, owned checkmarks, "Add to farm list" and "Try on" buttons on item pages, a Calculator tab on merge shops, a turn-in calculator on quests, event item lists on *Search Items by Tag*, collection progress, a dark theme, Imgur picture fixes |
+| **account.aq.com**                 | Inventory sync (inventory + bank), rarity badges, owned checkmarks, tooltips, foldable inventory categories, "open outfit in AQCloset", character image download (including an HD render with a transparent background), a dark theme |
+| **AQCloset** (aqcloset.com)        | Drag-to-reorder wardrobe panels, tooltips (with an on/off switch), owned borders, right-click menus, filling AQCloset's inventory import from the synced inventory |
 
-So a change to the popup in the extension is picked up by the app the next time
-it's built. Don't edit `desktop/app/`: it's generated and git ignores it.
+Plus the **toolbar popup**: active server boosts and when they're next, *Check bag*,
+the *Items to Farm* list, a dark/light switch and settings.
 
-**What's different from the extension:**
-- **Not in the app:** the right-click menu, tooltips and everything else that
-  runs on web pages, so the *Tooltip* and *AQCloset* settings are hidden.
-- **Own data:** the app keeps its own farm list and inventory, separate from the
-  browser. *Settings → Import from Chrome* copies them over from the extension
-  in one click (see below). From Firefox, use *Export* in the extension and
-  *Import…* in the app; both use the same backup file.
-- **Links and try-on** open in your default browser.
+The popup also comes as a **desktop app** for Mac, Windows and Linux that can
+stay on top of every other window, the game included. See
+[Desktop app](#desktop-app).
 
-### Import from Chrome
+It runs in **Chrome** (and other Chromium browsers: Edge, Brave, Opera) **121+**
+and **Firefox 140+**, from one code base. Install it from the
+[Chrome Web Store](https://chromewebstore.google.com/detail/aqw-lodestar/ebaiceinineljleohmdapccokleconkk)
+or [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/aqw-lodestar/).
 
-*Settings → Browser extension → Import from Chrome* copies the farm list,
-synced inventory and settings from the extension in Chrome, Edge, Brave,
-Vivaldi, Opera, Arc or Chromium, with no change to the extension.
+There's no bundler, no framework and no `npm install`: every file is plain
+JavaScript/CSS that the browser loads as it is. The only tool is a small Node
+script that packages the two store versions. (The desktop app in `desktop/` is
+the exception: it's built with Electron, so it has its own `npm install`.)
 
-Chrome keeps each extension's `storage.local` in the browser profile, in
-`Local Extension Settings/<extension id>/`, as a LevelDB database.
-`chrome-import.js` looks through every profile of every Chromium browser it
-knows, recognises Lodestar's folder by its storage keys (so the extension's id
-doesn't matter), and reads it with a small built-in LevelDB reader. It only
-reads, so it's safe while the browser is open.
+---
 
-- The newest copy is used. If several profiles or browsers have Lodestar, a
-  list appears under the button to import another one instead.
-- Like importing a backup, the extension's values replace the app's. The app's
-  data is saved first to `backups/before-import-<date>.json` in the data folder,
-  which *Import…* can load back.
-- It's one way, browser to app: other programs can't write into Chrome's
-  storage while it's running.
-- Firefox keeps extension data in a different format, so it isn't covered.
+## Contents
 
-Data folder (plugins are in `plugins/` and `plugin-data/` inside it):
-- Mac: `~/Library/Application Support/AQW Lodestar/`
-- Windows: `%APPDATA%\AQW Lodestar\`
-- Linux: `~/.config/AQW Lodestar/`
+- [Quick start](#quick-start)
+- [Project layout](#project-layout)
+- [How it fits together](#how-it-fits-together)
+- [Where the data comes from](#where-the-data-comes-from)
+- [Storage](#storage)
+- [Messages to the background](#messages-to-the-background)
+- [Chrome and Firefox differences](#chrome-and-firefox-differences)
+- [Building and releasing](#building-and-releasing)
+- [Desktop app](#desktop-app)
+- [Common changes](#common-changes)
+- [Debugging](#debugging)
+- [Code style](#code-style)
 
-## Plugins
+---
 
-Plugins add features that not everyone wants in the standard app, such as
-features that need extra permissions or native code. They're separate
-downloads, and the app works the same without them.
+## Quick start
 
-**Built-in plugins** come with the app instead: *Item Lists* (on) and *Class
-Enhancements* (off until turned on). They're
-listed under `build.extraResources` in `desktop/package.json`, which copies
-them into the app's `resources/plugins/` folder. In *Settings → Plugins* they
-say "comes with Lodestar", and can be turned off but not removed. To build
-another one in, add its folder there the same way (only plugins without npm
-dependencies; one with native code has to stay a separate download per platform).
-A plugin whose `plugin.json` has `"defaultEnabled": false` starts turned off;
-once someone turns any plugin on or off, that choice is kept.
+**Chrome (while developing):** open `chrome://extensions`, turn on *Developer mode*,
+press *Load unpacked* and pick **this folder** (the one with `manifest.json`).
+After editing a file, press the reload button on the extension's card, then
+reload the page you're testing on.
 
-A built-in plugin can still be updated without a new app: installing a newer
-zip of it replaces it (*Use built-in version* goes back). When a later app
-brings a newer version than the installed zip, the app's version is used.
-
-### Using them
-
-*Settings → Plugins* lists what's installed:
-
-- **Install plugin…** picks a plugin's `.zip` file. It starts the next time
-  Lodestar starts (**Restart now** appears).
-- **Turn off / Turn on** and **Remove** also apply on the next start. A running
-  plugin can't be unloaded safely, and on Windows its files can't even be
-  deleted while it's running.
-- **Open folder** shows where installed plugins live: `plugins/` in the app's
-  data folder (see below). Each plugin's own files and settings are in
-  `plugin-data/<id>/` next to it.
-
-A plugin with a page gets a tab next to *Farm*, and the tabs, Settings and the
-theme switch get a row of their own under the logo, which then grows to fill
-its row up to the pin. With no plugin pages (Item Lists turned off and nothing
-installed), the tab row is hidden and Settings and the theme switch sit next to
-the logo, as before.
-
-A plugin built for another platform, another processor or an older Lodestar is
-refused when installing, with the reason (for example "built for Windows;
-download the Mac version").
-
-**Plugins run with the same access as the app itself** (files, network,
-windows), so only install plugins you trust.
-
-### Writing a plugin
-
-A plugin is a folder in `desktop/plugins/<id>/` with a `plugin.json`:
-
-```json
-{
-  "id": "ultra-assistant",
-  "name": "Ultra Assistant",
-  "version": "1.0.0",
-  "description": "One or two sentences for Settings → Plugins.",
-  "apiVersion": 1,
-  "main": "main.js",
-  "page": {
-    "title": "Ultra",
-    "icon": "page/icon.svg",
-    "html": "page/page.html",
-    "css": "page/page.css",
-    "script": "page/page.js"
-  }
-}
-```
-
-- `id`: lowercase letters, digits and dashes. It names the plugin's folders and
-  must never change.
-- `main` (optional): runs in the app's main process, with full Node and
-  Electron access.
-- `page` (optional): a tab in the popup. `html` is a fragment, placed inside
-  the tab's `<section>`. `css` and `script` are loaded after it, so the script
-  can use the elements right away (no `DOMContentLoaded`). `icon` is an SVG,
-  shown in the tab's text colour. Without one, the tab gets a puzzle piece.
-  The page can use the popup's colour variables (`--ink`, `--muted`, `--card`,
-  `--line`, `--acc`, `--green`) to follow the dark/light theme.
-- `page.popout` (optional): `true`, or `{ "width": 760, "height": 860 }` for
-  the window's first size. Adds an *Open in its own window* button to the top
-  right of the page, which opens it in a separate window: the same page without
-  the logo and tabs. The window remembers its size and position, stays on top
-  when the main window does, and closes with the app.
-- The page runs inside the popup, so the popup's scripts are there to use:
-  `browser`/`ext` (storage, `runtime.sendMessage` to the background),
-  `fetchPage`, `fetchText`, `queryItemCatalog`, `Aqcloset`, `FarmEntry` and the
-  rest of `popup/popup.html`. The extension's page scripts are in the app too,
-  at `/content/...` and `/shared/...`, for a page to load (the Item Lists plugin
-  loads the item lists from there). Load each file only once: loading a script
-  the popup already has would declare its names twice.
-- npm dependencies go in the plugin's own `package.json`.
-
-`main` exports `activate(api)`, called when Lodestar starts, and optionally
-`deactivate()`, called when it quits:
-
-```js
-exports.activate = (api) => {
-  api.log('started');                                      // console, prefixed with the plugin id
-  api.page.handle('status', () => ({ ok: true }));         // answers the page's invoke()
-  api.page.send('step', { role: 'LOO', action: 'Taunt' }); // to the page's on()
-};
-exports.deactivate = () => { /* stop timers, close windows */ };
-```
-
-| `api.` | What it is |
-| --- | --- |
-| `id`, `version`, `dir` | The plugin's id, version and folder (for files next to `main.js`). |
-| `appVersion`, `apiVersion` | Lodestar's version, and the plugin api's version (1). |
-| `electron` | The `electron` module (`BrowserWindow`, `screen`, `ipcMain`, …). |
-| `storage` | The app's shared storage (`storage.local.get/set`, `storage.onChanged`): the farm list, inventory and settings, under the keys in `shared/constants.js`. |
-| `settings` | `get(key, fallback)`, `set(key, value)`, `all()`: the plugin's own settings, kept in `plugin-data/<id>/settings.json`. |
-| `dataDir` | `plugin-data/<id>/`, for any other files the plugin keeps. |
-| `page.handle(channel, fn)` | Answers `lodestarPlugins.invoke(id, channel, data)` from the page. `fn(data)` may return a value or a promise. |
-| `page.send(channel, data)` | Sends to `lodestarPlugins.on(id, channel, fn)` in the page. |
-| `openUrl(url)` | Opens a link in the default browser. |
-| `onQuit(fn)` | Runs `fn` when Lodestar quits. |
-| `log(...)` | `console.log` with the plugin's name in front. |
-
-In the page, `window.lodestarPlugins` has `invoke(id, channel, data)`, which
-returns a promise of the answer, and `on(id, channel, fn)`. Name any
-`ipcMain` channels a plugin adds itself `<id>:...`, so plugins can't clash.
-
-### Trying a plugin while developing
-
-`npm start` also loads every plugin in `desktop/plugins/` (marked "from
-desktop/plugins" in Settings). A plugin with npm dependencies needs them
-installed first, with native ones built for Electron rather than Node:
+**Firefox (while developing):** Firefox needs its own manifest, so build first:
 
 ```sh
-npm run plugins:dev   # npm install + rebuild for Electron, in each plugin folder
-npm start
+node scripts/build.mjs
 ```
 
-Run `plugins:dev` again after changing a plugin's dependencies. Changes to its
-files show after restarting the app.
+Then open `about:debugging#/runtime/this-firefox`, press *Load Temporary
+Add-on…* and pick `dist/firefox/manifest.json`. Run the build again (and press
+*Reload*) after each change. Temporary add-ons are removed when Firefox closes.
 
-To run the base app with no plugins at all (neither installed ones nor those in
-`desktop/plugins/`), use `npm run start:no-plugins`.
+**Store packages:** `node scripts/build.mjs` also writes
+`dist/aqw-lodestar-chrome-<version>.zip` and
+`dist/aqw-lodestar-firefox-<version>.zip`. See
+[Building and releasing](#building-and-releasing).
 
-### Building plugin zips
+Node 18 or newer is all the build needs.
+
+---
+
+## Project layout
+
+```
+manifest.json          The Chrome manifest (the Firefox one is generated from it)
+background.js          Background: cross-origin fetches, item catalog, context menus, tabs
+scripts/build.mjs      Builds dist/chrome, dist/firefox and the store zips
+
+shared/                Used in more than one context (pages, popup, background)
+  constants.js         `ext` (browser/chrome API), STORAGE_KEYS, WIKI_ORIGIN, ITEM_CATALOG_URL
+  text.js              Name helpers: normalizeItemName, getBaseName, getItemLinkLabel, ...
+  messaging.js         Page/popup side of the background API: fetchPage, fetchText,
+                       queryItemCatalog, lookupItems, tryOnItem
+  wiki-parser.js       Fetching and parsing wiki item pages
+  aqcloset.js          AQCloset API: item search, thumbnails, wardrobe links
+  inventory.js         The synced inventory as an "owned" lookup (watchOwnedItems)
+  inventory-import.js  Reads account.aq.com's inventory data (Sync button, desktop paste import)
+  farm-entry.js        Building and saving farm list entries
+  image-proxy.js       Replacing Imgur pictures where Imgur is blocked
+  rarity.js / .css     Rarity badges (Rare, Seasonal, ...)
+  backup.js            Export / import of everything saved
+
+content/               Content scripts, injected into the three sites
+  page.js              PAGE (which site/page this is) + icon URLs as CSS variables
+  base.css             Shared colours for everything injected
+  item-preview.js/.css Builds the item card used by tooltips and item lists
+  hover-tooltip.js     The hover tooltip
+  owned-marks.js/.css  Green checkmarks and borders for owned items
+  farm-context.js/.css Right-click menu support
+  theme.js/.css        Dark theme for the wiki and character pages
+  ── wiki only ──
+  farm-buttons.js/.css   "Add to farm list" buttons
+  try-on-buttons.js/.css "Try on" buttons
+  merge-calc.js/.css     Merge shop and quest calculators
+  item-lists.config.js   The event item lists (edit this to add lists)
+  item-list-view.js      The item list buttons, filter and cards (also used by the desktop app's Item Lists plugin)
+  item-lists.js/.css     Places the item lists on the Search Items by Tag page; their styles
+  collection-progress.js/.css  Owned counter on collection lists
+  wiki-images.js         Item picture swap where Imgur is blocked
+  ── account.aq.com only ──
+  inventory-sync.js/.css     "Sync inventory" button
+  account-page.js/.css       Rarity badges, outfit button, image download menu
+  inventory-sections.js/.css Foldable inventory categories
+  ── aqcloset.com only ──
+  aqcloset-page.js/.css   Tooltip switch, wiki links on item names
+  reorder.js/.css         Drag-to-reorder panels
+  aqcloset-import.js/.css Filling AQCloset's inventory import
+
+render/                Character image download (account.aq.com)
+  capture.js           Canvas → image file (content script)
+  main-world.js        HD render with the page's Flash player (runs in the page's own world)
+  CharacterRender.swf  The Flash file used for the HD render
+
+popup/                 The toolbar popup
+  popup.html / popup.js  Page and entry point
+  tabs.js              The tab row: Farm and other pages, Settings, theme switch
+  boosts.js            Active server boosts and the boost schedule
+  inventory-check.js   "Check bag"
+  farm-list.js         Items to Farm
+  add-item-modal.js    "Add item from link"
+  settings.js          Settings view
+  theme-toggle.js      Dark/light switch
+  popup.css / search-bar.css
+
+options/               The backup page (opened from Settings)
+icons/                 Toolbar icons (lodestar16/48/128) and pictures used in pages and the popup
+fonts/                 Poppins (popup, backup page, AQCloset additions)
+
+desktop/               The desktop app (Electron), running the popup above; see desktop/README.md
+  plugins/             Desktop plugins: item-lists and class-enhancements come with the app; ultra-assistant (boss callouts) is a separate download
+.github/workflows/     desktop.yml builds the desktop app's installers and plugin zips on GitHub
+```
+
+Every file starts with a comment saying what it does; read that first.
+
+---
+
+## How it fits together
+
+### The contexts
+
+An extension runs in several separate places that can't see each other's
+variables:
+
+| Context                 | Files                                         | Can do                                                       |
+| ----------------------- | --------------------------------------------- | ------------------------------------------------------------ |
+| **Background**          | `background.js` + the shared files it imports | Cross-origin requests to any site in `host_permissions`, context menus, opening tabs. No DOM (`document`, `window`): in Chrome it's a service worker. |
+| **Content scripts**     | `content/*`, `render/capture.js`, `shared/*`  | Read and change the page. Requests to other sites go through the background. |
+| **Page world**          | `render/main-world.js`                        | Runs inside the page's own JavaScript (`"world": "MAIN"`), only to use the page's Ruffle Flash player. Talks to content scripts with `window.postMessage`. |
+| **Popup / backup page** | `popup/*`, `options/*`, `shared/*`            | Extension pages.                                             |
+
+### Plain scripts, shared globals
+
+There are no imports. Each context loads a list of plain scripts in order, and
+everything a script defines at the top level (`const ext`, `STORAGE_KEYS`,
+`normalizeItemName`, `ItemPreview`, ...) is visible to the scripts loaded after
+it. Scripts that only need private code wrap themselves in `(() => { ... })()`.
+
+That makes **load order matter**:
+
+- Content scripts: the `"js"` arrays in `manifest.json`. Each site has **one**
+  entry listing everything it needs, shared files first (see
+  [why](#chrome-and-firefox-differences)).
+- Popup: the `<script>` tags at the bottom of `popup/popup.html`.
+- Backup page: the `<script>` tags in `options/options.html`.
+- Background: the `importScripts(...)` call at the top of `background.js`.
+
+### Talking to the background
+
+Content scripts and the popup call functions from `shared/messaging.js`
+(`fetchPage`, `fetchText`, `queryItemCatalog`, `lookupItems`, `tryOnItem`).
+Each sends a message to the background and resolves with its answer, or with
+`null` if the background couldn't be reached. `background.js` defines functions
+with the **same names** that do the work directly, so shared files such as
+`shared/aqcloset.js` call `fetchText()` without caring where they run.
+
+### Features and their files
+
+- **Hover tooltip:** `hover-tooltip.js` notices hovered item links and asks
+  `ItemPreview.load()` (item-preview.js) for the item. That fetches the wiki page
+  through the background (`wiki-parser.js`) and AQCloset thumbnails
+  (`aqcloset.js`), and `ItemPreview.fill()` draws the card.
+- **Owned items:** `inventory-sync.js` saves the inventory when the button is
+  pressed, reading the response with `shared/inventory-import.js` (the desktop
+  app uses the same file for an inventory pasted in). `shared/inventory.js` turns it into a name → count lookup and tells
+  subscribers when it changes (`watchOwnedItems`). `owned-marks.js`,
+  `merge-calc.js`, `collection-progress.js` and the item lists read it. Names
+  are always compared with `normalizeItemName()` so every feature agrees.
+- **Farm list:** entries are built by `shared/farm-entry.js` from the right-click
+  menu (`background.js` → `farm-context.js`), the buttons (`farm-buttons.js`)
+  or the popup (`add-item-modal.js`), and shown by `popup/farm-list.js`. Every
+  view updates through `storage.onChanged`.
+- **Item lists:** `item-list-view.js` (placed on the page by `item-lists.js`) asks the background for the items matching a
+  list's filter (`queryItemCatalog`), draws cards straight from the catalog, then
+  fills in full tooltip details as cards scroll into view. The *Filter* button
+  above the cards narrows a list to AC items, Member items (the wiki's `legend`
+  tag) and/or neither, and can leave out owned items; the choice is saved for
+  every list. "Event Hub" is left out of the card locations (it's on nearly every
+  seasonal item).
+- **Server boosts:** `popup/boosts.js` reads the Artix calendar page, finds boost
+  events by keywords in their titles, and caches them for 12 hours.
+- **Character image:** `account-page.js` either captures the Flash canvas already
+  on the page (`render/capture.js`), or asks `render/main-world.js` to render the
+  character again with `render/CharacterRender.swf` at 3× size.
+
+---
+
+## Where the data comes from
+
+| Source                                                       | Used for                                                     | Fetched by                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| **Item catalog**: `ITEM_CATALOG_URL` in `shared/constants.js` (raw.githubusercontent.com/andreassolli/lodestar-updates) | Item lists, rarity badges on character pages, "Owned items" cards, Imgur test pictures | `background.js`, at most once a day, kept in storage. It's rebuilt daily from the wiki by a GitHub Actions workflow in the **lodestar-updates** repository. |
+| **Wiki item pages** (aqwwiki.wikidot.com)                    | Tooltip details, farm entries, card details                  | `background.js` (`fetchPage`), cached 5 minutes              |
+| **AQCloset API** (aqcloset.com/api)                          | Item thumbnails, try-on links, character outfits             | `shared/aqcloset.js` through `fetchText`                     |
+| **Artix calendar** (www.artix.com/calendar)                  | Server boosts                                                | `popup/boosts.js` through `fetchText`, cached 12 hours       |
+| **account.aq.com**                                           | The logged-in player's inventory (Sync), a character's public inventory (Check bag) | `inventory-sync.js` (with the page's own login) and `popup/inventory-check.js` |
+| **game.aq.com**                                              | A character's id for Check bag, game files for the HD render | `popup/inventory-check.js`, the Flash player                 |
+| **i.imgur.com**                                              | Checking whether Imgur is blocked here                       | `background.js`, every 15 minutes at most                    |
+
+Nothing is ever sent to a server of ours: there isn't one. Everything the
+extension saves stays in the browser's extension storage.
+
+---
+
+## Storage
+
+Everything is in `storage.local` (`ext.storage.local`). The key names live in
+`STORAGE_KEYS` in `shared/constants.js`; use those, never the strings.
+
+| Key                              | Holds                                                        | In backups            |
+| -------------------------------- | ------------------------------------------------------------ | --------------------- |
+| `farmItems`                      | The farm list                                                | yes                   |
+| `username`                       | The character name from *Check bag* (used for try-on)        | yes                   |
+| `theme`                          | `'dark'` / `'light'`                                         | yes                   |
+| `inventory`, `inventorySyncedAt` | The synced inventory and when it was synced                  | yes                   |
+| `tooltipPlacement`               | `'side'` / `'anchored'`                                      | yes                   |
+| `imgurImages`                    | `'auto'` / `'replace'` / `'direct'`                          | yes                   |
+| `collapsedInventorySections`     | Folded character page categories                             | yes                   |
+| `itemListFilter`                 | The item lists' filter (AC / Member / neither, owned items)  | yes                   |
+| `moduleOrder:<path>`             | AQCloset panel layouts (not in STORAGE_KEYS; see reorder.js) | yes                   |
+| `itemCatalog`                    | The daily item catalog                                       | no (downloaded again) |
+| `boostSchedule`                  | Parsed boost calendar                                        | no                    |
+| `imgurCheck`                     | Last "is Imgur blocked here?" result                         | no                    |
+| `imgurProxyPreferred`            | The image proxy that last worked (in image-proxy.js)         | yes                   |
+| `boostCache`, `resourceCache`    | Old caches, only removed on start                            | no                    |
+
+Which keys are left out of backups is decided by `SKIPPED_KEYS` in
+`shared/backup.js`. A new setting is backed up automatically; a new cache should
+be added to `SKIPPED_KEYS`.
+
+`unlimitedStorage` is requested because the item catalog is larger than the
+default storage quota.
+
+---
+
+## Messages to the background
+
+Handled in `MESSAGE_HANDLERS` in `background.js`:
+
+| `type`          | Sent by              | Does                                                         |
+| --------------- | -------------------- | ------------------------------------------------------------ |
+| `FETCH_PAGE`    | `fetchPage()`        | Fetches an HTML page → `{ html, baseUrl }` or `{ error }`    |
+| `FETCH_TEXT`    | `fetchText()`        | Fetches any text → string or `null`                          |
+| `QUERY_ITEMS`   | `queryItemCatalog()` | Items matching a list filter, from the catalog, inventory or farm list |
+| `LOOKUP_ITEMS`  | `lookupItems()`      | Rarity and tags for items by name / wiki path (character page badges) |
+| `TRY_ON`        | `tryOnItem()`        | Opens AQCloset wearing the saved character's outfit plus an item |
+| `OPEN_WARDROBE` | account-page.js      | Opens a character's outfit in AQCloset                       |
+| `CHECK_IMGUR`   | image-proxy.js       | Whether Imgur is blocked here                                |
+
+And from the background to a tab: `GET_LINK_TEXT` and `SAVE_TO_FARM` (right-click
+menu, handled in `farm-context.js`); from the popup to an AQCloset tab:
+`FILL_AQCLOSET_INVENTORY` (`aqcloset-import.js`).
+
+---
+
+## Chrome and Firefox differences
+
+The code is the same; the differences are handled in a few places:
+
+- **`ext` instead of `chrome`/`browser`.** `shared/constants.js` sets
+  `const ext = globalThis.browser ?? globalThis.chrome`. Both return promises
+  (Chrome since version 121), so always use `ext.` and `await`.
+- **Background.** Chrome runs `background.js` as a service worker and loads the
+  shared files with `importScripts()`. Firefox runs it as an event page and loads
+  the same files from `"background": { "scripts": [...] }` in its manifest. The
+  build script reads the `importScripts()` list to write that, so the list only
+  lives in one place. Either way the background is stopped when idle, so don't
+  keep state in variables that must survive: put it in storage.
+- **Manifest.** `manifest.json` is Chrome's. The build makes Firefox's by
+  replacing `background`, removing `minimum_chrome_version` and adding
+  `browser_specific_settings` (the add-on id, minimum version 140 and
+  `data_collection_permissions: none`). The add-on id
+  (`aqw-lodestar@lodestar.addon`) must never change once it's published.
+- **Extension URLs in CSS.** `chrome-extension://` vs `moz-extension://` can't be
+  written in a stylesheet, so `content/page.js` puts the URLs CSS needs in
+  variables (`--aqwt-icon-circle`, ...) and `aqcloset-page.js` registers the font
+  from JavaScript. Pages can only load files listed in `web_accessible_resources`.
+- **Requests with the page's login.** In Firefox, `fetch` in a content script
+  doesn't send the site's cookies; `inventory-sync.js` uses `content.fetch` there.
+- **One content script entry per site.** Chrome doesn't always inject separate
+  `content_scripts` entries in the order they're listed. (The AQCloset entry used
+  to run before the shared files, so `ext` didn't exist yet and the panel handles
+  never appeared.) So each site has a single entry with the shared files first,
+  and nothing relies on the order *between* entries.
+
+---
+
+## Building and releasing
 
 ```sh
-npm run plugin:build                         # every plugin in desktop/plugins
-npm run plugin:build -- ultra-assistant      # one plugin
-npm run plugin:build -- ultra-assistant --arch x64   # for Intel Macs, from an Apple silicon Mac
+node scripts/build.mjs
 ```
 
-The zips go to `desktop/dist-plugins/`. Dependencies are installed and native
-modules rebuilt for this app's Electron version, from `desktop/node_modules`
-(run `npm install` in `desktop/` first). The build steps also need the usual
-native build tools: Xcode Command Line Tools on a Mac, Visual Studio Build
-Tools on Windows.
+It checks that every file the manifests mention exists, then writes:
 
-- **Plain JavaScript plugins** give one zip, `<id>-<version>.zip`, for every
-  platform.
-- **Plugins with native code** only run where they were built, so the zip is
-  `<id>-<version>-<platform>-<arch>.zip`. `plugin.json` gets a `build` entry
-  saying so, which the app checks when installing. The *Desktop app* workflow
-  builds every plugin on the Mac (Apple silicon and Intel), Windows and Linux
-  machines and attaches the zips to the release.
+| Output                                    | Use                                                 |
+| ----------------------------------------- | --------------------------------------------------- |
+| `dist/chrome/`                            | Load unpacked in Chrome to test the exact package   |
+| `dist/firefox/`                           | Load in `about:debugging` to test the exact package |
+| `dist/aqw-lodestar-chrome-<version>.zip`  | Upload to the Chrome Web Store                      |
+| `dist/aqw-lodestar-firefox-<version>.zip` | Upload to addons.mozilla.org                        |
 
-Native modules are tied to Electron's major version. When `electron` in
-`package.json` moves to a new major version, rebuild and re-release the plugins
-with native code. Their old zips are refused by the new app, with that reason.
+Only the extension's own folders go in (`INCLUDE` in the script): not this
+README, `scripts/`, `dist/` or dotfiles like `.DS_Store`.
 
-## Developing
+### Releasing a new version
 
-Needs Node 18 or newer.
+1. Raise `"version"` in `manifest.json` (both stores refuse a version they've
+   already seen). Use `1.0.1` for fixes, `1.1.0` for features.
+2. `node scripts/build.mjs`
+3. Test `dist/chrome/` and `dist/firefox/` once each.
+4. Upload the zips:
+   - [Chrome Web Store](https://chromewebstore.google.com/detail/aqw-lodestar/ebaiceinineljleohmdapccokleconkk):
+     Developer Dashboard → the item → *Package* → *Upload new package*.
+   - [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/aqw-lodestar/):
+     Developer Hub → the add-on → *Upload New Version*.
+
+### Store listing notes
+
+Both stores ask why each permission is needed:
+
+| Permission                                        | Why                                                          |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| `storage`                                         | Saves the farm list, synced inventory, settings and caches   |
+| `unlimitedStorage`                                | The daily item catalog is larger than the default quota      |
+| `contextMenus`                                    | "Add to Items to farm" and "Try on item" on right-click      |
+| aqwwiki.wikidot.com, account.aq.com, aqcloset.com | The sites the extension adds features to; also reads wiki item pages for tooltips |
+| game.aq.com                                       | Looks up a character for Check bag; game files for the HD render |
+| www.artix.com                                     | Reads the event calendar for server boosts                   |
+| raw.githubusercontent.com                         | Downloads the daily item catalog                             |
+| i.imgur.com                                       | Checks whether Imgur pictures are blocked in the user's country |
+
+- **Data collection:** none. Firefox's manifest says so
+  (`data_collection_permissions`). In the Chrome Web Store's *Privacy* tab, state
+  that no user data is collected. The website's privacy policy explains it in full.
+- **Remote code:** none. All code is in the package; the item catalog is data.
+- **Source code for Firefox review:** not needed, as nothing is minified or
+  generated.
+
+---
+
+## Desktop app
+
+`desktop/` turns the toolbar popup into an app for **Mac, Windows and Linux**,
+with the same server boosts, *Check bag*, *Items to Farm* list, *Add item from
+link*, dark/light switch and backups. What it adds:
+
+- **Stay on top:** keeps the window above every other window, including the
+  game. Use the pin button in the header, *Settings → Window*, *View → Stay on
+  Top*, or ⌘⇧T / Ctrl+Shift+T. It's remembered along with the window's size and
+  position.
+- **Menu bar / tray icon:** a compass in the Mac menu bar (system tray on
+  Windows and Linux) that shows or hides the window. Right-click it for
+  *Stay on Top* and *Quit*.
+- **Import from Chrome:** *Settings → Browser extension* copies the farm list,
+  synced inventory and settings from the extension in Chrome, Edge, Brave,
+  Vivaldi, Opera or Arc in one click. It reads the extension's storage straight
+  from the browser profile, so the extension needs no changes. It only copies
+  from the browser to the app. Firefox users move data with a backup file
+  (*Export* in the extension, *Import…* in the app).
+
+- **Plugins:** extra features with a tab of their own next to *Farm*, managed
+  in *Settings → Plugins*. Two come with the app:
+  - [Item Lists](desktop/plugins/item-lists/README.md): the wiki's event item
+    lists, with the same filter, in their own tab or window. The *Owned items*
+    list takes an inventory pasted from account.aq.com, since the app has no
+    Sync button.
+  - [Class Enhancements](desktop/plugins/class-enhancements/README.md): the
+    class guide from aqw.app (turned off until you turn it on).
+
+  Others are a zip from the release, installed with *Install plugin…*: the
+  [Ultra Assistant](desktop/plugins/ultra-assistant/README.md) watches the
+  game's traffic during ultra boss fights and shows who should Taunt or Zone
+  next. How to write and build plugins:
+  [desktop/README.md → Plugins](desktop/README.md#plugins).
+
+The app runs **this repository's own popup code**: `desktop/scripts/copy-extension.mjs`
+copies `popup/`, `shared/`, `options/`, `icons/`, `fonts/` and `background.js`
+into the app at build time, and the extension's `background.js` runs in the
+app's main process. So a change to the popup reaches the app the next time it's
+built. Web-page features (tooltips, right-click menus and so on) aren't part of
+the app.
+
+### Running and building it
+
+Needs Node 22 (Electron's installer has trouble with Node 24).
 
 ```sh
 cd desktop
 npm install
-npm start
+npm start          # copies the popup files in and opens the app
+npm run dist:mac   # or dist:win / dist:linux: installers in desktop/dist/
 ```
 
-`npm start` copies the extension files and opens the app. After changing a
-file, quit the app and run `npm start` again. Changes in `renderer/` or the
-popup also show with *View → Reload*, but only after the copy step has run. For
-the popup's DevTools, use *View → Toggle Developer Tools*.
-
-## Building the installers
-
-**On GitHub (recommended):** push a tag starting with `desktop-v`:
-
-```sh
-git tag desktop-v1.0.0
-git push origin desktop-v1.0.0
-```
-
+To release, raise `"version"` in `desktop/package.json` and push a tag starting
+with `desktop-v` (for example `git tag desktop-v1.0.0 && git push origin desktop-v1.0.0`).
 The *Desktop app* workflow (`.github/workflows/desktop.yml`) builds on GitHub's
-Mac, Windows and Linux machines and attaches the installers to a release for that tag.
-It takes about 10 minutes. To try a build without making a release, run the
-workflow from the *Actions* tab; the files appear under the run's *Artifacts*.
+Mac, Windows and Linux machines and attaches the installers to a release:
 
-**On your own computer:** `npm run dist:mac` on a Mac, `npm run dist:win` on
-Windows, `npm run dist:linux` on Linux. The files go to `desktop/dist/`.
+| File                                                        | For                           |
+| ----------------------------------------------------------- | ----------------------------- |
+| `AQW-Lodestar-<version>-mac-universal.dmg`                  | Mac (Apple Silicon and Intel) |
+| `AQW-Lodestar-<version>-setup-x64.exe` / `-setup-arm64.exe` | Windows installer             |
+| `AQW-Lodestar-<version>-portable.exe`                       | Windows, without installing   |
+| `aqw-lodestar_<version>_<arch>.deb`                         | Ubuntu, Debian, Mint          |
+| `AQW-Lodestar-<version>-x86_64.AppImage`                    | Other Linux distributions     |
 
-| File | For |
-| --- | --- |
-| `AQW-Lodestar-<version>-mac-universal.dmg` | Mac (Apple Silicon and Intel), drag to Applications |
-| `AQW-Lodestar-<version>-mac-universal.zip` | The same app, zipped |
-| `AQW-Lodestar-<version>-setup-x64.exe` | Windows installer (most PCs) |
-| `AQW-Lodestar-<version>-setup-arm64.exe` | Windows installer for ARM PCs |
-| `AQW-Lodestar-<version>-portable.exe` | Windows, runs without installing |
-| `aqw-lodestar_<version>_<arch>.deb` | Ubuntu, Debian, Mint: `sudo apt install ./aqw-lodestar_*.deb` |
-| `AQW-Lodestar-<version>-x86_64.AppImage` | Any other Linux: `chmod +x`, then open it |
+The builds aren't signed with a paid certificate, so the first launch asks for
+confirmation: on a Mac, right-click → *Open* (or *System Settings → Privacy &
+Security → Open Anyway*); on Windows, *More info → Run anyway*.
 
-Raise `"version"` in `desktop/package.json` for each release. The app's version
-is separate from the extension's.
+[`desktop/README.md`](desktop/README.md) has the details: how each file works,
+where the app keeps its data, the install screens and icons, and signing.
 
-### Unsigned apps
+---
 
-The builds aren't signed with a paid certificate (an Apple Developer account
-costs $99 a year; Windows code signing certificates cost a similar amount
-yearly). The apps work, but the first launch asks for confirmation:
+## Common changes
 
-- **Mac:** right-click the app → *Open* → *Open*. On macOS 15 and newer, open it
-  once, then go to *System Settings → Privacy & Security* and choose *Open Anyway*.
-- **Windows:** SmartScreen says "Windows protected your PC": choose *More info* →
-  *Run anyway*.
-- **Linux:** no prompt. The AppImage needs `libfuse2` (`sudo apt install libfuse2t64`
-  on Ubuntu 24.04, `libfuse2` on older versions). If it closes straight away on
-  Ubuntu 24.04 or newer, start it with `--no-sandbox` or use the `.deb`, which
-  sets up Electron's sandbox properly.
+**Add an event list** to *Search Items by Tag*: add an entry to `ITEM_LISTS` in
+`content/item-lists.config.js`. The comment at the top explains every field; tag
+names are the wiki's own (listed at the bottom of every item page).
 
-To sign later, add the certificates as repository secrets and pass them to the
-build step: `CSC_LINK` / `CSC_KEY_PASSWORD` (plus `APPLE_ID`,
-`APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID` for notarizing on the Mac).
-Remove `CSC_IDENTITY_AUTO_DISCOVERY: false` from the workflow when you do.
+**Add a page to the popup:** add a tab button to `.tabs` in
+`popup/popup.html` (`role="tab"`, `data-tab="<name>"`, `aria-controls="<panel id>"`)
+and a `<section id="<panel id>" class="tab-panel" role="tabpanel" hidden>` for its
+content; `popup/tabs.js` does the rest. The page then shows in the extension
+and the desktop app. (With only *Farm*, the tab row is hidden.) For a page only
+in the desktop app, make it a plugin instead
+([desktop/README.md → Plugins](desktop/README.md#plugins)).
 
-### App icon and install screens
+**Add or adjust a boost type:** `GROUPS` at the top of `popup/boosts.js`. An
+event counts for a type when one of its `keywords` is in the calendar title
+(lowercased, `#` removed).
 
-- `build/icon.png` (1024×1024): the app icon, a vector redraw of the Lodestar
-  compass on a parchment tile. electron-builder makes the Mac, Windows and
-  Linux icons from it.
-- `build/background.png` (660×400) and `build/background@2x.png` (1320×800,
-  for Retina screens): the window you see when opening the `.dmg`. The app icon
-  sits at (180, 205) and the Applications folder at (480, 205), set under
-  `"dmg"` in `package.json`. If you change the picture, keep those spots clear
-  (or move them), and save both sizes.
-- `build/installerSidebar.bmp` (164×314) and `build/installerHeader.bmp`
-  (150×57): the Windows installer's side panel (welcome and finish pages) and
-  the banner at the top of its other pages. They must stay 24-bit BMPs at
-  exactly these sizes. The welcome page text is in `build/installer.nsh`.
-- Linux has no installer window: the `.deb` installs through the terminal or
-  the Software app, and the AppImage just runs. Both show the app icon and the
-  description from `package.json`.
+**Add a content script:** put the file in `content/` and add it to the site's
+entry in `manifest.json` (both `"js"` and, if it has one, `"css"`), after the
+shared files. If it's needed on several sites, add it to each of their entries.
 
-## Stay on top: the details
+**Use a shared file in the background:** add it to the `importScripts(...)` call
+in `background.js`. Firefox picks it up from there at build time. It must not
+touch `document` or `window` when it loads.
 
-- On the Mac the pinned window also follows you into other Spaces and over
-  full-screen apps (a full-screen browser or the AQW launcher).
-- On Windows it stays above normal and borderless windowed apps. Games running
-  in *exclusive* fullscreen draw over everything, so play in windowed or
-  borderless mode to see Lodestar on top.
-- On Linux the app runs through X11 (XWayland on Wayland desktops such as GNOME
-  and KDE Plasma), because Wayland doesn't let apps keep their own window on top.
-  If the window manager has its own "always on top" option, that works too.
+**Add a setting:** add its key to `STORAGE_KEYS`, read it with
+`ext.storage.local.get`, and listen to `ext.storage.onChanged` if pages should
+react without a reload. It's included in backups automatically.
+
+**Point to a different item catalog:** change `ITEM_CATALOG_URL` in
+`shared/constants.js` (and its host in `host_permissions` if it moves off
+raw.githubusercontent.com). It must be JSON shaped like
+`{ "generatedAt": "...", "items": { "/wiki-path": { "name", "tags", "rarity", "price", "locations", "images" } } }`.
+
+**Add a picture or icon:** put it in `icons/` (keep it small: 128 px is plenty
+for anything shown at icon size) and use `ext.runtime.getURL('icons/…')`.
+
+---
+
+## Debugging
+
+- **Background errors and logs:** Chrome → `chrome://extensions` → *Inspect views:
+  service worker*. Firefox → `about:debugging` → *Inspect*.
+- **Content script logs:** the page's own DevTools console. In Chrome, pick the
+  extension in the console's context dropdown to run code in its world.
+- **Popup:** right-click the popup → *Inspect*.
+- **Errors Chrome caught:** the *Errors* button on the extension's card.
+- **Stored data:** in the background console, `await ext.storage.local.get(null)`.
+  To force a fresh item catalog: `await ext.storage.local.remove('itemCatalog')`.
+- **A site changed its HTML:** most features find elements by the site's own
+  classes and ids (`#page-content`, `a.item`, `.object .label .name`, ...). The
+  selectors are near the top of each content script.
+
+---
+
+## Code style
+
+- Plain modern JavaScript, no build step. Two-space indents, single quotes,
+  semicolons.
+- Every file starts with a comment saying what it does and where it runs.
+- Injected CSS classes and ids start with `aqwt-` (`lip-` in the popup and a few
+  older places) so they never clash with the sites' own.
+- Never send user data anywhere. Anything new that contacts a site must be added
+  to the privacy policy and to the permission notes above.
+
+## License
+
+The code is under the [MIT License](LICENSE): anyone may use, copy, change and
+share it, as long as they keep the copyright notice. AdventureQuest Worlds
+artwork and names belong to Artix Entertainment, and the Poppins font has its
+own license (`fonts/OFL.txt`); neither is covered by the MIT License.
