@@ -1,20 +1,39 @@
 # Item Lists (Lodestar desktop plugin)
 
 *Comes with the app* (a built-in plugin): it can be turned off in Settings →
-Plugins, and a newer zip of it can be installed over it.
+Options → Features, and a newer zip of it can be installed over it (Settings →
+Options → Plugins).
 
 The event item lists from the wiki's *Search Items by Tag* page, in Lodestar's
 **Lists** tab: Frostval, Mogloween, Talk Like a Pirate Day, Black Friday and
-30 more, plus *Owned items* and *Farm list*. Pick a list from the dropdown (it
-remembers your last one) to see every item in
+30 more, plus *Owned items* and *Farm list*. Pick a list from the dropdown to see every item in
 it as a card with pictures, rarity, location and price, with *Try on* and *Add
 to farm list* buttons and checkmarks on what you own.
 
-The **filter icon** beside the dropdown narrows a list to AC items, Member items
-and/or items that are neither, and *Show owned items* can be unticked to leave
-out what you own (once your inventory is imported, see below; it isn't offered
-on the Owned list). The number on the icon is how many boxes are ticked. It's the same filter as the *Filter* button
-on the wiki, and the choice is remembered for every list.
+Above the cards, a **search box** narrows the list to names containing what you
+type, and the **filter icon** beside it opens a menu with:
+
+- **Lists**: tick several to see them together (an item in more than one shows
+  once). Your own lists (Owned items, Farm list) come first, then the events
+  on now, then the rest by how soon they come around (each event's `months` in
+  `content/item-lists.config.js`); the dropdown is ordered the same way.
+  Dage's, Nulgath's and Beleen's birthdays are events too, with only their
+  seasonal items, and count as on now from a week before to a week after. Their
+  items come from the staff member's wiki page (read once a day) and from shops
+  and maps named after them. With several ticked the dropdown reads "Frostval +
+  2 more"; picking a list in it shows that one alone again.
+- **Show**: AC items, Member items and/or items that are neither, and *Show
+  owned items* to leave out what you own (once your inventory is imported, see
+  below; not offered while the Owned list is shown).
+- **Type**: the weapon types (Sword, Axe, Dagger, Mace, Polearm, Staff, Wand,
+  Bow, Gun, Scythe, Whip, Gauntlet; *Weapons* ticks them all), then Armor, Class, Helm,
+  Cape, Pet, Ground, House, Wall item, Floor item and Misc item; none ticked
+  shows every type. Gun covers the game's Gun, HandGun and Rifle; Scythe is every weapon tagged scythe (the game calls most of them Polearms), so Polearm has none.
+
+The number on the icon is how many filters are in use. It's the same search and
+filter as on the wiki; the filter is remembered for every list, and the lists
+you had open are opened again next time (the first time: the events on now). Clicking a card makes it bigger to show
+all of its details; clicking another card shrinks the first one again.
 
 Locations leave out **Event Hub** (the game menu that lists every event): it's on
 almost every seasonal item, so it only takes up room. The wiki's lists do the same.
@@ -58,6 +77,6 @@ It's plain JavaScript (no native code), so one zip runs on every platform:
 | --- | --- |
 | `plugin.json` | Name, version, and the page (with `"popout"`, which adds the window button and sets its first size). |
 | `page/page.html` | The tab's heading and the place the lists go. |
-| `page/page.js` | Loads the extension's list scripts and styles from the app, adds the list view, and a dropdown in place of its row of list buttons (picking a list clicks its button). |
-| `page/page.css` | Hides the list buttons, styles the dropdown, and makes the lists follow the app's dark/light theme and fill the window's width. |
+| `page/page.js` | Loads the extension's list scripts and styles from the app, adds the list view, and a dropdown above it (it chooses lists with the view's `lists.select(ids)` and follows its `aqwt-lists-change` event). |
+| `page/page.css` | Styles the dropdown, and makes the lists follow the app's dark/light theme and fill the window's width. |
 | `page/icon.svg` | The tab icon. |

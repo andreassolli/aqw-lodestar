@@ -1,5 +1,4 @@
-// Backup page: shows what's saved, exports it, and imports a backup file.
-// The logic lives in shared/backup.js; this file is the page's UI.
+// Backup page UI. The actual logic is in shared/backup.js.
 (() => {
   const $ = (id) => document.getElementById(id);
   let pendingImport = null;
@@ -72,7 +71,7 @@
     confirmImport().catch((err) => setStatus(`Import failed: ${err.message}`, true))
   );
 
-  // Opened from the popup's "Import" button: go straight to choosing a file.
+  // Opened from the popup's Import button, go straight to picking a file.
   if (location.hash === '#import') {
     document.querySelector('.file-button')?.scrollIntoView({ block: 'center' });
     $('import-file').focus();

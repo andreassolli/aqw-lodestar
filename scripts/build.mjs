@@ -1,17 +1,10 @@
-// Builds the store-ready Chrome and Firefox versions of the extension.
+// Builds the Chrome and Firefox versions for the stores.
 //
 //   node scripts/build.mjs
 //
-// Writes:
-//   dist/chrome/                            unpacked, load with "Load unpacked"
-//   dist/firefox/                           unpacked, load from about:debugging
-//   dist/aqw-lodestar-chrome-<version>.zip  upload to the Chrome Web Store
-//   dist/aqw-lodestar-firefox-<version>.zip upload to addons.mozilla.org
-//
-// manifest.json in the project root is the Chrome manifest, so the project
-// folder itself also loads unpacked in Chrome while developing. The Firefox
-// manifest is made from it here (see firefoxManifest below). Needs Node 18+ and
-// nothing else: no npm install.
+// Output goes to dist/ (unpacked folders + zips). manifest.json is the Chrome one,
+// so the project folder also loads unpacked while developing. The Firefox
+// manifest is generated from it. No npm install needed.
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync, copyFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
@@ -21,26 +14,22 @@ import { deflateRawSync } from 'node:zlib';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
 
-// What goes into the extension. Everything else in the project (README, scripts,
-// dist, dotfiles) stays out of the packages.
-const INCLUDE = ['manifest.json', 'background.js', 'content', 'shared', 'popup', 'options', 'render', 'icons', 'fonts'];
-const SKIP_NAMES = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini']);
+// What goes into the extension. Everything else stays out.
+const INCLUDE = ['manifest.json', 'background.js', 'content', 'shared', 'components', 'popup', 'options', 'render', 'icons', 'fonts'];
+// The last three are old render tests, account-page.js only uses TestRender1.swf.
+const SKIP_NAMES = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini', 'CharacterRender.swf', 'TestRender2.swf', 'TestRenderer.swf']);
 
-// Firefox-only settings. The add-on id must never change once it's on
-// addons.mozilla.org: it's how Firefox knows an update belongs to this add-on.
+// Never change the add-on id once it's on AMO, that's how Firefox matches updates.
 const GECKO = {
   id: 'aqw-lodestar@lodestar.addon',
-  // 140 is the first Firefox that understands data_collection_permissions.
+  // 140 is the first Firefox that knows data_collection_permissions.
   strict_min_version: '140.0',
-  // Lodestar collects nothing (see the website's privacy policy).
+  // we don't collect anything
   data_collection_permissions: { required: ['none'] },
 };
 
-// ---------- manifests ----------
-
 const chromeManifest = JSON.parse(readFileSync(join(ROOT, 'manifest.json'), 'utf8'));
 
-/** The files background.js loads with importScripts(), in order. */
 function backgroundImports() {
   const source = readFileSync(join(ROOT, 'background.js'), 'utf8');
   const call = source.match(/importScripts\(\s*(['"][^)]*)\)/);
@@ -48,11 +37,8 @@ function backgroundImports() {
   return [...call[1].matchAll(/['"]([^'"]+)['"]/g)].map((m) => m[1]);
 }
 
-/**
- * Firefox runs the background as an event page, not a service worker, so it
- * gets "background.scripts": the files background.js would importScripts(),
- * then background.js itself. Chrome-only keys come out; Firefox's go in.
- */
+// Firefox uses an event page, not a service worker, so it gets background.scripts
+// with the same files. Chrome-only keys are removed.
 function firefoxManifest(chrome) {
   const { minimum_chrome_version, background, ...rest } = chrome;
   return {
@@ -62,9 +48,7 @@ function firefoxManifest(chrome) {
   };
 }
 
-// ---------- checks ----------
-
-/** Every file a manifest points at, so a typo fails the build instead of the browser. */
+// So a typo fails the build instead of the browser.
 function manifestFiles(manifest) {
   const files = new Set();
   const add = (file) => file && files.add(file);
@@ -85,8 +69,6 @@ function check(manifest, label) {
   const missing = manifestFiles(manifest).filter((file) => !existsSync(join(ROOT, file)));
   if (missing.length) throw new Error(`${label} manifest points at missing files:\n  ${missing.join('\n  ')}`);
 }
-
-// ---------- copying ----------
 
 function listFiles(path) {
   const full = join(ROOT, path);
@@ -118,8 +100,6 @@ function build(name, manifest) {
   console.log(`${name.padEnd(8)} ${relative(ROOT, out)}/  ·  ${relative(ROOT, zipPath)} (${size} KB, ${files.length + 1} files)`);
 }
 
-// ---------- zip (no dependencies; stores paths with "/" as the stores require) ----------
-
 const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
   let c = n;
   for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
@@ -136,7 +116,7 @@ function writeZip(path, entries) {
   const locals = [];
   const centrals = [];
   let offset = 0;
-  // A fixed date (2024-01-01) so the same source always gives the same zip.
+  // Fixed date so the same files give the same zip.
   const dosTime = 0;
   const dosDate = ((2024 - 1980) << 9) | (1 << 5) | 1;
 
@@ -149,8 +129,8 @@ function writeZip(path, entries) {
 
     const local = Buffer.alloc(30);
     local.writeUInt32LE(0x04034b50, 0);
-    local.writeUInt16LE(20, 4); // version needed
-    local.writeUInt16LE(0x0800, 6); // UTF-8 names
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0x0800, 6);
     local.writeUInt16LE(useDeflate ? 8 : 0, 8);
     local.writeUInt16LE(dosTime, 10);
     local.writeUInt16LE(dosDate, 12);
@@ -162,7 +142,7 @@ function writeZip(path, entries) {
 
     const central = Buffer.alloc(46);
     central.writeUInt32LE(0x02014b50, 0);
-    central.writeUInt16LE(20, 4); // version made by
+    central.writeUInt16LE(20, 4);
     central.writeUInt16LE(20, 6);
     central.writeUInt16LE(0x0800, 8);
     central.writeUInt16LE(useDeflate ? 8 : 0, 10);
@@ -187,8 +167,6 @@ function writeZip(path, entries) {
   end.writeUInt32LE(offset, 16);
   writeFileSync(path, Buffer.concat([...locals, ...centrals, end]));
 }
-
-// ---------- run ----------
 
 const firefox = firefoxManifest(chromeManifest);
 check(chromeManifest, 'Chrome');

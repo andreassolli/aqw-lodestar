@@ -1,5 +1,4 @@
-// Desktop app: the backup page's wording, for moving data between the
-// extension and the app (both use the same backup file format).
+// Backup page wording for the app.
 (() => {
   const lead = document.querySelector('.lead');
   if (lead) {
@@ -7,7 +6,7 @@
       'Move your data between the Lodestar browser extension and this app: export a backup in one and import it in the other.';
   }
 
-  // The extension's message talks about reloading browser tabs; the app updates by itself.
+  // The extension's message talks about reloading tabs, the app doesn't need that.
   const status = document.getElementById('status');
   if (status) {
     new MutationObserver(() => {

@@ -1,13 +1,12 @@
-// Item preview panel shown while hovering wiki links, inventory rows on
-// account.aq.com, and items on aqcloset.com. Content comes from item-preview.js.
-// Placement follows the popup setting: at the side of the screen, or above the item.
+// The tooltip when hovering wiki links, account site tables and AQCloset items.
+// Shows to the side, above the item, or not at all depending on the setting.
 (() => {
   const HOVER_DELAY_MS = 100;
   const EXCLUDED_LINK_AREAS = 'sub, #top-bar, #side-bar, #breadcrumbs, [data-aqwt-no-tooltip]';
   const BADGE_ICON_FILES = ['ac.png', 'legend.png'];
-  const ANCHOR_GAP = 8; // px between the item and the tooltip
+  const ANCHOR_GAP = 8;
   const VIEWPORT_MARGIN = 8;
-  const MIN_HEIGHT_ABOVE = 180; // below this much room above the item, show it underneath instead
+  const SHRINK_ALLOWED = 24; // cut this much off above before moving it below instead
 
   const panel = document.createElement('div');
   panel.className = 'aqwt-card aqwt-tooltip';
@@ -15,7 +14,7 @@
 
   let hoverTimer = null;
   let activeKey = null;
-  let anchorEl = null; // the hovered item, for 'anchored' placement
+  let anchorEl = null;
   let placement = 'side';
 
   ext.storage.local.get(STORAGE_KEYS.tooltipPlacement).then((result) => {
@@ -35,13 +34,12 @@
     }
   }
 
-  // aqcloset-page.js adds a "Toggle tooltip" switch; no switch means enabled.
   function isAqclosetTooltipEnabled() {
     const checkbox = document.getElementById('toggle-tooltip');
     return !checkbox || checkbox.checked;
   }
 
-  /** On aqcloset.com the item's preview is already in the DOM - reuse it. */
+  // AQCloset already has the images on the page so we just reuse them.
   function getAqclosetObjectImages(object) {
     const images = new Set();
     object.querySelectorAll('img[src]').forEach((img) => {
@@ -52,14 +50,43 @@
     return [...images];
   }
 
-  /** @returns {{url: string, name: string, pageImages?: string[]}|null} */
+  // Account site tables like Awesome Items and Buy Back. Looked up by header
+  // since you can drag the columns around.
+  function columnIndex(table, ...labels) {
+    const header = labels.map((label) => table.querySelector(`[role="columnheader"][aria-label="Column ${label}"]`)).find(Boolean);
+    return header ? header.getAttribute('aria-colindex') : null;
+  }
+
+  function resolveGridItem(target) {
+    const cell = target.closest('tr.dx-data-row > td');
+    const table = cell && cell.closest('#dataGridContainer');
+    if (!table || cell.getAttribute('aria-colindex') !== columnIndex(table, 'Item Name')) return null;
+
+    const name = cell.textContent.trim();
+    const typeColumn = columnIndex(table, 'Item Type', 'Type');
+    const typeCell = typeColumn && cell.parentElement.querySelector(`td[aria-colindex="${typeColumn}"]`);
+    const url = wikiUrlFromName(name);
+    if (!url || !typeCell) return null;
+
+    const acColumn = columnIndex(table, 'AC');
+    const acBox = acColumn && cell.parentElement.querySelector(`td[aria-colindex="${acColumn}"] [role="checkbox"]`);
+    // Buy Back has no AC column, it's all AC gear.
+    const ac = acBox ? acBox.getAttribute('aria-checked') === 'true' : true;
+    return { el: cell, url, name, itemType: typeCell.textContent.trim(), ac };
+  }
+
   function resolveTarget(target) {
     const link = target.closest('a[href]');
     if (link && !link.dataset.aqwtGenerated && isWikiUrl(link.href) && !link.closest(EXCLUDED_LINK_AREAS)) {
-      return { el: link, url: link.href, name: getItemLinkLabel(link) };
+      return { el: link, url: link.href, name: getItemLinkLabel(link), fromLink: true };
     }
 
-    if (PAGE.isInventory && target.tagName === 'TD' && target.parentElement?.firstElementChild === target) {
+    if (PAGE.isAccount) {
+      const gridItem = resolveGridItem(target);
+      if (gridItem) return gridItem;
+    }
+
+    if (PAGE.isInventory && (target.tagName === 'TD' || target.tagName === 'A') && target.parentElement?.firstElementChild === target) {
       const name = target.textContent.trim();
       const url = wikiUrlFromName(name);
       if (url) return { el: target, url, name };
@@ -75,34 +102,29 @@
     return null;
   }
 
-  /**
-   * 'anchored' placement: centered above the item. When the tooltip is taller
-   * than the room above, it's shortened to fit there; only when there's almost
-   * no room above (item at the very top of the screen) does it go below.
-   */
+  // Above the item. If it doesn't fit it goes below, unless it would barely have
+  // to shrink or there's even less room down there. Then it gets shorter instead.
   function positionOnAnchor() {
     if (!anchorEl || !panel.classList.contains('is-anchored') || !anchorEl.isConnected) return;
     const item = anchorEl.getBoundingClientRect();
-    // clientWidth/Height exclude scrollbars, unlike innerWidth/Height.
+    // clientWidth/Height skip the scrollbars.
     const viewportWidth = document.documentElement.clientWidth;
     const viewportHeight = document.documentElement.clientHeight;
 
-    // Natural size first. offsetWidth/Height are layout sizes, so the pop-in
-    // animation's scale doesn't distort them.
+    // offsetWidth/Height so the pop in animation doesn't mess up the size.
     panel.style.maxHeight = '';
     const width = panel.offsetWidth;
     const height = panel.offsetHeight;
 
     const roomAbove = item.top - ANCHOR_GAP - VIEWPORT_MARGIN;
     const roomBelow = viewportHeight - item.bottom - ANCHOR_GAP - VIEWPORT_MARGIN;
-    // max-height applies inside the padding and border, so leave room for them.
     const style = getComputedStyle(panel);
     const chrome = ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth']
       .reduce((sum, prop) => sum + parseFloat(style[prop]), 0);
     let top;
     if (height <= roomAbove) {
       top = item.top - ANCHOR_GAP - height;
-    } else if (roomAbove >= MIN_HEIGHT_ABOVE || roomAbove >= roomBelow) {
+    } else if (height - roomAbove <= SHRINK_ALLOWED || roomAbove > roomBelow) {
       panel.style.maxHeight = `${Math.max(roomAbove - chrome, 0)}px`;
       top = VIEWPORT_MARGIN;
     } else {
@@ -116,7 +138,7 @@
     panel.style.left = `${Math.max(VIEWPORT_MARGIN, Math.min(left, maxLeft))}px`;
   }
 
-  // Images loading in change the tooltip's height; keep it lined up with the item.
+  // Images change the height when they load, keep it lined up.
   new ResizeObserver(positionOnAnchor).observe(panel);
   window.addEventListener('scroll', positionOnAnchor, true);
 
@@ -144,16 +166,17 @@
 
   document.addEventListener('mouseover', (e) => {
     if (!(e.target instanceof Element)) return;
+    if (placement === 'off') return;
     const target = resolveTarget(e.target);
     if (!target || !target.url) return;
 
-    const key = `${target.url}::${target.name || ''}`;
+    const key = ItemPreview.previewKey(target);
     activeKey = key;
     clearTimeout(hoverTimer);
 
     hoverTimer = setTimeout(async () => {
       const preview = await ItemPreview.load(target);
-      if (!preview || activeKey !== key) return; // nothing to show, or the cursor already left
+      if (!preview || activeKey !== key) return;
       show(preview, target.el);
     }, HOVER_DELAY_MS);
   });
@@ -163,6 +186,7 @@
     if (
       e.target.closest('a') ||
       (PAGE.isInventory && e.target.tagName === 'TD') ||
+      (PAGE.isAccount && e.target.closest('tr.dx-data-row')) ||
       (PAGE.isAqcloset && e.target.closest('.object'))
     ) {
       hide();

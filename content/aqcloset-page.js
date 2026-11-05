@@ -1,7 +1,7 @@
-// aqcloset.com: a switch for the hover tooltip, and real wiki links on item
-// names so the right-click "Add to Items to farm" / "Try on" menus work there.
+// aqcloset.com: tooltip toggle, and real wiki links on item names so the
+// right-click menu works there too.
 (() => {
-  // Registered from JS so the font URL works in both Chrome and Firefox.
+  // Loaded from JS so the font URL works in both Chrome and Firefox.
   const poppins = new FontFace('Poppins', `url(${ext.runtime.getURL('fonts/Poppins-Regular.ttf')})`, { weight: '400' });
   poppins.load().then((font) => document.fonts.add(font)).catch(() => {});
 
@@ -31,10 +31,10 @@
       link.appendChild(nameEl);
     }
     link.href = url;
-    link.dataset.aqwtGenerated = '1'; // hover-tooltip.js handles these via the .object branch
+    link.dataset.aqwtGenerated = '1';
     link.style.color = 'inherit';
     link.style.textDecoration = 'inherit';
-    // Keep AQCloset's own click behavior; only block navigating to the wiki.
+    // Keep AQCloset's own click, just don't follow the link.
     link.addEventListener('click', (e) => e.preventDefault());
   }
 

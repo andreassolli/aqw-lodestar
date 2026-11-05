@@ -1,4 +1,4 @@
-// Maps wiki rarity text / tags to a badge. Styles live in shared/rarity.css.
+// Wiki rarity text/tags -> badge. Styles are in rarity.css.
 
 const RARITY_LABELS = {
   rare: 'Rare',
@@ -13,8 +13,7 @@ const RARITY_LABELS = {
   secret: 'Secret',
 };
 
-// Checked in order against the lowercased rarity text; "rare" must stay last
-// so "Seasonal Rare" isn't matched as plain "Rare".
+// Checked in order, "rare" has to be last or "Seasonal Rare" would match it.
 const RARITY_TEXT_RULES = [
   ['upgrade', 'upgrade'],
   ['seasonal', 'seasonal'],
@@ -28,13 +27,9 @@ const RARITY_TEXT_RULES = [
   ['rare', 'rare'],
 ];
 
-// Used only when the page has no usable "Rarity:" field.
+// Only used when there's no Rarity field.
 const RARITY_TAG_FALLBACKS = ['seasonal', 'rare', 'lqs'];
 
-/**
- * @param {{rarity?: string|null, tags?: string[]}} source
- * @returns {string|null} a key of RARITY_LABELS, or null for common/unknown rarities
- */
 function getRarity({ rarity, tags }) {
   const tagList = Array.isArray(tags) ? tags : [];
   if (tagList.includes('pseudo-rare')) return 'pseudo-rare';

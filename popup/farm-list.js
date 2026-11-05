@@ -1,5 +1,4 @@
-// The "Items to Farm" list: rendering, checking off, removing, and the
-// hover image preview / scroll hint.
+// The farm list: drawing it, checking off, removing, the image preview and the scroll hint.
 const FarmList = (() => {
   const HOVER_DELAY_MS = 350;
   const CURSOR_OFFSET = 16;
@@ -19,6 +18,14 @@ const FarmList = (() => {
     helm: 'helm.webp',
     cape: 'cape.webp',
     pet: 'petaqw.png',
+    house: 'aqwhouse.png',
+    ground: 'ground.png',
+    wall: 'aqwwall.png',
+    whip: 'aqwwhip.png',
+    handgun: 'aqwgun.png',
+    rifle: 'aqwgun.png',
+    gauntlet: 'aqwgauntlet.png',
+
   };
 
   const iconUrl = (file) => ext.runtime.getURL(`icons/${file}`);
@@ -27,7 +34,6 @@ const FarmList = (() => {
   let hoverTimer = null;
   let mouse = { x: 0, y: 0 };
   let previewEl = null;
-  let scrollHintEl = null;
 
   function getPreview() {
     if (!previewEl) {
@@ -88,7 +94,7 @@ const FarmList = (() => {
     row.addEventListener('mouseleave', hidePreview);
   }
 
-  // Entries saved by older versions kept wiki images under wikiInfo.
+  // Older entries kept images under wikiInfo.
   function previewUrlsFor(item) {
     if (Array.isArray(item.image) && item.image.length) return item.image;
     if (typeof item.image === 'string' && item.image) return [item.image];
@@ -98,21 +104,8 @@ const FarmList = (() => {
 
   function updateScrollHint() {
     const list = document.getElementById('list');
-    if (!scrollHintEl) {
-      scrollHintEl = document.createElement('div');
-      scrollHintEl.className = 'lip-scroll-indicator';
-      scrollHintEl.innerHTML =
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
-      document.body.appendChild(scrollHintEl);
-    }
-
     const hasMoreBelow = list.scrollHeight - list.clientHeight - list.scrollTop > 4;
-    scrollHintEl.classList.toggle('visible', hasMoreBelow);
-    if (!hasMoreBelow) return;
-
-    const rect = list.getBoundingClientRect();
-    scrollHintEl.style.left = `${rect.left + rect.width / 2}px`;
-    scrollHintEl.style.top = `${rect.bottom - 20}px`;
+    document.querySelector('.farm-list .lip-scroll-indicator').classList.toggle('visible', hasMoreBelow);
   }
 
   function el(tag, className, text) {
@@ -202,6 +195,7 @@ const FarmList = (() => {
     li.appendChild(row);
 
     if (item.locations && item.locations.length) li.appendChild(createLocation(item.locations[0]));
+    if (item.map) li.appendChild(CopyButton.create(`/join ${item.map}`, { className: 'join-command' }));
     if (item.price) li.appendChild(createPrice(item.price));
     if (item.mergeList && item.mergeList.items.length) {
       const ingredients = el('ul', 'lip-popup-ingredients');
@@ -219,13 +213,14 @@ const FarmList = (() => {
     const list = document.getElementById('list');
     document.getElementById('empty-message').hidden = items.length > 0;
 
-    // Newest first.
     const ordered = [...items].sort((a, b) => b.savedAt - a.savedAt);
     list.replaceChildren(...ordered.map(createItem));
     updateScrollHint();
   }
 
   function init() {
+    // The list's height changes with the window.
+    new ResizeObserver(updateScrollHint).observe(document.getElementById('list'));
     document.getElementById('list').addEventListener('scroll', () => {
       hidePreview();
       updateScrollHint();
@@ -236,12 +231,14 @@ const FarmList = (() => {
       render([]);
     });
 
-    FarmEntry.loadAll().then(render);
+    // Fill in entries from a transfer code or older ones without a /join map.
+    FarmEntry.loadAll()
+      .then(render)
+      .then(() => FarmEntry.completeEntries())
+      .catch(() => {});
 
-    // Items added elsewhere while this is open: the add buttons on item list
-    // cards (the desktop app's Lists tab, or its popout window), the right-click
-    // menu, another window. Changes made here come back too; those are skipped
-    // so the list isn't redrawn (and its scroll position lost) for nothing.
+    // Items added somewhere else while this is open (cards, right-click, another
+    // window). Our own changes come back too, skip those so we don't lose the scroll position.
     ext.storage.onChanged.addListener((changes, area) => {
       const change = changes[STORAGE_KEYS.farmItems];
       if (area !== 'local' || !change) return;

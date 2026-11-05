@@ -1,0 +1,39 @@
+.copy-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 6px;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: copy;
+  transition: border-color .15s ease, color .15s ease;
+}
+
+.copy-button code {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 10.5px;
+}
+
+.copy-button:hover {
+  border-color: var(--muted);
+  color: var(--ink);
+}
+
+.copy-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.copy-button.is-copied {
+  border-style: solid;
+  border-color: var(--green);
+}
+
+.copy-button-done {
+  color: var(--green);
+  font-weight: 600;
+}

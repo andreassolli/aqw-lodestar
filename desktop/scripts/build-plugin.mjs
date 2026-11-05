@@ -1,18 +1,11 @@
-// Packages a plugin from desktop/plugins/ as a zip to install in the app
-// (Settings → Plugins → Install plugin…).
+// Packs a plugin from desktop/plugins/ into a zip you can install in the app.
 //
 //   node scripts/build-plugin.mjs <id> [--arch x64|arm64]   (npm run plugin:build -- <id>)
 //   node scripts/build-plugin.mjs --dev                    (npm run plugins:dev)
 //
-// A plugin with npm dependencies gets them installed, and native ones (like the
-// Ultra Assistant's "cap") rebuilt for this app's Electron version. Native code
-// only runs on the platform it was built on, so such a plugin is built on each
-// platform (the GitHub workflow does this) and the zip's name says which one:
-//   dist-plugins/<id>-<version>-<platform>-<arch>.zip
-// A plugin without native code runs anywhere: dist-plugins/<id>-<version>.zip
-//
-// --dev installs and rebuilds the dependencies of every plugin in place, so
-// `npm start` can load them straight from desktop/plugins/.
+// Native dependencies get rebuilt for the app's Electron. Those only work on the
+// platform they were built on, so the zip name says which one. --dev installs
+// dependencies in place so npm start can load the plugins directly.
 
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -35,7 +28,7 @@ const archIndex = args.indexOf('--arch');
 const arch = archIndex >= 0 ? args[archIndex + 1] : process.arch;
 const ids = args.filter((arg, i) => !arg.startsWith('--') && args[i - 1] !== '--arch');
 
-/** The Electron version the app runs on, from desktop/node_modules (run npm install in desktop/ first). */
+// Electron version from desktop/node_modules (run npm install first).
 function electronVersion() {
   const file = join(DESKTOP, 'node_modules', 'electron', 'package.json');
   if (!existsSync(file)) throw new Error('Electron is not installed: run npm install in desktop/ first');
@@ -48,7 +41,6 @@ function hasDependencies(dir) {
   return Object.keys(JSON.parse(readFileSync(file, 'utf8')).dependencies || {}).length > 0;
 }
 
-/** npm install (without dev dependencies), then rebuild native modules for Electron. */
 async function installDependencies(dir, version) {
   console.log(`  npm install in ${relative(DESKTOP, dir) || '.'}`);
   execFileSync(NPM, ['install', '--omit=dev', '--no-audit', '--no-fund', '--no-package-lock'], { cwd: dir, stdio: 'inherit', shell: process.platform === 'win32' });
@@ -62,7 +54,7 @@ function listFiles(dir, base = dir) {
     if (SKIP.has(name) && name !== 'node_modules') return [];
     const full = join(dir, name);
     if (statSync(full).isDirectory()) {
-      // Inside node_modules, leave out what's only needed for building.
+      // Skip build-only stuff inside node_modules.
       if (name === 'node_modules' && dir === base) return listFiles(full, base);
       if (['test', 'tests', '.github', 'obj.target', '.deps'].includes(name) && full.includes(`${sep}node_modules${sep}`)) return [];
       return listFiles(full, base);
@@ -79,7 +71,7 @@ async function build(id) {
   const version = electronVersion();
   console.log(`${manifest.name} ${manifest.version || ''}`);
 
-  // Work on a copy, so desktop/plugins/<id> keeps whatever node_modules it has for npm start.
+  // Work on a copy so desktop/plugins/<id> keeps its node_modules for npm start.
   const work = join(OUT, '.work', id);
   rmSync(work, { recursive: true, force: true });
   mkdirSync(work, { recursive: true });
@@ -89,7 +81,7 @@ async function build(id) {
 
   const files = listFiles(work);
   const native = files.some((file) => file.endsWith('.node'));
-  // Native code is tied to this platform, processor and Electron version; plain JavaScript isn't.
+  // Native code is tied to platform, CPU and Electron version. Plain JS isn't.
   const builtManifest = native
     ? { ...manifest, build: { platform: process.platform, arch, electron: version, native: true } }
     : manifest;

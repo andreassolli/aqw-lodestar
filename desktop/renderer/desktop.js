@@ -1,6 +1,4 @@
-// Desktop app additions to the extension's popup: the "stay on top" pin button
-// in the header and in Settings, plus wording that fits an app without
-// browser tabs. Loaded after popup.js (see scripts/copy-extension.mjs).
+// Desktop additions to the popup: the stay on top pin and wording that fits an app.
 (() => {
   const desktop = window.lodestarDesktop;
   if (!desktop) return;
@@ -15,7 +13,7 @@
   pin.className = 'header-button';
   pin.innerHTML =
     '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>';
-  // Top right, beside the logo (Settings and the theme switch are in the tab row below).
+  // Top right next to the logo.
   const pinCorner = document.createElement('div');
   pinCorner.className = 'header-buttons pin-corner';
   pinCorner.append(pin);
@@ -24,16 +22,12 @@
   const group = document.createElement('div');
   group.className = 'settings-group';
   group.innerHTML = `
-    <h3>Window</h3>
-    <div class="setting-row">
-      <span class="setting-label" id="stay-on-top-label">Stay on top</span>
-      <div class="segmented" role="radiogroup" aria-labelledby="stay-on-top-label">
-        <label><input type="radio" name="stay-on-top" value="off" checked><span>Off</span></label>
-        <label><input type="radio" name="stay-on-top" value="on"><span>On</span></label>
-      </div>
-    </div>
-    <p class="settings-hint">Keeps Lodestar above every other window, including the game, so the boosts and your farm list stay in view. Also with the pin button at the top, or ${shortcut}.</p>`;
-  document.querySelector('#settings-view .settings-header')?.after(group);
+    <h3 id="stay-on-top-label">Stay on top <button type="button" class="help-tip" data-help="Keeps Lodestar above every other window, including the game, so the boosts and your farm list stay in view. Also with the pin button at the top, or ${shortcut}."></button></h3>
+    <div class="segmented" role="radiogroup" aria-labelledby="stay-on-top-label">
+      <label><input type="radio" name="stay-on-top" value="off" checked><span>Off</span></label>
+      <label><input type="radio" name="stay-on-top" value="on"><span>On</span></label>
+    </div>`;
+  document.getElementById('settings-options')?.prepend(group);
   const radios = [...group.querySelectorAll('input[name="stay-on-top"]')];
 
   function reflect(pinned) {
@@ -58,8 +52,7 @@
   const importGroup = document.createElement('div');
   importGroup.className = 'settings-group';
   importGroup.innerHTML = `
-    <h3>Browser extension</h3>
-    <p class="settings-hint">Copy your farm list, synced inventory and settings from the Lodestar extension in Chrome, Edge, Brave or another Chromium browser. It replaces what's in the app now; the app keeps a copy of that first.</p>
+    <h3>Import from a browser <button type="button" class="help-tip" data-help="Copies your farm list, synced inventory and settings from the Lodestar extension in Chrome, Edge, Brave or another Chromium browser, once. It replaces what's in the app now; the app keeps a copy of that first."></button></h3>
     <div class="settings-actions">
       <button type="button" id="import-chrome" class="pill-button">Import from Chrome</button>
     </div>
@@ -70,7 +63,7 @@
     <p id="import-chrome-status" class="check-status" role="status" hidden></p>`;
   const dataGroup = document.getElementById('export-data')?.closest('.settings-group');
   if (dataGroup) dataGroup.before(importGroup);
-  else document.getElementById('settings-view')?.append(importGroup);
+  else document.getElementById('settings-data')?.append(importGroup);
 
   const importButton = importGroup.querySelector('#import-chrome');
   const importStatus = importGroup.querySelector('#import-chrome-status');
@@ -78,11 +71,7 @@
   const otherSelect = importGroup.querySelector('#import-source');
   const STATUS_KEY = 'lodestar-import-status';
 
-  function setImportStatus(message, isError = false) {
-    importStatus.hidden = !message;
-    importStatus.textContent = message || '';
-    importStatus.classList.toggle('is-error', isError);
-  }
+  const setImportStatus = StatusLine(importStatus);
 
   const when = (ms) => new Date(ms).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -108,8 +97,7 @@
     // "40 items on the farm list · 812 inventory items (synced 12/10/2026)"
     const summary = Backup.describe(result.data).slice(0, 2).join(' · ');
     const message = `Imported from ${result.label}: ${summary}.`;
-    // Reload so the theme, username and lists all show the imported data; the
-    // message and the open Settings view survive the reload.
+    // Reload so everything shows the imported data. The message survives the reload.
     try {
       sessionStorage.setItem(STATUS_KEY, JSON.stringify({ message, others: result.others, id: result.id }));
     } catch {}
@@ -130,23 +118,24 @@
     if (otherSelect.value) runImport(otherSelect.value);
   });
 
-  // After an import's reload: reopen Settings and show what happened.
+  // After the reload, reopen Settings and show the result.
   try {
     const saved = JSON.parse(sessionStorage.getItem(STATUS_KEY) || 'null');
     if (saved) {
       sessionStorage.removeItem(STATUS_KEY);
       document.getElementById('settings-toggle')?.click();
+      Settings.showPanel('data');
       setImportStatus(saved.message);
       showOthers(saved.others, saved.id);
       importGroup.scrollIntoView({ block: 'nearest' });
     }
   } catch {}
 
-  // There's no right-click menu on web pages here; items come in through the + button or a backup.
+  // No right-click menu in the app, items come from the + button or a backup.
   const empty = document.getElementById('empty-message');
   if (empty) {
     empty.innerHTML =
-      'Nothing here yet. Press <strong>+</strong> above to add an item from a wiki link, or bring over your extension’s farm list with <strong>Settings → Import from Chrome</strong>.';
+      'Nothing here yet. Press <strong>+</strong> above to add an item from a wiki link, or bring over your extension’s farm list with <strong>Settings → Data → Import from Chrome</strong>.';
   }
 
   const dataHint = [...document.querySelectorAll('#settings-view .settings-hint')].find((p) => p.textContent.startsWith('Save your farm list'));

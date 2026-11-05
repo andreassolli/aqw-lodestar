@@ -1,8 +1,7 @@
-// "Try on" buttons: one next to the title on wiki item pages, and a small one
-// on each item list card (item-lists.js uses TryOnButtons.create). Clicking
-// opens the AQCloset wardrobe wearing your saved character's outfit plus the item.
+// "Try on" buttons on item pages and list cards. Opens AQCloset with your
+// character wearing the item.
 const TryOnButtons = (() => {
-  // Items with these wiki tags can't be worn, so they get no button.
+  // These tags can't be worn.
   const NOT_WEARABLE_TAGS = ['item', 'house', 'floor-item', 'wall-item', 'npc', 'quest', 'shop', 'location', 'monster', 'enhancement'];
   const ERROR_RESET_MS = 4000;
   const HANGER_ICON =
@@ -19,7 +18,6 @@ const TryOnButtons = (() => {
     button.innerHTML = HANGER_ICON + (compact ? '' : `<span>${label}</span>`);
   }
 
-  /** @param {{name: string, compact?: boolean}} options compact = icon only (cards) */
   function create({ name, compact = false }) {
     const button = document.createElement('button');
     button.type = 'button';
@@ -54,7 +52,7 @@ const TryOnButtons = (() => {
     title.appendChild(create({ name: WikiParser.getTitle(document) }));
   }
 
-  addPageButton();
+  Features.run('itemButtons', addPageButton);
 
   return { create, isWearable };
 })();

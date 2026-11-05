@@ -1,0 +1,182 @@
+{
+  "id": "ultra-dage",
+  "name": "Ultra Dage",
+  "columns": [
+    {
+      "id": "column-1792969174313-bwvks",
+      "name": "Chaos Avenger",
+      "color": "#0d0d0d"
+    },
+    {
+      "id": "column-1792969174313-5xre2",
+      "name": "Ultra Dage",
+      "color": "#0d0d0d"
+    }
+  ],
+  "types": [
+    {
+      "id": "normal",
+      "name": "Normal",
+      "color": ""
+    },
+    {
+      "id": "ca",
+      "name": "Chaos Avenger",
+      "color": "#a333ff"
+    },
+    {
+      "id": "auto",
+      "name": "Auto",
+      "color": "#474747"
+    },
+    {
+      "id": "decay",
+      "name": "Noxious Decay",
+      "color": "#3f82fd"
+    },
+    {
+      "id": "platform",
+      "name": "Platform",
+      "color": "#ea3323"
+    },
+    {
+      "id": "disposal",
+      "name": "Disposal",
+      "color": "#ff9a57"
+    },
+    {
+      "id": "section",
+      "name": "Section",
+      "color": "#34a26f"
+    }
+  ],
+  "entries": [
+    {
+      "text": "Skill 2",
+      "type": "ca",
+      "column": "column-1792969174313-bwvks",
+      "row": 1
+    },
+    {
+      "text": "Auto",
+      "type": "auto",
+      "column": "column-1792969174313-5xre2",
+      "row": 1
+    },
+    {
+      "text": "Flux",
+      "type": "ca",
+      "column": "column-1792969174313-bwvks",
+      "row": 2
+    },
+    {
+      "text": "Auto",
+      "type": "auto",
+      "column": "column-1792969174313-5xre2",
+      "row": 2
+    },
+    {
+      "text": "Auto",
+      "type": "auto",
+      "column": "column-1792969174313-5xre2",
+      "row": 3
+    },
+    {
+      "text": "Auto",
+      "type": "auto",
+      "column": "column-1792969174313-5xre2",
+      "row": 4
+    },
+    {
+      "text": "Noxious Decay",
+      "type": "decay",
+      "column": "column-1792969174313-5xre2",
+      "row": 5
+    },
+    {
+      "text": "Flux",
+      "type": "ca",
+      "column": "column-1792969174313-bwvks",
+      "row": 6
+    },
+    {
+      "text": "Auto",
+      "type": "auto",
+      "column": "column-1792969174313-5xre2",
+      "row": 6
+    },
+    {
+      "text": "Auto",
+      "type": "auto",
+      "column": "column-1792969174313-5xre2",
+      "row": 7
+    },
+    {
+      "text": "Loop",
+      "type": "section",
+      "column": "column-1792969174313-bwvks",
+      "row": 8,
+      "span": true
+    },
+    {
+      "text": "Platform",
+      "type": "platform",
+      "column": "column-1792969174313-5xre2",
+      "row": 9
+    },
+    {
+      "text": "Noxious Decay",
+      "type": "decay",
+      "column": "column-1792969174313-5xre2",
+      "row": 10
+    },
+    {
+      "text": "Flux",
+      "type": "ca",
+      "column": "column-1792969174313-bwvks",
+      "row": 11
+    },
+    {
+      "text": "Auto",
+      "type": "auto",
+      "column": "column-1792969174313-5xre2",
+      "row": 11
+    },
+    {
+      "text": "Auto",
+      "type": "auto",
+      "column": "column-1792969174313-5xre2",
+      "row": 12
+    },
+    {
+      "text": "Auto",
+      "type": "auto",
+      "column": "column-1792969174313-5xre2",
+      "row": 13
+    },
+    {
+      "text": "Decay/Disposal every 3rd zone",
+      "type": "decay",
+      "column": "column-1792969174313-5xre2",
+      "row": 14
+    },
+    {
+      "text": "Flux",
+      "type": "ca",
+      "column": "column-1792969174313-bwvks",
+      "row": 15
+    },
+    {
+      "text": "Auto",
+      "type": "auto",
+      "column": "column-1792969174313-5xre2",
+      "row": 15
+    },
+    {
+      "text": "Auto",
+      "type": "auto",
+      "column": "column-1792969174313-5xre2",
+      "row": 16
+    }
+  ]
+}

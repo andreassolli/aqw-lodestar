@@ -139,9 +139,9 @@ content/               Content scripts, injected into the three sites
   aqcloset-import.js/.css Filling AQCloset's inventory import
 
 render/                Character image download (account.aq.com)
-  capture.js           Canvas → image file (content script)
+  capture.js           Canvas → image file (runs in the page's own world)
   main-world.js        HD render with the page's Flash player (runs in the page's own world)
-  CharacterRender.swf  The Flash file used for the HD render
+  TestRender1.swf      The Flash file used for the HD render
 
 popup/                 The toolbar popup
   popup.html / popup.js  Page and entry point
@@ -233,7 +233,7 @@ with the **same names** that do the work directly, so shared files such as
   events by keywords in their titles, and caches them for 12 hours.
 - **Character image:** `account-page.js` either captures the Flash canvas already
   on the page (`render/capture.js`), or asks `render/main-world.js` to render the
-  character again with `render/CharacterRender.swf` at 3× size.
+  character again with `render/TestRender1.swf` at 3× size.
 
 ---
 
@@ -398,32 +398,39 @@ with the same server boosts, *Check bag*, *Items to Farm* list, *Add item from
 link*, dark/light switch and backups. What it adds:
 
 - **Stay on top:** keeps the window above every other window, including the
-  game. Use the pin button in the header, *Settings → Window*, *View → Stay on
+  game. Use the pin button in the header, *Settings → Options → Window*, *View → Stay on
   Top*, or ⌘⇧T / Ctrl+Shift+T. It's remembered along with the window's size and
   position.
 - **Menu bar / tray icon:** a compass in the Mac menu bar (system tray on
   Windows and Linux) that shows or hides the window. Right-click it for
   *Stay on Top* and *Quit*.
-- **Import from Chrome:** *Settings → Browser extension* copies the farm list,
+- **Sync with the extension:** *Settings → Data → Browser extension sync* keeps
+  the farm list and settings the same in the app and the Lodestar extension on
+  this computer: press *Connect the extension* and type the code it shows into
+  the extension (*Settings → Data → Desktop app*). The app listens on
+  127.0.0.1:47386 for the extension only (see `desktop/sync-server.js` and
+  `shared/sync.js`); the inventory isn't synced.
+- **Import from Chrome:** *Settings → Data → Browser extension* copies the farm list,
   synced inventory and settings from the extension in Chrome, Edge, Brave,
   Vivaldi, Opera or Arc in one click. It reads the extension's storage straight
   from the browser profile, so the extension needs no changes. It only copies
   from the browser to the app. Firefox users move data with a backup file
   (*Export* in the extension, *Import…* in the app).
 
-- **Plugins:** extra features with a tab of their own next to *Farm*, managed
-  in *Settings → Plugins*. Two come with the app:
+- **Plugins:** extra features with a tab of their own next to *Farm*, turned on
+  and off in *Settings → Options → Features*, and installed from a zip in
+  *Settings → Options → Plugins*. Three come with the app:
   - [Item Lists](desktop/plugins/item-lists/README.md): the wiki's event item
     lists, with the same filter, in their own tab or window. The *Owned items*
     list takes an inventory pasted from account.aq.com, since the app has no
     Sync button.
   - [Class Enhancements](desktop/plugins/class-enhancements/README.md): the
     class guide from aqw.app (turned off until you turn it on).
+  - [Attack Patterns](desktop/plugins/ultra-assistant/README.md): each ultra
+    boss's attack pattern, in its Ultra tab or a window of its own.
 
-  Others are a zip from the release, installed with *Install plugin…*: the
-  [Ultra Assistant](desktop/plugins/ultra-assistant/README.md) watches the
-  game's traffic during ultra boss fights and shows who should Taunt or Zone
-  next. How to write and build plugins:
+  Others are a zip from a release, installed with *Install plugin…*. How to
+  write and build plugins:
   [desktop/README.md → Plugins](desktop/README.md#plugins).
 
 The app runs **this repository's own popup code**: `desktop/scripts/copy-extension.mjs`

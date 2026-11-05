@@ -1,7 +1,5 @@
-// Wiki item pages where Imgur is blocked (see shared/image-proxy.js): the
-// item's own picture is swapped for its AQCloset thumbnail when AQCloset has an
-// item with exactly this name, and loaded through the image proxy otherwise.
-// Other Imgur images on the page are proxied by ImageProxy itself.
+// Where Imgur is blocked: swap the item picture for the AQCloset one, or load
+// it through a proxy if AQCloset doesn't have it.
 (() => {
   if (!PAGE.isWiki || location.pathname.startsWith('/search-items-by-tag')) return;
   if (!WikiParser.isItemPage(document) || WikiParser.isNonItemCategory(document)) return;
@@ -9,18 +7,16 @@
   const content = document.getElementById('page-content');
   if (!content) return;
 
-  // ImageProxy may already have pointed an image at the proxy; it keeps the original.
   const originalSrc = (img) => img.getAttribute(ImageProxy.ORIGINAL_ATTR) || img.getAttribute('src') || '';
 
-  // The item's picture: the male/female tabs if there are any, otherwise the
-  // first Imgur image on the page.
+  // The male/female tab images, or the first Imgur image.
   const tabImages = ['#wiki-tab-0-0 img', '#wiki-tab-0-1 img'].map((s) => content.querySelector(s)).filter(Boolean);
   const itemImages = (tabImages.length ? tabImages : [...content.querySelectorAll('img')])
     .filter((img) => ImageProxy.isImgur(originalSrc(img)))
     .slice(0, tabImages.length ? 2 : 1);
   if (!itemImages.length) return;
 
-  // Claimed, so ImageProxy leaves them to this script.
+  // Marked so ImageProxy leaves them alone.
   const originals = new Map(itemImages.map((img) => [img, new URL(originalSrc(img), location.href).href]));
   itemImages.forEach((img) => img.setAttribute(ImageProxy.OWNER_ATTR, 'wiki-images'));
 
@@ -41,7 +37,7 @@
 
   async function replace() {
     const { images } = await findOnCloset();
-    if (!ImageProxy.isActive()) return; // turned off while AQCloset answered
+    if (!ImageProxy.isActive()) return;
 
     itemImages.forEach((img, i) => {
       const original = originals.get(img);
@@ -53,7 +49,7 @@
       img.onerror = () => {
         img.onerror = null;
         img.classList.remove('aqwt-closet-image');
-        ImageProxy.useProxy(img, original); // thumbnail missing: proxy the wiki image after all
+        ImageProxy.useProxy(img, original); // no thumbnail, proxy the wiki image instead
       };
       img.classList.add('aqwt-closet-image');
       img.title = 'Picture from AQCloset (Imgur is blocked here)';

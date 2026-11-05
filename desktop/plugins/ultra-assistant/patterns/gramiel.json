@@ -1,0 +1,366 @@
+{
+  "id": "gramiel",
+  "name": "Gramiel",
+  "columns": [
+    {
+      "id": "column-1792970349080-iglev",
+      "name": "HP / Attack",
+      "color": "#000000"
+    },
+    {
+      "id": "column-1792970349080-q3o2e",
+      "name": "Left / Order",
+      "color": "#000000"
+    },
+    {
+      "id": "column-1792970349080-dn5fg",
+      "name": "Right",
+      "color": "#000000"
+    }
+  ],
+  "types": [
+    {
+      "id": "normal",
+      "name": "Normal",
+      "color": ""
+    },
+    {
+      "id": "phase",
+      "name": "Phase",
+      "color": "#000000"
+    },
+    {
+      "id": "crystal",
+      "name": "Crystal",
+      "color": "#9fc5e8"
+    },
+    {
+      "id": "lr",
+      "name": "LR",
+      "color": "#3c78d8"
+    },
+    {
+      "id": "shaman",
+      "name": "Shaman",
+      "color": "#8e7cc3"
+    },
+    {
+      "id": "sc",
+      "name": "SC",
+      "color": "#93c47d"
+    },
+    {
+      "id": "loo",
+      "name": "LOO",
+      "color": "#ffe599"
+    },
+    {
+      "id": "attack",
+      "name": "Shattering Attack",
+      "color": "#a2c4c9"
+    },
+    {
+      "id": "everyone",
+      "name": "Everyone",
+      "color": "#6fa8dc"
+    },
+    {
+      "id": "hphead",
+      "name": "HP / Order header",
+      "color": "#ffd966"
+    },
+    {
+      "id": "hp",
+      "name": "HP",
+      "color": "#ffe599"
+    },
+    {
+      "id": "delay",
+      "name": "Delay",
+      "color": "#f1c232"
+    },
+    {
+      "id": "loop",
+      "name": "Loop",
+      "color": "#93c47d"
+    },
+    {
+      "id": "stops",
+      "name": "Shaman stops",
+      "color": "#d9d9d9"
+    },
+    {
+      "id": "waiting",
+      "name": "Waiting",
+      "color": "#6aa84f"
+    },
+    {
+      "id": "trigger",
+      "name": "Death Door trigger",
+      "color": "#6d9eeb"
+    },
+    {
+      "id": "door",
+      "name": "Death's Door",
+      "color": "#cc4125"
+    }
+  ],
+  "entries": [
+    {
+      "text": "Phase 1 (Loop)",
+      "type": "phase",
+      "column": "column-1792970349080-iglev",
+      "row": 1,
+      "span": true
+    },
+    {
+      "text": "Left Crystal",
+      "type": "crystal",
+      "column": "column-1792970349080-q3o2e",
+      "row": 2
+    },
+    {
+      "text": "Right Crystal",
+      "type": "crystal",
+      "column": "column-1792970349080-dn5fg",
+      "row": 2
+    },
+    {
+      "text": "Shattering Attack 1 (T1)",
+      "type": "attack",
+      "column": "column-1792970349080-iglev",
+      "row": 3
+    },
+    {
+      "text": "LR",
+      "type": "lr",
+      "column": "column-1792970349080-q3o2e",
+      "row": 3
+    },
+    {
+      "text": "Shaman",
+      "type": "shaman",
+      "column": "column-1792970349080-dn5fg",
+      "row": 3
+    },
+    {
+      "text": "Shattering Attack 2 (T2)",
+      "type": "attack",
+      "column": "column-1792970349080-iglev",
+      "row": 4
+    },
+    {
+      "text": "SC",
+      "type": "sc",
+      "column": "column-1792970349080-q3o2e",
+      "row": 4
+    },
+    {
+      "text": "LOO",
+      "type": "loo",
+      "column": "column-1792970349080-dn5fg",
+      "row": 4
+    },
+    {
+      "text": "Break his Guard!",
+      "type": "crystal",
+      "column": "column-1792970349080-iglev",
+      "row": 5
+    },
+    {
+      "text": "All attack Gramiel",
+      "type": "everyone",
+      "column": "column-1792970349080-q3o2e",
+      "row": 5,
+      "span": 2
+    },
+    {
+      "text": "PHASE 2",
+      "type": "phase",
+      "column": "column-1792970349080-iglev",
+      "row": 6,
+      "span": true
+    },
+    {
+      "text": "HP",
+      "type": "hphead",
+      "column": "column-1792970349080-iglev",
+      "row": 7
+    },
+    {
+      "text": "Order",
+      "type": "hphead",
+      "column": "column-1792970349080-q3o2e",
+      "row": 7,
+      "span": 2
+    },
+    {
+      "text": "7.5 M",
+      "type": "hp",
+      "column": "column-1792970349080-iglev",
+      "row": 8
+    },
+    {
+      "text": "Delay Taunt 5 Sec",
+      "type": "delay",
+      "column": "column-1792970349080-q3o2e",
+      "row": 8,
+      "span": 2
+    },
+    {
+      "text": "DPS > LOO > SC > LR",
+      "type": "loop",
+      "column": "column-1792970349080-q3o2e",
+      "row": 9,
+      "span": 2
+    },
+    {
+      "text": "5.5 M ~ 5.8 M",
+      "type": "hp",
+      "column": "column-1792970349080-iglev",
+      "row": 10
+    },
+    {
+      "text": "Shaman stops Attacking.",
+      "type": "stops",
+      "column": "column-1792970349080-q3o2e",
+      "row": 10,
+      "span": 2
+    },
+    {
+      "text": "Waiting for \"Liberator\" text",
+      "type": "waiting",
+      "column": "column-1792970349080-q3o2e",
+      "row": 11,
+      "span": 2
+    },
+    {
+      "text": "Shaman nuke",
+      "type": "trigger",
+      "column": "column-1792970349080-q3o2e",
+      "row": 12,
+      "span": 2
+    },
+    {
+      "text": "5.2 M",
+      "type": "hp",
+      "column": "column-1792970349080-iglev",
+      "row": 13
+    },
+    {
+      "text": "\"The Shadow Fiend lends their aid to those at Death’s Door.\"",
+      "type": "door",
+      "column": "column-1792970349080-q3o2e",
+      "row": 13,
+      "span": 2
+    },
+    {
+      "text": "Delay 4 Sec",
+      "type": "delay",
+      "column": "column-1792970349080-q3o2e",
+      "row": 14,
+      "span": 2
+    },
+    {
+      "text": "DPS > LOO > SC > LR",
+      "type": "loop",
+      "column": "column-1792970349080-q3o2e",
+      "row": 15,
+      "span": 2
+    },
+    {
+      "text": "3.3 M ~ 3.6 M",
+      "type": "hp",
+      "column": "column-1792970349080-iglev",
+      "row": 16
+    },
+    {
+      "text": "Shaman stops Attacking.",
+      "type": "stops",
+      "column": "column-1792970349080-q3o2e",
+      "row": 16,
+      "span": 2
+    },
+    {
+      "text": "Waiting for \"Liberator\" text",
+      "type": "waiting",
+      "column": "column-1792970349080-q3o2e",
+      "row": 17,
+      "span": 2
+    },
+    {
+      "text": "Shaman nuke",
+      "type": "trigger",
+      "column": "column-1792970349080-q3o2e",
+      "row": 18,
+      "span": 2
+    },
+    {
+      "text": "3 M",
+      "type": "hp",
+      "column": "column-1792970349080-iglev",
+      "row": 19
+    },
+    {
+      "text": "\"The Shadow Fiend lends their aid to those at Death’s Door.\"",
+      "type": "door",
+      "column": "column-1792970349080-q3o2e",
+      "row": 19,
+      "span": 2
+    },
+    {
+      "text": "Delay 4 Sec",
+      "type": "delay",
+      "column": "column-1792970349080-q3o2e",
+      "row": 20,
+      "span": 2
+    },
+    {
+      "text": "DPS > LOO > SC > LR",
+      "type": "loop",
+      "column": "column-1792970349080-q3o2e",
+      "row": 21,
+      "span": 2
+    },
+    {
+      "text": "1.4 M ~ 1.1 M",
+      "type": "hp",
+      "column": "column-1792970349080-iglev",
+      "row": 22
+    },
+    {
+      "text": "Shaman stops Attacking.",
+      "type": "stops",
+      "column": "column-1792970349080-q3o2e",
+      "row": 22,
+      "span": 2
+    },
+    {
+      "text": "Waiting for \"Liberator\" text",
+      "type": "waiting",
+      "column": "column-1792970349080-q3o2e",
+      "row": 23,
+      "span": 2
+    },
+    {
+      "text": "Shaman nuke",
+      "type": "trigger",
+      "column": "column-1792970349080-q3o2e",
+      "row": 24,
+      "span": 2
+    },
+    {
+      "text": "750 K",
+      "type": "hp",
+      "column": "column-1792970349080-iglev",
+      "row": 25
+    },
+    {
+      "text": "\"The Shadow Fiend lends their aid to those at Death’s Door.\"",
+      "type": "door",
+      "column": "column-1792970349080-q3o2e",
+      "row": 25,
+      "span": 2
+    }
+  ]
+}

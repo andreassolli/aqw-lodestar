@@ -1,15 +1,8 @@
-// The tab row under the logo: page tabs on the left (Farm, ...), Settings and
-// the theme switch on the right. Every [data-tab] button shows the element named
-// in its aria-controls and hides the other panels. Settings works the same way,
-// so it can be opened from any page; its Back button returns to that page.
-//
-// To add a page: add a .tab button to .tabs in popup.html (role="tab",
-// data-tab="<name>", aria-controls="<panel id>") and a
-// <section id="<panel id>" class="tab-panel" role="tabpanel" hidden> for it.
-// Tabs added later (the desktop app's plugin pages) work too: call
-// Tabs.refresh() after adding them. With only one page, the tab list is hidden.
+// The tab row: page tabs on the left, Settings and theme on the right. Every
+// [data-tab] button shows its aria-controls panel. Plugin pages can be added
+// later, just call Tabs.refresh() after. With only one page the tabs hide.
 const Tabs = (() => {
-  const REMEMBER_KEY = 'lodestar-popup-tab'; // the last page, so the popup reopens on it
+  const REMEMBER_KEY = 'lodestar-popup-tab'; // so the popup reopens on it
   const HOME = 'farm';
   let current = null;
   let previous = null; // the page Settings was opened from
@@ -18,11 +11,7 @@ const Tabs = (() => {
   const pageTabs = () => [...document.querySelectorAll('.tabs [role="tab"]')];
   const isPage = (name) => pageTabs().some((tab) => tab.dataset.tab === name);
 
-  /**
-   * Shows a tab's panel and hides the rest.
-   * @param {{remember?: boolean}} [options]  remember: false keeps the remembered
-   *   page (used while a remembered plugin page hasn't been added yet)
-   */
+  // remember: false keeps the saved page (for plugin pages that aren't added yet).
   function show(name, { remember = true } = {}) {
     if (!buttons().some((button) => button.dataset.tab === name)) name = HOME;
     if (name !== current) {
@@ -47,13 +36,12 @@ const Tabs = (() => {
       try {
         localStorage.setItem(REMEMBER_KEY, name);
       } catch {
-        // storage blocked: just don't remember
+        // storage blocked, just don't remember
       }
     }
     document.dispatchEvent(new CustomEvent('lodestar:tab', { detail: { tab: name } }));
   }
 
-  /** Back to the page that was showing before Settings (or Farm). */
   function back() {
     show(previous && isPage(previous) ? previous : HOME);
   }
@@ -66,7 +54,7 @@ const Tabs = (() => {
     }
   }
 
-  /** After tabs are added or removed: hide a lone tab, and reopen the remembered page if it just appeared. */
+  // Call after adding tabs. Hides a lone tab and reopens the saved page if it showed up.
   function refresh() {
     document.querySelector('.tabs')?.classList.toggle('is-single', pageTabs().length < 2);
     const saved = savedPage();
@@ -75,11 +63,11 @@ const Tabs = (() => {
   }
 
   function init() {
-    // One listener for every [data-tab] button, including ones added later.
+    // One listener for all tabs, including ones added later.
     document.addEventListener('click', (e) => {
       const button = e.target.closest('[data-tab]');
       if (!button) return;
-      // A second click on Settings closes it again.
+      // Clicking Settings again closes it.
       if (button.dataset.tab === current && !isPage(current)) back();
       else show(button.dataset.tab);
     });
@@ -90,7 +78,6 @@ const Tabs = (() => {
       })
     );
 
-    // Arrow keys move between page tabs, as in any tab list.
     document.querySelector('.tabs')?.addEventListener('keydown', (e) => {
       const tabs = pageTabs();
       const index = tabs.indexOf(document.activeElement);
@@ -104,7 +91,7 @@ const Tabs = (() => {
     });
 
     document.querySelector('.tabs')?.classList.toggle('is-single', pageTabs().length < 2);
-    // A remembered plugin page may not be added yet; keep remembering it until refresh().
+    // A saved plugin page might not be added yet, keep it until refresh().
     const saved = savedPage();
     show(isPage(saved) ? saved : HOME, { remember: false });
   }

@@ -1,5 +1,4 @@
-/* The Lists tab: the extension's item list styles (content/item-lists.css and
-   friends, loaded by page.js), adjusted for the app. */
+/* Lists tab: the extension's list styles, tweaked for the app. */
 
 .item-lists-head h2 {
   margin: 0 0 4px;
@@ -12,8 +11,7 @@
   font-size: 12px;
 }
 
-/* Follow the app's dark/light theme. (On the wiki, these colours follow the
-   wiki's theme; the extra .aqwt-lists makes this win over that rule.) */
+/* Use the app's theme colors. The extra .aqwt-lists beats the wiki's rule. */
 .plugin-page .aqwt-lists.aqwt-lists,
 .plugin-page .aqwt-filter.aqwt-filter {
   --aqwt-bg: var(--bg);
@@ -29,11 +27,6 @@
 .plugin-page .aqwt-lists.aqwt-lists {
   margin: 0;
   font-size: 13px;
-}
-
-/* A dropdown (page.js) instead of the row of list buttons. */
-.plugin-page .aqwt-list-buttons {
-  display: none;
 }
 
 .item-lists-select {
@@ -55,8 +48,7 @@
   outline-offset: 1px;
 }
 
-/* The wiki shows cards at the tooltip's fixed 340 px; here they fill the
-   window: one column in the narrow app window, more in a wide popout. */
+/* Cards fill the window instead of the fixed 340px on the wiki. */
 .plugin-page .aqwt-list-grid {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
 }
@@ -65,13 +57,12 @@
   font-size: 12px;
 }
 
-/* Keep the card title (and its rarity badge) clear of the Try on / farm buttons
-   in the card's top right corner. */
+/* Keep the title clear of the buttons in the top right. */
 .plugin-page .aqwt-list-card .aqwt-tooltip-title {
   padding-right: 72px;
 }
 
-/* Importing the inventory (page.js), with the Owned list. */
+/* Inventory import box, shown with the Owned list. */
 .inventory-import {
   margin: 10px 0 0;
   padding: 8px 12px;
@@ -152,58 +143,13 @@
   color: #d04b4b;
 }
 
-/* The list picker and the filter icon beside it (page.js). */
 .item-lists-picker {
   display: flex;
-  gap: 8px;
-  align-items: stretch;
 }
 
 .item-lists-picker .item-lists-select {
   flex: 1;
   min-width: 0;
-}
-
-.plugin-page .aqwt-filter.is-icon .aqwt-filter-button {
-  position: relative;
-  justify-content: center;
-  width: 36px;
-  height: 100%;
-  min-height: 34px;
-  padding: 0;
-  border-color: var(--line);
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--ink);
-}
-
-.plugin-page .aqwt-filter.is-icon .aqwt-filter-button:hover,
-.plugin-page .aqwt-filter.is-icon.is-open .aqwt-filter-button {
-  border-color: var(--muted);
-}
-
-.plugin-page .aqwt-filter.is-icon.is-active .aqwt-filter-button {
-  border-color: var(--acc);
-}
-
-.plugin-page .aqwt-filter.is-icon .aqwt-filter-button svg {
-  width: 17px;
-  height: 17px;
-}
-
-.plugin-page .aqwt-filter.is-icon .aqwt-filter-label {
-  display: none;
-}
-
-/* The number of ticked boxes as a small badge on the icon's corner. */
-.plugin-page .aqwt-filter.is-icon .aqwt-filter-count {
-  position: absolute;
-  top: -7px;
-  right: -7px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  font-size: 10px;
 }
 
 .plugin-page .aqwt-filter-menu {

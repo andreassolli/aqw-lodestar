@@ -1,0 +1,32 @@
+.pill-button {
+  padding: 6px 14px;
+  border: 1px solid var(--acc);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--acc);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+
+.pill-button:hover {
+  background: var(--acc);
+  color: var(--acc-ink);
+}
+
+.pill-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.pill-button:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+.pill-button:disabled:hover {
+  background: transparent;
+  color: var(--acc);
+}

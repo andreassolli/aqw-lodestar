@@ -1,0 +1,310 @@
+{
+  "id": "speaker2keloo",
+  "name": "Speaker (KE & LOO 2 man)",
+  "columns": [
+    {
+      "id": "column-1792968254842-3zmt2",
+      "name": "Warning",
+      "color": "#333333"
+    },
+    {
+      "id": "column-1792968254842-ljjpc",
+      "name": "Taunt",
+      "color": "#333333"
+    },
+    {
+      "id": "column-1792968254842-2fwlu",
+      "name": "Zone",
+      "color": "#333333"
+    }
+  ],
+  "types": [
+    {
+      "id": "normal",
+      "name": "Normal",
+      "color": ""
+    },
+    {
+      "id": "truth",
+      "name": "Truth",
+      "color": "#fd7571"
+    },
+    {
+      "id": "listen",
+      "name": "Listen",
+      "color": "#44fdfe"
+    },
+    {
+      "id": "zone",
+      "name": "Zone / Equal",
+      "color": "#ee9b62"
+    },
+    {
+      "id": "lr",
+      "name": "LR",
+      "color": "#408ac9"
+    },
+    {
+      "id": "loo",
+      "name": "LOO",
+      "color": "#97823d"
+    },
+    {
+      "id": "ap",
+      "name": "AP",
+      "color": "#fcd051"
+    },
+    {
+      "id": "dps",
+      "name": "DPS",
+      "color": "#a4d97c"
+    },
+    {
+      "id": "column-1792968304600-8drt4",
+      "name": "KE",
+      "color": "#0057c2"
+    }
+  ],
+  "entries": [
+    {
+      "text": "Truth",
+      "type": "truth",
+      "column": "column-1792968254842-3zmt2",
+      "row": 2
+    },
+    {
+      "text": "LOO",
+      "type": "loo",
+      "column": "column-1792968254842-ljjpc",
+      "row": 2
+    },
+    {
+      "text": "Listen",
+      "type": "listen",
+      "column": "column-1792968254842-3zmt2",
+      "row": 3
+    },
+    {
+      "text": "LOO",
+      "type": "loo",
+      "column": "column-1792968254842-ljjpc",
+      "row": 3
+    },
+    {
+      "text": "Zone",
+      "type": "zone",
+      "column": "column-1792968254842-3zmt2",
+      "row": 4
+    },
+    {
+      "text": "KE",
+      "type": "column-1792968304600-8drt4",
+      "column": "column-1792968254842-2fwlu",
+      "row": 4
+    },
+    {
+      "text": "Truth",
+      "type": "truth",
+      "column": "column-1792968254842-3zmt2",
+      "row": 5
+    },
+    {
+      "text": "Listen",
+      "type": "listen",
+      "column": "column-1792968254842-3zmt2",
+      "row": 6
+    },
+    {
+      "text": "LOO",
+      "type": "loo",
+      "column": "column-1792968254842-ljjpc",
+      "row": 6
+    },
+    {
+      "text": "Truth",
+      "type": "truth",
+      "column": "column-1792968254842-3zmt2",
+      "row": 7
+    },
+    {
+      "text": "KE",
+      "type": "column-1792968304600-8drt4",
+      "column": "column-1792968254842-ljjpc",
+      "row": 7
+    },
+    {
+      "text": "Zone",
+      "type": "zone",
+      "column": "column-1792968254842-3zmt2",
+      "row": 8
+    },
+    {
+      "text": "AP",
+      "type": "ap",
+      "column": "column-1792968254842-2fwlu",
+      "row": 8
+    },
+    {
+      "text": "Listen",
+      "type": "listen",
+      "column": "column-1792968254842-3zmt2",
+      "row": 9
+    },
+    {
+      "text": "LOO",
+      "type": "loo",
+      "column": "column-1792968254842-ljjpc",
+      "row": 9
+    },
+    {
+      "text": "Truth",
+      "type": "truth",
+      "column": "column-1792968254842-3zmt2",
+      "row": 10
+    },
+    {
+      "text": "KE",
+      "type": "column-1792968304600-8drt4",
+      "column": "column-1792968254842-ljjpc",
+      "row": 10
+    },
+    {
+      "text": "Truth",
+      "type": "truth",
+      "column": "column-1792968254842-3zmt2",
+      "row": 11
+    },
+    {
+      "text": "LOO (Quix)",
+      "type": "loo",
+      "column": "column-1792968254842-ljjpc",
+      "row": 11
+    },
+    {
+      "text": "Listen",
+      "type": "listen",
+      "column": "column-1792968254842-3zmt2",
+      "row": 12
+    },
+    {
+      "text": "LOO",
+      "type": "loo",
+      "column": "column-1792968254842-ljjpc",
+      "row": 12
+    },
+    {
+      "text": "Zone",
+      "type": "zone",
+      "column": "column-1792968254842-3zmt2",
+      "row": 13
+    },
+    {
+      "text": "LR",
+      "type": "lr",
+      "column": "column-1792968254842-2fwlu",
+      "row": 13
+    },
+    {
+      "text": "Truth",
+      "type": "truth",
+      "column": "column-1792968254842-3zmt2",
+      "row": 14
+    },
+    {
+      "text": "KE",
+      "type": "column-1792968304600-8drt4",
+      "column": "column-1792968254842-ljjpc",
+      "row": 14
+    },
+    {
+      "text": "Listen",
+      "type": "listen",
+      "column": "column-1792968254842-3zmt2",
+      "row": 15
+    },
+    {
+      "text": "LOO",
+      "type": "loo",
+      "column": "column-1792968254842-ljjpc",
+      "row": 15
+    },
+    {
+      "text": "Truth",
+      "type": "truth",
+      "column": "column-1792968254842-3zmt2",
+      "row": 16
+    },
+    {
+      "text": "KE",
+      "type": "column-1792968304600-8drt4",
+      "column": "column-1792968254842-ljjpc",
+      "row": 16
+    },
+    {
+      "text": "Zone",
+      "type": "zone",
+      "column": "column-1792968254842-3zmt2",
+      "row": 17
+    },
+    {
+      "text": "LOO",
+      "type": "loo",
+      "column": "column-1792968254842-2fwlu",
+      "row": 17
+    },
+    {
+      "text": "Listen",
+      "type": "listen",
+      "column": "column-1792968254842-3zmt2",
+      "row": 18
+    },
+    {
+      "text": "LOO",
+      "type": "loo",
+      "column": "column-1792968254842-ljjpc",
+      "row": 18
+    },
+    {
+      "text": "Truth",
+      "type": "truth",
+      "column": "column-1792968254842-3zmt2",
+      "row": 19
+    },
+    {
+      "text": "LOO",
+      "type": "loo",
+      "column": "column-1792968254842-ljjpc",
+      "row": 19
+    },
+    {
+      "text": "Truth",
+      "type": "truth",
+      "column": "column-1792968254842-3zmt2",
+      "row": 20
+    },
+    {
+      "text": "LOO (Quix)",
+      "type": "loo",
+      "column": "column-1792968254842-ljjpc",
+      "row": 20
+    },
+    {
+      "text": "Listen",
+      "type": "listen",
+      "column": "column-1792968254842-3zmt2",
+      "row": 21
+    },
+    {
+      "text": "LOO",
+      "type": "loo",
+      "column": "column-1792968254842-ljjpc",
+      "row": 21
+    },
+    {
+      "text": "KE",
+      "type": "column-1792968304600-8drt4",
+      "column": "column-1792968254842-ljjpc",
+      "row": 5
+    }
+  ]
+}

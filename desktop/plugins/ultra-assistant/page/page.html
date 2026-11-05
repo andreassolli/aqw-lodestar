@@ -1,18 +1,81 @@
-<!-- The Ultra tab. Lodestar puts this inside the tab's <section>. -->
+<!-- Ultra tab -->
 <div class="attack-pattern-header">
-  <h2>Ultra Assistant</h2>
+  <h2>Attack patterns</h2>
 
   <div class="attack-pattern-selector">
-    <!--<label for="attack-pattern-select">Select boss</label>-->
-    <select id="attack-pattern-select">
-      <option value="eternal">Speaker</option>
-      <option value="example">Dage</option>
-    </select>
+      <button id="attack-mode-toggle" type="button" aria-pressed="false">Edit</button>
+      <select id="attack-pattern-select">
+      </select>
   </div>
 </div>
 
-<p class="ultra-status" id="ultra-status" role="status"></p>
 
-<div id="attack-pattern-content" aria-live="polite">
-  <!-- Filled in by page.js -->
+<div class="attack-pattern-toolbar" id="attack-toolbar">
+  <button id="add-attack-entry" type="button">+ Add entry</button>
+  <button id="add-attack-column" type="button">+ Add column</button>
+  <button id="add-attack-boss" type="button">+ Add boss</button>
+  <button id="delete-attack-boss" type="button">Delete boss</button>
+  <button id="download-attack-boss" type="button">Download JSON</button>
+  <button id="import-attack-boss" type="button">Import JSON</button>
+  <input
+    id="attack-boss-file"
+    type="file"
+    accept=".json,application/json"
+    hidden
+  >
 </div>
+
+<div id="attack-boss-form" hidden>
+  <label>
+    Boss name
+    <input
+      id="attack-boss-name"
+      type="text"
+      placeholder="Enter boss name"
+      maxlength="80"
+    >
+  </label>
+  <button id="save-attack-boss" type="button">Create boss</button>
+  <button id="cancel-attack-boss" type="button">Cancel</button>
+</div>
+
+
+<div id="attack-entry-form" hidden>
+  <label>
+    Entry text
+    <input id="attack-entry-text" type="text"
+           placeholder="Enter an attack or mechanic">
+  </label>
+
+  <label>
+    Entry type
+    <select id="attack-entry-type"></select>
+  </label>
+
+  <label>
+    Column
+    <select id="attack-entry-column"></select>
+  </label>
+  <label>
+    Row
+    <input
+      id="attack-entry-row"
+      type="number"
+      min="1"
+      step="1"
+      value="1"
+      required
+    >
+  </label>
+
+  <label>
+    <span><input id="attack-entry-span" type="checkbox"> Span all columns</span>
+  </label>
+
+  <button id="save-attack-entry" type="button">Add entry</button>
+  <button id="cancel-attack-entry" type="button">Cancel</button>
+</div>
+
+<div id="attack-column-settings"></div>
+
+<div id="attack-pattern-content" aria-live="polite"></div>

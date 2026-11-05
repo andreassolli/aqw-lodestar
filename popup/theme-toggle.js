@@ -1,5 +1,4 @@
-// Dark/light switch. The popup applies it via [data-theme]; wiki and
-// character pages pick up the same storage value in content/theme.js.
+// Dark/light switch. Wiki and character pages read the same setting in theme.js.
 const ThemeToggle = (() => {
   const isDark = (theme) => theme !== 'light';
 
@@ -14,7 +13,7 @@ const ThemeToggle = (() => {
     if (!button) return;
 
     ext.storage.local.get(STORAGE_KEYS.theme).then((result) => {
-      const theme = result[STORAGE_KEYS.theme] || 'dark'; // dark matches the CSS default
+      const theme = result[STORAGE_KEYS.theme] || 'dark';
       root.dataset.theme = theme;
       reflect(button, theme);
     });

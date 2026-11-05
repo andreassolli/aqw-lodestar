@@ -107,9 +107,7 @@
   font-weight: bold;
 }
 
-/* The rarity badge and owned checkmark sit in .aqwt-title-tags (owned-marks.css). */
 
-/* "Location:", "Price:" etc. */
 .aqwt-hover-details strong,
 .aqwt-hover-details b {
   color: var(--aqwt-strong) !important;
@@ -128,7 +126,7 @@
   opacity: 1;
 }
 
-/* Title link: looks like the plain title until hovered. */
+/* Title link looks like normal text until you hover it. */
 .aqwt-card a.aqwt-card-title-link {
   color: var(--aqwt-acc) !important;
   opacity: 1;
@@ -137,4 +135,9 @@
 
 .aqwt-card a.aqwt-card-title-link:hover {
   text-decoration: underline;
+}
+
+/* Hidden until we know the map, some quests don't have one. */
+.aqwt-quest-join:not(.is-ready) {
+  display: none;
 }

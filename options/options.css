@@ -4,7 +4,6 @@
   font-weight: 400;
 }
 
-/* Same palette as the popup. */
 :root {
   --bg: #1A1A1A;
   --card: #272D2E;
@@ -167,4 +166,18 @@ button:focus-visible,
 
 .status.is-error {
   border-left-color: var(--error);
+}
+
+/* Artix wants fan projects to say they aren't official. */
+.page-footer {
+  margin-top: 28px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line, #3a3a3a);
+  color: var(--muted, #9c9c9c);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.page-footer a {
+  color: inherit;
 }

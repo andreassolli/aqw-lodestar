@@ -1,8 +1,5 @@
-// aqcloset.com/profile: fills AQCloset's "Paste the inventory data" field with
-// the inventory synced to Lodestar, in the same format AQCloset's own
-// bookmarklet sends. Started from the popup settings ("Fill in on AQCloset"),
-// either by a message to this tab or by opening /profile#lodestar-import.
-// Nothing is submitted: you still press AQCloset's own Import button.
+// aqcloset.com/profile: pastes your synced inventory into AQCloset's import box,
+// same format as their bookmarklet. You still press Import yourself.
 (() => {
   if (!/^\/profile\/?$/.test(location.pathname)) return;
 
@@ -10,7 +7,6 @@
   const WAIT_FOR_FORM_MS = 20000;
   const NOTICE_MS = 7000;
 
-  /** AQCloset's import format: {"totalCount": n, "data": [{Name, Count, Type, Bank, ...}]} */
   function toAqclosetJson(inventory) {
     const data = inventory.map((entry) => {
       const row = {

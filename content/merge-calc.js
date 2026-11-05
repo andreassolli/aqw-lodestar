@@ -1,7 +1,6 @@
-// Wiki merge shops and quests: totals up required materials and compares them
-// against the saved inventory. Merge shops get a "Calculator" tab; quests get
-// a panel above the tabs with a turn-in multiplier.
-(() => {
+// Merge shops and quests: adds up what you need against your inventory.
+// Merge shops get a Calculator tab, quests get a panel with a multiplier.
+Features.run('mergeCalc', () => {
   const PANEL_ID = 'calc-merge-extension';
 
   const pageTitle = document.querySelector('#page-title')?.textContent || '';
@@ -12,7 +11,7 @@
   const isQuestPage = !isMergePage && pageMentions('Quest');
   if (!isMergePage && !isQuestPage) return;
 
-  // Quest pages can have several tab sets; follow whichever one was clicked last.
+  // Quest pages can have several tab sets, follow the last one clicked.
   let activeNavset = document.querySelector('.yui-navset');
   document.addEventListener('click', (e) => {
     const navset = e.target instanceof Element && e.target.closest('.yui-navset');
@@ -160,7 +159,6 @@
       </div>`;
   }
 
-  /** Makes the navset's tabs (including our added one) switch panes by index. */
   function attachTabSwitching(navList, contentList) {
     if (navList.dataset.aqwtTabsBound === 'true') return;
     navList.dataset.aqwtTabsBound = 'true';
@@ -179,7 +177,6 @@
     });
   }
 
-  /** Quest pages: a panel above the tab set. */
   function mountQuestPanel(html) {
     let pane = document.getElementById(PANEL_ID);
     if (!pane) {
@@ -192,7 +189,6 @@
     pane.innerHTML = html;
   }
 
-  /** Merge pages: an extra "Calculator" tab in the shop's tab set. */
   function mountMergeTab(html) {
     let pane = document.getElementById(PANEL_ID);
     if (pane) {
@@ -245,7 +241,6 @@
       const icon = document.getElementById(`${id}-icon`);
       if (!input) return;
       input.addEventListener('change', () => update({ [key]: input.checked }));
-      // The visible icon sits outside the hidden checkbox's hit area.
       if (icon) icon.addEventListener('click', () => update({ [key]: !input.checked }));
     }
 
@@ -271,10 +266,10 @@
     calculator.update();
 
     if (isQuestPage) {
-      // Recalculate for the newly selected quest after the wiki switches tabs.
+      // Recalculate after the wiki switches tabs.
       document.querySelectorAll('.yui-nav a').forEach((tab) => {
         tab.addEventListener('click', () => setTimeout(() => calculator.update(), 50));
       });
     }
   });
-})();
+});

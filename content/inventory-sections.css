@@ -1,6 +1,5 @@
-/* The page places categories with a masonry script (absolute top/left), which
-   can't re-run when one collapses. CSS columns reflow by themselves instead.
-   Column counts follow the page's col-12 / col-md-6 / col-lg-4 breakpoints. */
+/* The page lays out categories with a masonry script that can't redo itself
+   when one collapses, so we use CSS columns instead. */
 #inventoryRendered.aqwt-inventory-columns.show {
   display: block !important; /* Bootstrap .row is flex, which ignores columns */
   height: auto !important;

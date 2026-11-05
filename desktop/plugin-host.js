@@ -1,52 +1,31 @@
-// Plugins for the desktop app: extra features that aren't part of the base
-// download, installed separately from Settings → Plugins.
+// Desktop plugins. A plugin is a folder with a plugin.json (see desktop/README.md).
+// It can have a "main" script (runs in the main process, activate/deactivate)
+// and/or a "page" that shows as a tab.
 //
-// A plugin is a folder with a plugin.json (see desktop/README.md, "Writing a
-// plugin"). It can have:
-//   - "main": a script that runs in the app's main process (full Node and
-//     Electron access), with activate(api) / deactivate() functions;
-//   - "page": an HTML fragment, CSS and a script, shown as a tab in the popup.
+// Installed ones live in <app data>/plugins/<id>/. Built-in ones come from the
+// app's resources and can be turned off but not removed. From source,
+// desktop/plugins is loaded too.
 //
-// Installed plugins live in <app data>/plugins/<id>/. Some plugins come with the
-// app (built in: the "extraResources" in package.json put them in the app's
-// resources/plugins/); they can be turned off but not removed, and installing a
-// newer version of one from a zip replaces it. When running from source
-// (npm start), desktop/plugins/<id>/ is loaded too, so plugins can be developed
-// in the repository. Installing, removing, enabling and disabling all take
-// effect on the next start: a running plugin can't be unloaded safely, and on
-// Windows its native files can't even be deleted while it's loaded. So new
-// installs wait in plugins/.staged/ and removals are noted in plugins.json, and
-// both are applied before anything loads.
-//
-// This file uses only Node; main.js passes in what it needs from Electron.
+// Installs, removals and on/off all happen on the next start. A running plugin
+// can't be unloaded safely (and on Windows its files are locked), so installs
+// wait in plugins/.staged/ and removals are noted in plugins.json.
 
 const fs = require('node:fs');
 const path = require('node:path');
 const { readZip } = require('./zip');
 
-/** Bumped when the api passed to plugins changes in a way old plugins can't handle. */
+// Bump this when the plugin api changes in a way old plugins can't handle.
 const API_VERSION = 1;
 const ID_PATTERN = /^[a-z0-9][a-z0-9-]{1,48}$/;
 const PLATFORM_NAMES = { darwin: 'Mac', win32: 'Windows', linux: 'Linux' };
 
-/**
- * @param {object} options
- * @param {string} options.pluginsDir   installed plugins (<app data>/plugins)
- * @param {string} options.dataDir      plugin data folders (<app data>/plugin-data)
- * @param {string[]} [options.devDirs]  extra folders of plugins (desktop/plugins when running from source)
- * @param {string[]} [options.bundledDirs]  folders of plugins that come with the app (built in)
- * @param {string} options.appVersion
- * @param {string} options.electronVersion
- * @param {string} [options.platform]
- * @param {string} [options.arch]
- */
 function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [], appVersion, electronVersion, platform = process.platform, arch = process.arch }) {
   const stagedDir = path.join(pluginsDir, '.staged');
   const stateFile = path.join(pluginsDir, 'plugins.json');
   fs.mkdirSync(pluginsDir, { recursive: true });
 
-  const plugins = new Map(); // id -> record (see scan)
-  const pageHandlers = new Map(); // id -> Map(channel -> handler)
+  const plugins = new Map();
+  const pageHandlers = new Map();
   const quitHandlers = [];
 
   function readState() {
@@ -69,23 +48,21 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
     return manifest;
   }
 
-  /** Why a plugin can't run here, or null if it can. */
   function incompatibility(manifest) {
     if ((manifest.apiVersion || 1) > API_VERSION) return 'needs a newer version of Lodestar';
     const build = manifest.build;
-    if (!build) return null; // not built for a platform: plain JavaScript, runs anywhere
+    if (!build) return null; // no build info means plain JS, runs anywhere
     if (build.platform && build.platform !== platform) {
       return `built for ${PLATFORM_NAMES[build.platform] || build.platform}; download the ${PLATFORM_NAMES[platform] || platform} version`;
     }
     if (build.arch && build.arch !== arch) return `built for ${build.arch} processors; this computer needs the ${arch} version`;
-    // Native modules only load in the Electron version they were built for (by major version).
+    // Native modules only load in the Electron major they were built for.
     if (build.native && build.electron && build.electron.split('.')[0] !== electronVersion.split('.')[0]) {
       return `built for an older Lodestar (Electron ${build.electron}); download the version made for this one`;
     }
     return null;
   }
 
-  /** Applies installs and removals waiting from the last session. */
   function applyPending() {
     const state = readState();
     for (const id of state.remove) fs.rmSync(path.join(pluginsDir, id), { recursive: true, force: true });
@@ -101,7 +78,6 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
     if (state.remove.length) writeState({ ...state, remove: [] });
   }
 
-  /** -1, 0 or 1, comparing "1.2.0"-style versions number by number. */
   function compareVersions(a, b) {
     const pa = String(a || '0').split('.').map((n) => parseInt(n, 10) || 0);
     const pb = String(b || '0').split('.').map((n) => parseInt(n, 10) || 0);
@@ -111,7 +87,6 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
     return 0;
   }
 
-  /** Finds every plugin folder and reads its plugin.json. */
   function scan() {
     plugins.clear();
     const state = readState();
@@ -139,19 +114,16 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
         }
         const existing = plugins.get(manifest.id);
         if (existing) {
-          // The development copy wins over the others. An installed copy wins over
-          // the built-in one unless the app has since brought a newer version.
+          // Dev copy wins. Installed beats built-in unless the app has a newer one.
           const builtInIsNewer =
             source === 'built-in' && existing.source === 'installed' && compareVersions(manifest.version, existing.manifest?.version) > 0;
           if (!builtInIsNewer) {
-            if (source === 'built-in') existing.builtIn = true; // removing the installed copy goes back to this one
+            if (source === 'built-in') existing.builtIn = true;
             continue;
           }
         }
         const problem = incompatibility(manifest);
-        // Plugins start on, unless plugin.json says "defaultEnabled": false (a
-        // built-in plugin people turn on themselves). Turning one on or off is
-        // remembered either way.
+        // On by default unless plugin.json says "defaultEnabled": false.
         const enabled = state.disabled.includes(manifest.id)
           ? false
           : state.enabled.includes(manifest.id) || manifest.defaultEnabled !== false;
@@ -171,14 +143,21 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
     }
   }
 
-  /** The folder a plugin keeps its own files in, created on first use. */
   function dataDirFor(id) {
     const dir = path.join(dataDir, id);
     fs.mkdirSync(dir, { recursive: true });
     return dir;
   }
 
+  // One per plugin so changes from Settings show up in the plugin right away.
+  const settingsCache = new Map();
+
   function settingsFor(id) {
+    if (!settingsCache.has(id)) settingsCache.set(id, readSettings(id));
+    return settingsCache.get(id);
+  }
+
+  function readSettings(id) {
     const file = path.join(dataDirFor(id), 'settings.json');
     let values = {};
     try {
@@ -196,18 +175,12 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
     };
   }
 
-  /**
-   * Starts every enabled, compatible plugin that has a "main" script.
-   * @param {object} options
-   * @param {(record: object) => object} [options.extraApi]  what main.js adds to each plugin's api
-   * @param {(id: string, channel: string, data: any) => void} [options.sendToPages]  delivers page.send()
-   */
   function loadAll({ extraApi = () => ({}), sendToPages = () => {} } = {}) {
     for (const record of plugins.values()) {
       if (record.status !== 'not-loaded') continue;
       const { manifest } = record;
       if (!manifest.main) {
-        record.status = 'running'; // a page-only plugin
+        record.status = 'running';
         continue;
       }
       const handlers = new Map();
@@ -224,9 +197,7 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
         settings: settingsFor(record.id),
         log: (...args) => console.log(`[plugin ${record.id}]`, ...args),
         page: {
-          // Answers lodestarPlugins.invoke(id, channel, data) from the plugin's page.
           handle: (channel, handler) => handlers.set(channel, handler),
-          // Delivered to lodestarPlugins.on(id, channel, ...) in the plugin's page.
           send: (channel, data) => sendToPages(record.id, channel, data),
         },
         onQuit: (fn) => quitHandlers.push([record.id, fn]),
@@ -255,7 +226,6 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
     }
   }
 
-  /** Lets running plugins clean up (close windows, stop capture) before the app quits. */
   function deactivateAll() {
     for (const [id, fn] of quitHandlers) {
       try {
@@ -275,14 +245,40 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
     }
   }
 
-  /** A message from a plugin's page, passed to the handler the plugin registered. */
   async function handlePageMessage(id, channel, data) {
     const handler = pageHandlers.get(id)?.get(channel);
     if (!handler) throw new Error(`plugin ${id} has no handler for "${channel}"`);
     return handler(data);
   }
 
-  /** Everything Settings shows, in a form that can be sent to the page. */
+  // A plugin's on/off options from plugin.json, with their current values.
+  function optionsOf(record) {
+    const declared = Array.isArray(record.manifest?.options) ? record.manifest.options : [];
+    const settings = declared.length ? settingsFor(record.id) : null;
+    return declared
+      .filter((option) => option && typeof option.id === 'string' && option.label)
+      .map((option) => ({
+        id: option.id,
+        label: String(option.label),
+        description: option.description ? String(option.description) : '',
+        value: Boolean(settings.get(option.id, option.default ?? true)),
+      }));
+  }
+
+  function options(id) {
+    const record = plugins.get(id);
+    if (!record) throw new Error(`no plugin "${id}"`);
+    return Object.fromEntries(optionsOf(record).map((option) => [option.id, option.value]));
+  }
+
+  function setOption(id, key, value) {
+    const record = plugins.get(id);
+    if (!record) throw new Error(`no plugin "${id}"`);
+    if (!optionsOf(record).some((option) => option.id === key)) throw new Error(`"${id}" has no option "${key}"`);
+    settingsFor(id).set(key, Boolean(value));
+    return Boolean(value);
+  }
+
   function list() {
     const state = readState();
     const stagedIds = (fs.existsSync(stagedDir) ? fs.readdirSync(stagedDir) : []).filter((id) => ID_PATTERN.test(id));
@@ -291,16 +287,18 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
       name: record.name,
       version: record.manifest?.version || '',
       description: record.manifest?.description || '',
+      summary: record.manifest?.summary || '',
       source: record.source,
       builtIn: Boolean(record.builtIn),
       enabled: record.enabled ?? false,
       status: record.status,
       error: record.error || null,
       hasPage: Boolean(record.manifest?.page),
+      options: optionsOf(record),
       pendingRemoval: state.remove.includes(record.id),
       pendingUpdate: stagedIds.includes(record.id),
     })).concat(
-      // Installed this session, not loaded until the next start.
+      // Installed this session, loads next start.
       stagedIds
         .filter((id) => !plugins.has(id))
         .map((id) => {
@@ -310,18 +308,17 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
           } catch {
             manifest = { name: id };
           }
-          return { id, name: manifest.name, version: manifest.version || '', description: manifest.description || '', source: 'installed', enabled: true, status: 'pending', error: null, hasPage: Boolean(manifest.page), pendingRemoval: false, pendingUpdate: true };
+          return { id, name: manifest.name, version: manifest.version || '', description: manifest.description || '', source: 'installed', enabled: true, status: 'pending', error: null, hasPage: Boolean(manifest.page), options: [], pendingRemoval: false, pendingUpdate: true };
         })
     );
   }
 
-  /** The pages of running plugins, for the popup's tab row. */
   function pages() {
     return [...plugins.values()]
       .filter((record) => record.status === 'running' && record.manifest.page)
       .map((record) => {
         const page = record.manifest.page;
-        // Root-relative, so they resolve against the popup's own address (app://lodestar/).
+        // Root relative so they work from app://lodestar/.
         const url = (file) => (file ? `/plugins/${record.id}/${file.replace(/^\.?\/+/, '')}` : null);
         return {
           id: record.id,
@@ -330,14 +327,12 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
           html: url(page.html),
           css: url(page.css),
           script: url(page.script),
-          // true, or { width, height } for the window's first size: adds the
-          // "Open in its own window" button to the plugin's tab.
+          // true, or { width, height }. Adds the pop out button.
           popout: page.popout || false,
         };
       });
   }
 
-  /** The file behind app://lodestar/plugins/<id>/<file>, or null (unknown plugin, or outside its folder). */
   function resolveFile(id, file) {
     const record = plugins.get(id);
     if (!record || record.status !== 'running') return null;
@@ -345,11 +340,8 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
     return full.startsWith(record.dir + path.sep) ? full : null;
   }
 
-  /**
-   * Installs a plugin from a zip, ready for the next start. The zip may have
-   * plugin.json at the top or inside one folder (as macOS's "Compress" makes).
-   * @returns {{ id: string, name: string, version: string, replaces: boolean }}
-   */
+  // Installs a plugin zip for the next start. plugin.json can be at the top or
+  // inside one folder (macOS Compress does that).
   function installZip(buffer) {
     let files = readZip(buffer).filter((file) => !file.name.startsWith('__MACOSX/') && !file.name.endsWith('.DS_Store'));
     if (!files.some((file) => file.name === 'plugin.json')) {
@@ -367,8 +359,8 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
     const problem = incompatibility(manifest);
     if (problem) throw new Error(`${manifest.name} is ${problem}`);
 
-    // Check every path before writing anything, then write to a temporary folder
-    // and move it into place, so a bad zip never leaves half a plugin behind.
+    // Check every path first, then unpack to a temp folder and move it in, so a
+    // bad zip never leaves half a plugin.
     const target = path.join(stagedDir, manifest.id);
     const temp = path.join(stagedDir, `.incoming-${manifest.id}`);
     const writes = files.map((file) => {
@@ -389,7 +381,7 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
       throw err;
     }
 
-    // Installing again undoes a pending removal, and a fresh install starts enabled.
+    // Reinstalling undoes a pending removal.
     const state = readState();
     writeState({
       disabled: state.disabled.filter((id) => id !== manifest.id),
@@ -415,7 +407,6 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
     if (record) record.enabled = enabled;
   }
 
-  /** Removes an installed plugin on the next start (a development copy is only disabled). */
   function remove(id) {
     const record = plugins.get(id);
     if (record && record.source === 'development') throw new Error('plugins in desktop/plugins can only be disabled; delete the folder to remove one');
@@ -425,13 +416,12 @@ function createPluginHost({ pluginsDir, dataDir, devDirs = [], bundledDirs = [],
     if (record) writeState({ ...state, remove: [...new Set([...state.remove, id])] });
   }
 
-  /** Undoes a removal chosen this session. */
   function keep(id) {
     const state = readState();
     writeState({ ...state, remove: state.remove.filter((other) => other !== id) });
   }
 
-  return { applyPending, scan, loadAll, deactivateAll, handlePageMessage, list, pages, resolveFile, installZip, setEnabled, remove, keep, API_VERSION };
+  return { applyPending, scan, loadAll, deactivateAll, handlePageMessage, list, pages, options, setOption, resolveFile, installZip, setEnabled, remove, keep, API_VERSION };
 }
 
 module.exports = { createPluginHost, API_VERSION };

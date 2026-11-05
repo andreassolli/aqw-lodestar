@@ -1,5 +1,4 @@
-/* The Classes tab (page.html, page.js). Uses the app's colours (--bg, --card,
-   --ink, --muted, --line, --ring), so it follows the dark/light theme. */
+/* Classes tab. Uses the app's color variables so it follows the theme. */
 
 .ce-head h2 {
   margin: 0 0 4px;
@@ -22,8 +21,6 @@
   flex-direction: column;
   gap: 12px;
 }
-
-/* ---------- icons ---------- */
 
 .ce-icon {
   display: inline-grid;
@@ -53,8 +50,6 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-
-/* ---------- class search ---------- */
 
 .ce-search-box {
   padding: 4px;
@@ -187,8 +182,6 @@
   text-align: center;
 }
 
-/* ---------- class card ---------- */
-
 .ce-card {
   display: flex;
   flex-direction: column;
@@ -199,7 +192,7 @@
   background: var(--card);
 }
 
-/* Side by side once there's room (a wide window or the popout), like md: on the website. */
+/* Side by side when there's room. */
 @container (min-width: 560px) {
   .ce-card {
     flex-direction: row;
@@ -230,7 +223,6 @@
   background: var(--line);
 }
 
-/* boss buttons */
 .ce-bosses {
   position: relative;
   display: flex;
@@ -281,7 +273,7 @@
   cursor: default;
 }
 
-/* The green pill behind the chosen boss; page.js moves it to the button. */
+/* Green pill behind the chosen boss, page.js moves it. */
 .ce-boss-pill {
   position: absolute;
   z-index: 0;
@@ -297,7 +289,6 @@
   transition: none;
 }
 
-/* loadout rows */
 .ce-rows {
   display: flex;
   flex-direction: column;
@@ -335,7 +326,7 @@
   text-align: right;
 }
 
-/* The old and new value share one grid cell while one slides out and the other in. */
+/* Old and new value share a cell while they slide. */
 .ce-value {
   grid-area: 1 / 1;
   align-self: center;
@@ -359,7 +350,11 @@
   to { opacity: 0; transform: translateX(-24px); }
 }
 
-/* class picture */
+/* Picture turned off in Settings */
+.ce-no-picture .ce-card-media {
+  display: none !important;
+}
+
 .ce-card-media {
   display: flex;
   align-items: flex-start;
@@ -394,7 +389,6 @@
   to { background-position: -200% 0; }
 }
 
-/* footer */
 .ce-footer {
   display: flex;
   align-items: center;

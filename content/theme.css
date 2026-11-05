@@ -57,7 +57,6 @@ body.wiki-theme .yui-content {
   border-color: var(--aqwt-line) !important;
 }
 
-/* ---- Character page dark theme ---- */
 body.char-theme .img-fluid {
   display: none;
 }

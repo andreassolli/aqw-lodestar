@@ -2,6 +2,7 @@
   "id": "item-lists",
   "name": "Item Lists",
   "version": "1.1.0",
+  "summary": "The Lists tab: event item lists, your owned items and farm list.",
   "description": "The event item lists from the wiki's Search Items by Tag page (Frostval, Mogloween, your owned items, your farm list and more) in their own tab, or a window of their own.",
   "author": "Andreas Solli",
   "apiVersion": 1,

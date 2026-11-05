@@ -1,7 +1,5 @@
-// The desktop app's stand-in for the extension's storage.local: the same
-// get / set / remove calls and onChanged events, kept as one JSON file per key
-// in the app's data folder (so the big item catalog doesn't get rewritten every
-// time a setting changes).
+// Replacement for chrome.storage.local in the app. Same calls and events, one
+// JSON file per key so the big catalog isn't rewritten on every change.
 //
 // Mac:     ~/Library/Application Support/AQW Lodestar/storage/
 // Windows: %APPDATA%\AQW Lodestar\storage\
@@ -16,7 +14,7 @@ function createStorage(dir) {
   const data = new Map();
   const listeners = new Set();
 
-  // Load everything once; it's small apart from the catalog, which the popup reads anyway.
+  // Load everything once.
   for (const name of fs.readdirSync(dir)) {
     if (!name.endsWith('.json')) continue;
     try {
@@ -26,7 +24,7 @@ function createStorage(dir) {
     }
   }
 
-  // Write to a temporary file, then rename, so a crash mid-write never leaves half a file.
+  // Write to a temp file then rename, so a crash never leaves half a file.
   function persist(key) {
     const file = fileFor(key);
     if (!data.has(key)) {
@@ -51,7 +49,7 @@ function createStorage(dir) {
     }
   }
 
-  /** Same arguments as chrome.storage.local.get: null, a key, a list of keys, or { key: default }. */
+  // Takes the same arguments as chrome.storage.local.get.
   async function get(keys) {
     const result = {};
     if (keys === null || keys === undefined) {
