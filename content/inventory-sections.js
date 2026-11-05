@@ -1,6 +1,4 @@
-// Character page: a +/- button on each inventory category (Class, Armor, ...)
-// matching the page's own Inventory/Achievements toggles. Collapsed
-// categories are remembered across pages.
+// Character page: +/- buttons to collapse inventory categories. Remembered.
 (() => {
   if (!PAGE.isCharPage) return;
 
@@ -36,7 +34,6 @@
     header.prepend(button);
     header.classList.add('aqwt-section-header');
 
-    // Whole header is clickable, like the page's own collapsible headings.
     header.addEventListener('click', () => {
       const isCollapsed = !section.classList.contains('aqwt-section-collapsed');
       setCollapsed(section, isCollapsed);
@@ -57,7 +54,7 @@
     const stored = await ext.storage.local.get(KEY);
     collapsed = new Set(stored[KEY] || []);
     enhanceAll(container);
-    // Sections are rendered by the page's script, possibly after we run.
+    // The page might render these after we run.
     new MutationObserver(() => enhanceAll(container)).observe(container, { childList: true });
   }
 

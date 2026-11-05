@@ -1,11 +1,10 @@
-// Gives the popup and backup pages the extension API they expect, as
-// `browser` (shared/constants.js picks it up as `ext`). Every call is passed to
-// the main process (main.js), which holds the storage and runs background.js.
-// Also exposes `lodestarDesktop` for the desktop-only controls (stay on top).
+// Gives the popup the extension API it expects as `browser`. Everything is passed
+// on to main.js, which has the storage and runs background.js. Also exposes
+// lodestarDesktop for app-only stuff like stay on top.
 
 const { contextBridge, ipcRenderer } = require('electron');
 
-const info = ipcRenderer.sendSync('app:info'); // { version, platform }
+const info = ipcRenderer.sendSync('app:info');
 const ROOT = 'app://lodestar/';
 
 const storageListeners = new Set();
@@ -20,13 +19,15 @@ ipcRenderer.on('storage:changed', (_event, changes) => {
 });
 
 const pinnedListeners = new Set();
+const syncListeners = new Set();
+ipcRenderer.on('sync:status', (_event, status) => syncListeners.forEach((fn) => fn(status)));
 ipcRenderer.on('window:pinned', (_event, pinned) => {
   for (const listener of pinnedListeners) listener(pinned);
 });
 
 const noopEvent = { addListener() {}, removeListener() {}, hasListener: () => false };
 
-// Messages from plugins to their pages: plugin id -> channel -> listeners.
+// plugin id -> channel -> listeners
 const pluginListeners = new Map();
 ipcRenderer.on('plugin:event', (_event, { id, channel, data }) => {
   for (const listener of pluginListeners.get(id)?.get(channel) || []) {
@@ -38,7 +39,6 @@ ipcRenderer.on('plugin:event', (_event, { id, channel, data }) => {
   }
 });
 
-/** Unwraps { ok, value } / { ok: false, error } from main.js into a value or a thrown Error. */
 async function unwrap(promise) {
   const result = await promise;
   if (!result.ok) throw new Error(result.error);
@@ -54,8 +54,7 @@ contextBridge.exposeInMainWorld('browser', {
       clear: () => ipcRenderer.invoke('storage', 'clear'),
     },
     onChanged: {
-      // Braces, so nothing is returned: Electron can't pass a Set back to the page
-      // and would throw, stopping the rest of the calling script.
+      // Braces so nothing is returned. Electron can't pass a Set back and would throw.
       addListener: (fn) => {
         storageListeners.add(fn);
       },
@@ -90,24 +89,30 @@ contextBridge.exposeInMainWorld('lodestarDesktop', {
     pinnedListeners.add(fn);
   },
   importFromChrome: (id) => ipcRenderer.invoke('chrome:import', id),
+  sync: {
+    status: () => ipcRenderer.invoke('sync:status'),
+    startPairing: () => ipcRenderer.invoke('sync:start-pairing'),
+    unpair: () => ipcRenderer.invoke('sync:unpair'),
+    onStatus: (fn) => {
+      syncListeners.add(fn);
+    },
+  },
 });
 
-// Plugins: managing them (Settings → Plugins) and talking to them from their pages.
-// Nothing here returns a Set or a function: Electron can't pass those to the page.
+// Plugins. Never return a Set or a function here, Electron can't pass those.
 contextBridge.exposeInMainWorld('lodestarPlugins', {
   list: () => ipcRenderer.invoke('plugins:list'),
   pages: () => ipcRenderer.invoke('plugins:pages'),
   install: () => unwrap(ipcRenderer.invoke('plugins:install')),
   setEnabled: (id, enabled) => unwrap(ipcRenderer.invoke('plugins:set-enabled', id, enabled)),
+  options: (id) => unwrap(ipcRenderer.invoke('plugins:options', id)),
+  setOption: (id, key, value) => unwrap(ipcRenderer.invoke('plugins:set-option', id, key, value)),
   remove: (id) => unwrap(ipcRenderer.invoke('plugins:remove', id)),
   keep: (id) => unwrap(ipcRenderer.invoke('plugins:keep', id)),
   openFolder: () => ipcRenderer.invoke('plugins:open-folder'),
-  /** Opens a plugin's page in its own window (plugin.json: "page": { "popout": true }). */
   popout: (id) => unwrap(ipcRenderer.invoke('plugins:popout', id)),
   restart: () => ipcRenderer.invoke('plugins:restart'),
-  /** Calls the handler a plugin registered with api.page.handle(channel, ...) and returns its answer. */
   invoke: (id, channel, data) => unwrap(ipcRenderer.invoke('plugin:invoke', id, channel, data)),
-  /** Listens for api.page.send(channel, data) from a plugin. */
   on: (id, channel, fn) => {
     if (!pluginListeners.has(id)) pluginListeners.set(id, new Map());
     const channels = pluginListeners.get(id);

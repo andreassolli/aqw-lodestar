@@ -1,49 +1,49 @@
-// Content-script / popup side of the background fetch API.
-// background.js defines functions with the same names that fetch directly,
-// so shared modules (aqcloset.js, wiki-parser.js) work in every context.
+// Popup/content side of the background fetches. background.js has functions with
+// the same names, so aqcloset.js and wiki-parser.js work everywhere.
 
 async function sendToBackground(message) {
   try {
     return (await ext.runtime.sendMessage(message)) ?? null;
   } catch {
-    return null; // background unavailable, or the extension was reloaded
+    return null; // background not there, or the extension was reloaded
   }
 }
 
-/**
- * @returns {Promise<{html: string, baseUrl: string}|{error: string}|null>}
- *   null only when the background couldn't be reached at all
- */
 function fetchPage(url) {
   return sendToBackground({ type: 'FETCH_PAGE', url });
 }
 
-/**
- * Items matching a list filter (see matchesFilter in background.js).
- * @param {{allTags?: string[], anyTags?: string[], noneTags?: string[], rarities?: string[], nameIncludes?: string}} filter
- * @param {'catalog'|'inventory'} [source] - every wiki item, or only the synced inventory
- * @returns {Promise<{items: {url, name, tags, rarity, price, locations, images}[], updatedAt: string|null, noInventory?: boolean}|{error: string}|null>}
- */
 function queryItemCatalog(filter, source = 'catalog') {
   return sendToBackground({ type: 'QUERY_ITEMS', filter, source });
 }
 
-/**
- * Rarity and tags for items, looked up in the daily item catalog by exact name,
- * then by wiki path. One result per entry, null where the catalog has no match.
- * @param {{name?: string, path?: string|null}[]} entries
- * @returns {Promise<{items: ({rarity: string|null, tags: string[]}|null)[]}|{error: string}|null>}
- */
 function lookupItems(entries) {
   return sendToBackground({ type: 'LOOKUP_ITEMS', entries });
 }
 
-/** @returns {Promise<string|null>} */
+function findItemPage(item) {
+  return sendToBackground({ type: 'FIND_ITEM_PAGE', ...item });
+}
+
 function fetchText(url) {
   return sendToBackground({ type: 'FETCH_TEXT', url });
 }
 
-/** Opens the item on AQCloset with the saved character's outfit. Resolves { ok } or { error }. */
 function tryOnItem(name) {
   return sendToBackground({ type: 'TRY_ON', name });
+}
+
+// Which wiki links are items, by path. null if we can't check, then nothing gets ruled out.
+async function classifyWikiLinks(entries) {
+  const result = await sendToBackground({ type: 'CLASSIFY_LINKS', entries });
+  return result && Array.isArray(result.items) ? result.items : null;
+}
+
+function wikiPathOf(url) {
+  try {
+    const parsed = new URL(url, WIKI_ORIGIN);
+    return parsed.hostname === new URL(WIKI_ORIGIN).hostname ? parsed.pathname.toLowerCase().replace(/\/+$/, '') : null;
+  } catch {
+    return null;
+  }
 }

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <!-- Scythe: a wooden shaft and a curved steel blade, on the diagonal like the other weapon icons. -->
+  <path d="M16 88 70 14" stroke="#2b1d14" stroke-width="11" stroke-linecap="round"/>
+  <path d="M16 88 70 14" stroke="#8a5a2b" stroke-width="6" stroke-linecap="round"/>
+  <path d="M22 76l7 4M30 65l7 4" stroke="#5a3a1e" stroke-width="3" stroke-linecap="round"/>
+  <path d="M66 18C50 6 26 6 8 20c18-4 36-2 52 10z" fill="#8b929c" stroke="#2b1d14" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M58 22C44 14 28 13 16 18" fill="none" stroke="#d3d8de" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="66" cy="19" r="5" fill="#6f7680" stroke="#2b1d14" stroke-width="3"/>
+</svg>

@@ -1,19 +1,13 @@
-// Finds the Lodestar extension's saved data in Chrome (and other Chromium
-// browsers) on this computer and reads it, so the app can import it in one
-// click without any change to the extension.
-//
-// Chrome keeps each extension's storage.local in its profile folder, under
-// "Local Extension Settings/<extension id>/", as a LevelDB database: one entry
-// per storage key, the value saved as JSON text. This file reads those files
-// directly (read-only, so it's safe while Chrome is running). Lodestar's folder
-// is recognised by its storage keys, so it works whatever the extension's id is
-// (store install or "Load unpacked").
+// Finds Lodestar's saved data in Chrome (and other Chromium browsers) so the app
+// can import it with one click. Chrome keeps extension storage as a LevelDB in
+// "Local Extension Settings/<id>/". We read the files directly (read only, so it's
+// fine while Chrome is open) and spot Lodestar by its storage keys, so the
+// extension id doesn't matter.
 
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-/** [browser name, folder holding "Local State" and the profiles] for this OS. */
 function browserRoots() {
   const home = os.homedir();
   if (process.platform === 'darwin') {
@@ -61,7 +55,7 @@ function browserRoots() {
   ];
 }
 
-/** Profile folders in a browser root ("Default", "Profile 1", ... or the root itself for Opera), with display names. */
+// Profile folders with display names. Opera just uses the root.
 function profilesIn(root) {
   let names = {};
   try {
@@ -77,35 +71,26 @@ function profilesIn(root) {
     return [];
   }
   const profiles = dirs.map((dir) => ({ dir: path.join(root, dir), name: names[dir] || dir, folder: dir }));
-  // Opera keeps its single profile directly in the root.
   if (!profiles.length && fs.existsSync(path.join(root, 'Local Extension Settings'))) {
     profiles.push({ dir: root, name: '', folder: '' });
   }
   return profiles;
 }
 
-// Storage keys only Lodestar writes; a folder with any of them is Lodestar's.
+// Keys only Lodestar writes.
 const LODESTAR_KEYS = ['lip_saved_items', 'savedInventory', 'saved_theme', 'saved_username', 'inventorySyncedAt', 'tooltipPlacement'];
 
-/**
- * Whether a storage folder is Lodestar's. Besides the keys above, an install
- * that hasn't saved anything yet still has its caches: the item catalog with the
- * boost schedule or Imgur check (1.1), or the boost cache with the 1.0 theme key.
- */
+// A fresh install that hasn't saved anything still has its caches, so those count too.
 function isLodestar(entries) {
   if (LODESTAR_KEYS.some((key) => entries.has(key))) return true;
   if (entries.has('itemCatalog') && (entries.has('boostSchedule') || entries.has('imgurCheck'))) return true;
   return entries.has('boostCache') && entries.has('savedTheme');
 }
 
-// Downloaded again by the app itself; left out (the same list as shared/backup.js).
+// The app downloads these itself (same list as backup.js).
 const SKIPPED_KEYS = ['itemCatalog', 'boostSchedule', 'boostCache', 'resourceCache', 'imgurCheck'];
 
-/**
- * Every copy of Lodestar's data in Chromium browsers on this computer, most
- * recently changed first.
- * @returns {{ id: string, label: string, browser: string, profile: string, modified: number, data: object }[]}
- */
+// Every copy of Lodestar's data on this computer, newest first.
 function findLodestarData() {
   const found = [];
   for (const [browser, root] of browserRoots()) {
@@ -124,7 +109,7 @@ function findLodestarData() {
         try {
           entries = readLevelDb(dbDir);
         } catch {
-          continue; // not readable right now; skip it
+          continue; // can't read it right now, skip
         }
         if (!isLodestar(entries)) continue;
 
@@ -134,10 +119,10 @@ function findLodestarData() {
           try {
             data[key] = JSON.parse(raw.toString('utf8'));
           } catch {
-            // not JSON: not something the extension wrote
+            // not JSON, so not ours
           }
         }
-        // Version 1.0 saved the theme as "savedTheme".
+        // 1.0 called the theme "savedTheme".
         if (data.savedTheme && !data.saved_theme) data.saved_theme = data.savedTheme;
         delete data.savedTheme;
 
@@ -162,25 +147,21 @@ function lastModified(dir) {
     try {
       latest = Math.max(latest, fs.statSync(path.join(dir, name)).mtimeMs);
     } catch {
-      // deleted while we looked
+      // deleted while we were looking
     }
   }
   return latest;
 }
 
-//
-// LevelDB keeps recent writes in *.log files and older ones in sorted tables
-// (*.ldb, or *.sst in old versions). Every write has a sequence number, so the
-// newest version of each key wins, and a deletion hides older values. Only
-// what Chrome's extension storage needs is handled: no MANIFEST (leftover old
-// files only hold lower sequence numbers), no comparators other than bytewise.
+// LevelDB reading. Recent writes are in *.log, older ones in sorted tables
+// (*.ldb or *.sst). Highest sequence number wins and deletes hide older values.
+// We only handle what Chrome's extension storage needs.
 
 const TYPE_DELETION = 0;
 const TYPE_VALUE = 1;
 
-/** @returns {Map<string, Buffer>} the current value of every key */
 function readLevelDb(dir) {
-  const newest = new Map(); // key -> { seq, type, value }
+  const newest = new Map();
   const keep = (key, seq, type, value) => {
     const current = newest.get(key);
     if (!current || seq > current.seq) newest.set(key, { seq, type, value });
@@ -194,13 +175,13 @@ function readLevelDb(dir) {
       if (!/\.(ldb|sst|log)$/.test(name)) continue;
       buffer = fs.readFileSync(path.join(dir, name));
     } catch {
-      continue; // compacted away while reading
+      continue; // compacted while we read
     }
     try {
       if (name.endsWith('.log')) readLogFile(buffer, keep);
       else readTableFile(buffer, keep);
     } catch {
-      // a damaged or half-written file: use what the other files have
+      // damaged or half written, use the other files
     }
   }
 
@@ -224,8 +205,8 @@ function readVarint(buffer, offset) {
 
 const readUint64 = (buffer, offset) => buffer.readUInt32LE(offset) + buffer.readUInt32LE(offset + 4) * 2 ** 32;
 
-// Write-ahead log: 32 KiB blocks of records (checksum 4, length 2, type 1, data).
-// A write batch can be split over several records (first / middle / last).
+// Log file: 32 KiB blocks of records (checksum 4, length 2, type 1, data).
+// A batch can be split over several records.
 function readLogFile(buffer, keep) {
   const BLOCK = 32768;
   let offset = 0;
@@ -233,17 +214,17 @@ function readLogFile(buffer, keep) {
   while (offset + 7 <= buffer.length) {
     const left = BLOCK - (offset % BLOCK);
     if (left < 7) {
-      offset += left; // block trailer padding
+      offset += left;
       continue;
     }
     const length = buffer.readUInt16LE(offset + 4);
     const type = buffer[offset + 6];
     const start = offset + 7;
     if (type === 0 && length === 0) {
-      offset += left; // preallocated, unused space
+      offset += left;
       continue;
     }
-    if (start + length > buffer.length) break; // being written right now
+    if (start + length > buffer.length) break; // still being written
     const data = buffer.subarray(start, start + length);
     offset = start + length;
 
@@ -258,7 +239,7 @@ function readLogFile(buffer, keep) {
   }
 }
 
-// A batch: sequence number (8), count (4), then per entry a tag and the key (and value).
+// Batch: sequence (8), count (4), then a tag, key and value per entry.
 function readWriteBatch(batch, keep) {
   let seq = readUint64(batch, 0);
   const count = batch.readUInt32LE(8);
@@ -280,13 +261,13 @@ function readWriteBatch(batch, keep) {
   }
 }
 
-// Sorted table: a 48-byte footer points to the index block, whose entries point
-// to the data blocks. Each block may be Snappy-compressed.
+// Table: a 48 byte footer points to the index block, which points to the
+// data blocks. Blocks can be Snappy compressed.
 function readTableFile(buffer, keep) {
   const footer = buffer.subarray(buffer.length - 48);
   let offset = 0;
-  [, offset] = readVarint(footer, offset); // metaindex offset
-  [, offset] = readVarint(footer, offset); // metaindex size
+  [, offset] = readVarint(footer, offset);
+  [, offset] = readVarint(footer, offset);
   let indexOffset;
   let indexSize;
   [indexOffset, offset] = readVarint(footer, offset);
@@ -311,13 +292,13 @@ function readTableFile(buffer, keep) {
 
 function readBlock(buffer, offset, size) {
   const contents = buffer.subarray(offset, offset + size);
-  const compression = buffer[offset + size]; // the 5-byte trailer: type, then a checksum
+  const compression = buffer[offset + size]; // 5 byte trailer: type + checksum
   if (compression === 0) return contents;
   if (compression === 1) return snappyDecompress(contents);
   throw new Error(`unsupported block compression ${compression}`);
 }
 
-/** The [key, value] entries of a block (keys are prefix-compressed). */
+// Keys in a block are prefix compressed.
 function blockEntries(block) {
   const restarts = block.readUInt32LE(block.length - 4);
   const end = block.length - 4 - restarts * 4;
@@ -340,7 +321,6 @@ function blockEntries(block) {
   return entries;
 }
 
-/** Snappy (raw format), as LevelDB uses it. */
 function snappyDecompress(input) {
   let [length, offset] = readVarint(input, 0);
   const out = Buffer.alloc(length);
@@ -377,27 +357,18 @@ function snappyDecompress(input) {
       offset += 4;
     }
     if (!back || back > pos) throw new Error('bad snappy copy');
-    for (let i = 0; i < len; i++, pos++) out[pos] = out[pos - back]; // may overlap, so byte by byte
+    for (let i = 0; i < len; i++, pos++) out[pos] = out[pos - back]; // can overlap, so byte by byte
   }
   if (pos !== length) throw new Error('snappy length mismatch');
   return out;
 }
 
-/**
- * Copies Lodestar's data from a browser into the app's storage, replacing what
- * the app has under the same keys (like importing a backup file). The app's
- * current data is saved first as a backup file in `backupsDir`, so nothing is
- * lost by importing over it.
- * @param {object} options
- * @param {object} options.storage     from storage.js
- * @param {string} options.backupsDir  where to keep the safety copy
- * @param {string} options.version     the app's version, for the backup file
- * @param {string} [options.id]        a source from an earlier result's `others`; the newest by default
- */
+// Copies Lodestar's data from a browser into the app, replacing what's there.
+// Saves a backup of the app's data first so nothing gets lost.
 async function importFromChrome({ storage, backupsDir, version, id }) {
   const found = findLodestarData();
   if (!found.length) return { error: 'not-found' };
-  // Copies with nothing saved yet (only caches) can't be imported; say where Lodestar was found, though.
+  // Copies with only caches can't be imported, but say where we found them.
   const usable = found.filter((entry) => Object.keys(entry.data).length);
   if (!usable.length) return { error: 'empty', label: found[0].label };
   const source = (id && usable.find((entry) => entry.id === id)) || usable[0];

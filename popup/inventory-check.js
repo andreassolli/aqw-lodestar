@@ -1,5 +1,4 @@
-// "Check bag": looks up a character's inventory, ticks off farm-list items
-// they already own, and adds items not yet in the saved inventory to it.
+// Check bag: looks up a character's inventory and ticks off farm items they own.
 const InventoryCheck = (() => {
   async function fetchCharacterInventory(username) {
     const fvars = await fetchText(`https://game.aq.com/game/api/charpage/fvars?id=${encodeURIComponent(username)}`);
@@ -15,7 +14,6 @@ const InventoryCheck = (() => {
     }
   }
 
-  // Character page entries ({ strName, intCount, strType, ... }) in the saved-inventory format.
   function toInventoryEntries(characterItems) {
     return characterItems
       .filter((entry) => entry && entry.strName)
@@ -27,7 +25,7 @@ const InventoryCheck = (() => {
       }));
   }
 
-  // Adds entries whose item isn't saved yet; existing entries are left as they are.
+  // Only adds missing items, existing ones stay as they are.
   async function addToSavedInventory(entries) {
     const result = await ext.storage.local.get(STORAGE_KEYS.inventory);
     const saved = Array.isArray(result[STORAGE_KEYS.inventory]) ? result[STORAGE_KEYS.inventory] : [];

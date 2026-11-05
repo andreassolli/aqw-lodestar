@@ -2,53 +2,16 @@
   margin: 8px 0 16px;
 }
 
-.aqwt-list-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.aqwt-list-button {
-  --aqwt-list-color: #b8860b; /* per list: item-lists.config.js "color" */
-  padding: 6px 16px;
-  border: 1px solid var(--aqwt-list-color);
-  border-radius: 999px;
-  background: var(--aqwt-card);
-  background: color-mix(in srgb, var(--aqwt-list-color) 16%, var(--aqwt-card));
-  color: var(--aqwt-ink);
-  color: color-mix(in srgb, var(--aqwt-list-color) 55%, var(--aqwt-ink));
-  font-weight: 700;
-  letter-spacing: .5px;
-  cursor: pointer;
-  transition: filter .15s ease;
-}
-
-.aqwt-list-button:hover {
-  filter: brightness(1.2);
-}
-
-.aqwt-list-button:disabled {
-  opacity: .6;
-  cursor: progress;
-}
-
-.aqwt-list-button[aria-expanded="true"] {
-  background: var(--aqwt-list-color);
-  color: #14110c;
-}
-
 .aqwt-list-status {
   margin: 12px 0 8px;
   font-weight: 600;
   color: var(--aqwt-ink);
 }
 
-/* ---- heading above the cards: the count, and the filter (item-list-view.js) ---- */
+/* Search box + filter, then the count. Same on the wiki and in the app. */
 .aqwt-list-head {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 8px;
   margin: 12px 0 8px;
 }
@@ -57,28 +20,97 @@
   margin: 0;
 }
 
-.aqwt-filter {
-  position: relative;
+.aqwt-list-tools {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
 }
 
-.aqwt-filter-button {
-  display: inline-flex;
+.aqwt-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.aqwt-list-search-field {
+  display: flex;
+  flex: 1;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 10px;
   border: 1px solid var(--aqwt-line);
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--aqwt-card);
+  color: var(--aqwt-muted);
+  cursor: text;
+}
+
+.aqwt-list-search-field:hover {
+  border-color: var(--aqwt-muted);
+}
+
+.aqwt-list-search-field:focus-within {
+  border-color: var(--aqwt-acc);
+  outline: 2px solid var(--aqwt-ring, var(--aqwt-acc));
+  outline-offset: 1px;
+}
+
+.aqwt-list-search-field svg {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.aqwt-list-search {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
   color: var(--aqwt-ink);
   font: inherit;
   font-size: 13px;
-  font-weight: 600;
+}
+
+.aqwt-list-search::placeholder {
+  color: var(--aqwt-muted);
+}
+
+/* Icon button the same height as the search box, badge in the corner. */
+.aqwt-filter {
+  position: relative;
+  display: flex;
+}
+
+.aqwt-filter-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 1px solid var(--aqwt-line);
+  border-radius: 8px;
+  background: var(--aqwt-card);
+  color: var(--aqwt-ink);
+  font: inherit;
   cursor: pointer;
 }
 
 .aqwt-filter-button:hover,
 .aqwt-filter.is-open .aqwt-filter-button {
-  border-color: var(--aqwt-acc);
+  border-color: var(--aqwt-muted);
 }
 
 .aqwt-filter-button:focus-visible {
@@ -87,8 +119,8 @@
 }
 
 .aqwt-filter-button svg {
-  width: 15px;
-  height: 15px;
+  width: 17px;
+  height: 17px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -101,29 +133,39 @@
 }
 
 .aqwt-filter-count {
+  position: absolute;
+  top: -7px;
+  right: -7px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
   box-sizing: border-box;
   border-radius: 999px;
   background: var(--aqwt-acc);
   color: var(--aqwt-card);
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 700;
   line-height: 1;
   white-space: nowrap;
 }
 
-
+.aqwt-filter-count[hidden] {
+  display: none;
+}
 
 .aqwt-filter-menu {
   position: absolute;
   z-index: 30;
   top: calc(100% + 6px);
   right: 0;
-  width: 240px;
+  width: min(700px, calc(100vw - 32px));
+  max-height: min(75vh, 560px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  container-type: inline-size;
   padding: 10px 12px;
   border: 1px solid var(--aqwt-line);
   border-radius: 10px;
@@ -132,6 +174,65 @@
   box-shadow: 0 10px 28px rgba(0, 0, 0, .3);
   font-size: 13px;
   text-align: left;
+}
+
+/* Lists on the left, filter on the right. Stacks when the menu is narrow. */
+.aqwt-filter-menu:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0 16px;
+}
+
+.aqwt-filter-menu:has(> .aqwt-filter-lists-column[hidden]) {
+  width: 280px;
+}
+
+.aqwt-filter-column {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.aqwt-filter-lists-column {
+  flex: 1.6 1 300px;
+  padding-right: 16px;
+  border-right: 1px solid var(--aqwt-line);
+}
+
+.aqwt-filter-group {
+  margin: 6px 0 2px;
+  color: var(--aqwt-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.aqwt-filter-lists {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  column-gap: 8px;
+}
+
+.aqwt-filter-lists .aqwt-filter-option {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.aqwt-filter-list-dot {
+  flex: none;
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--aqwt-list-color, var(--aqwt-line));
+}
+
+/* Stacked version. 540px is about where two columns stop fitting. */
+@container (max-width: 540px) {
+  .aqwt-filter-lists-column {
+    margin-bottom: 8px;
+    padding: 0 0 8px;
+    border-right: 0;
+    border-bottom: 1px solid var(--aqwt-line);
+  }
 }
 
 .aqwt-filter-heading {
@@ -143,6 +244,50 @@
   text-transform: uppercase;
 }
 
+.aqwt-filter-subhead {
+  margin-left: 4px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.aqwt-filter-types {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 8px;
+}
+
+.aqwt-filter-type-icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-right: -2px;
+  object-fit: contain;
+}
+
+/* Fade the unticked types once some are ticked. */
+.aqwt-filter-column:has(input[name="type"]:checked) .aqwt-filter-types .aqwt-filter-option:not(:has(input:checked)) .aqwt-filter-type-icon {
+  opacity: .45;
+}
+
+.aqwt-filter-type-group {
+  font-weight: 600;
+}
+
+.aqwt-filter-weapon-types {
+  margin: 0 0 6px 12px;
+  padding-left: 8px;
+  border-left: 2px solid var(--aqwt-line);
+}
+
+/* Half ticked: a dash in the circle. */
+.aqwt-filter-option input:indeterminate {
+  background-image: none;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--aqwt-acc);
+  background: linear-gradient(var(--aqwt-acc), var(--aqwt-acc)) no-repeat center / 8px 2px;
+}
+
 .aqwt-filter-option {
   display: flex;
   align-items: center;
@@ -151,7 +296,7 @@
   cursor: pointer;
 }
 
-/* The farm list's round checkboxes (icons/circle.png, circlecheck.png). */
+/* Same round checkboxes as the farm list. */
 .aqwt-filter-option input {
   flex: none;
   width: 18px;
@@ -207,13 +352,41 @@
   text-decoration: underline;
 }
 
+.aqwt-list-choose {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.aqwt-list-choose-button {
+  padding: 6px 14px;
+  border: 1px solid var(--aqwt-acc);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--aqwt-acc);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aqwt-list-choose-button:hover {
+  background: var(--aqwt-acc);
+  color: var(--aqwt-card);
+}
+
+.aqwt-list-choose-button:focus-visible {
+  outline: 2px solid var(--aqwt-ring, var(--aqwt-acc));
+  outline-offset: 2px;
+}
+
 .aqwt-list-empty {
   grid-column: 1 / -1;
   margin: 8px 0;
   color: var(--aqwt-muted);
 }
 
-/* ---- cards: identical to the hover tooltip (item-preview.css), at its width ---- */
 .aqwt-list-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
@@ -222,14 +395,44 @@
 }
 
 
-
-/* Every card the same height (padding and border included); long details
-   scroll inside the card. */
+/* Same height for every card, long details scroll inside. */
 .aqwt-list-card {
   box-sizing: border-box;
-  height: 605px;
-  background-color: var(--aqwt-card);
-  color: var(--aqwt-ink);
+  height: auto;
+  max-height: 400px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: max-height .2s ease;
+}
+
+.aqwt-list-card.is-expanded {
+  height: auto;
+  max-height: 800px;
+  overflow: auto;
+}
+
+.aqwt-list-card:focus-visible {
+  outline: 2px solid var(--aqwt-ring, var(--aqwt-acc));
+  outline-offset: 2px;
+}
+
+.aqwt-list-card .aqwt-hover-details {
+  min-height: 0;
+  overflow: visible;
+}
+
+.aqwt-list-card a,
+.aqwt-list-card button,
+.aqwt-list-card input,
+.aqwt-list-card select,
+.aqwt-list-card label {
+  cursor: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aqwt-list-card {
+    transition: none;
+  }
 }
 
 .aqwt-list-card .aqwt-tooltip-images {
@@ -246,8 +449,7 @@
   scrollbar-color: var(--aqwt-muted) transparent;
 }
 
-/* Pictures and other wide content inside the details (notes, older looks,
-   tables) shrink to the card's width instead of scrolling sideways. */
+/* Wide stuff in the details shrinks to fit instead of scrolling sideways. */
 .aqwt-list-card .aqwt-hover-details img,
 .aqwt-list-card .aqwt-hover-details video,
 .aqwt-list-card .aqwt-hover-details iframe {
@@ -267,9 +469,8 @@
   overflow-wrap: anywhere;
 }
 
-/* ---- skeletons (loading placeholders) ---- */
 .aqwt-lists {
-  /* shimmer shades, from the text color so they show on light and dark cards */
+  /* shimmer colors based on the text color so they work in both themes */
   --aqwt-skeleton-base: rgba(127, 127, 127, .12);
   --aqwt-skeleton-base: color-mix(in srgb, var(--aqwt-ink) 6%, transparent);
   --aqwt-skeleton-shine: rgba(127, 127, 127, .25);
@@ -306,12 +507,10 @@
   height: 12px;
 }
 
-/* The card title placeholder is a little taller. */
 .aqwt-skeleton-card .aqwt-skeleton-lines:first-child .aqwt-skeleton-line {
   height: 18px;
 }
 
-/* Image row while its image downloads. */
 .aqwt-list-card .aqwt-tooltip-images.is-loading {
   min-height: 220px;
   border-radius: 8px;
@@ -327,7 +526,6 @@
   }
 }
 
-/* Marker that loads the next batch of cards; takes no space. */
 .aqwt-list-sentinel {
   grid-column: 1 / -1;
   height: 1px;

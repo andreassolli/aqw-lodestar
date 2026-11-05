@@ -1,7 +1,4 @@
-// account.aq.com/AQW/Inventory: a "Sync inventory" button that saves the
-// logged-in player's full inventory (inventory and bank) to storage. Nothing is
-// synced until the button is pressed. Owned-item checkmarks and the merge/quest
-// calculators read the saved inventory.
+// Inventory page: the Sync button that saves your whole inventory and bank.
 (() => {
   if (!/^\/aqw\/inventory\/?$/i.test(location.pathname)) return;
 
@@ -15,13 +12,12 @@
     setTimeout(() => notice.remove(), NOTICE_MS);
   }
 
-  /** The page's own request, so it carries the page's cookies (Firefox needs content.fetch for that). */
+  // Uses the page's own fetch so it has the cookies (Firefox needs content.fetch).
   function pageFetch(url, init) {
     const fetchAsPage = typeof content !== 'undefined' && content.fetch ? content.fetch.bind(content) : fetch;
     return fetchAsPage(url, init);
   }
 
-  /** The inventory, read with the page's login (shared/inventory-import.js turns it into the saved format). */
   async function requestInventory() {
     const url = new URL(`${InventoryImport.URL_PATH}&_=${Date.now()}`, location.origin).href;
     const response = await pageFetch(url, {

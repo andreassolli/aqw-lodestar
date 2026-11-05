@@ -1,11 +1,11 @@
 {
   "id": "ultra-assistant",
-  "name": "Ultra Assistant",
+  "name": "Attack Patterns",
   "version": "1.0.0",
-  "description": "Watches the game's traffic during ultra boss fights and shows who should Taunt or Zone next, in a notification at the top of the screen. Also shows each boss's attack pattern.",
+  "summary": "The Ultra tab: each ultra boss's attack pattern.",
+  "description": "Each ultra boss's attack pattern, in a tab of its own or a window of its own.",
   "author": "Andreas Solli",
   "apiVersion": 1,
-  "main": "main.js",
   "page": {
     "title": "Ultra",
     "icon": "page/icon.svg",

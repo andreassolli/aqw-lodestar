@@ -1,7 +1,7 @@
 {
   "name": "aqw-lodestar-desktop",
   "productName": "AQW Lodestar",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "description": "The AQW Lodestar popup as a desktop app: server boosts, Check bag and the farm list, with an option to stay on top of other windows.",
   "author": "Andreas Solli",
   "license": "MIT",
@@ -21,13 +21,13 @@
   },
   "devDependencies": {
     "@electron/rebuild": "^4.2.1",
-    "electron": "^37.2.0",
-    "electron-builder": "^26.0.12"
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3"
   },
   "build": {
     "appId": "com.lodestar.aqw-lodestar",
     "productName": "AQW Lodestar",
-    "copyright": "Copyright \u00a9 2026 Andreas Solli",
+    "copyright": "Copyright © 2026 Andreas Solli",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -40,6 +40,7 @@
       "chrome-import.js",
       "zip.js",
       "plugin-host.js",
+      "sync-server.js",
       "app/**/*",
       "package.json"
     ],
@@ -154,6 +155,14 @@
           "**/*",
           "!README.md",
           "!site/**"
+        ]
+      },
+      {
+        "from": "plugins/ultra-assistant",
+        "to": "plugins/ultra-assistant",
+        "filter": [
+          "**/*",
+          "!README.md"
         ]
       }
     ]

@@ -1,8 +1,6 @@
-// The saved inventory (written by content/inventory-sync.js), as a lookup of
-// what the player owns. Names are matched with normalizeItemName (shared/text.js),
-// so every feature agrees on what counts as owned.
+// The saved inventory as a lookup. Everything uses normalizeItemName so they all
+// agree on what you own.
 
-/** @returns {Map<string, number>} normalized item name -> total quantity */
 function buildOwnedMap(inventory) {
   const owned = new Map();
   for (const entry of Array.isArray(inventory) ? inventory : []) {
@@ -12,10 +10,7 @@ function buildOwnedMap(inventory) {
   return owned;
 }
 
-/**
- * Calls onChange(ownedMap) with the current inventory, and again whenever it's re-synced.
- * An empty map means no inventory has been saved yet.
- */
+// Calls onChange with the inventory now and again whenever it's synced.
 function watchOwnedItems(onChange) {
   ext.storage.local.get(STORAGE_KEYS.inventory).then((result) => onChange(buildOwnedMap(result[STORAGE_KEYS.inventory])));
   ext.storage.onChanged.addListener((changes, area) => {

@@ -1,4 +1,4 @@
-// "Add item from link" dialog: same result as the right-click menu, from a pasted URL.
+// "Add item from link" dialog. Same as the right-click menu but with a pasted URL.
 const AddItemModal = (() => {
   let els;
 
@@ -78,7 +78,7 @@ const AddItemModal = (() => {
     els.cancel.addEventListener('click', close);
     els.confirm.addEventListener('click', confirm);
     els.overlay.addEventListener('click', (e) => {
-      if (e.target === els.overlay) close(); // backdrop click
+      if (e.target === els.overlay) close();
     });
     els.input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') confirm();

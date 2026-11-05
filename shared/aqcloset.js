@@ -1,5 +1,4 @@
-// AQCloset API helpers. Relies on a global fetchText(url) -> Promise<string|null>
-// (shared/messaging.js in pages, background.js in the service worker).
+// AQCloset API helpers. Needs a global fetchText (messaging.js or background.js).
 
 const Aqcloset = (() => {
   const API_BASE = 'https://aqcloset.com/api';
@@ -15,36 +14,65 @@ const Aqcloset = (() => {
     }
   }
 
-  /**
-   * Best search hit for a name: an exact name match, else the first result.
-   * With { exact: true }, only an exact (any case) name match, else null.
-   */
-  async function searchItem(name, { exact = false } = {}) {
-    if (!name) return null;
-    const data = await fetchJson(`${API_BASE}/items/search?q=${encodeURIComponent(name)}&limit=20`);
-    const results = data && data.results;
-    if (!results || !results.length) return null;
-    const lower = name.toLowerCase();
-    const match = results.find((item) => item.name === name) || results.find((item) => String(item.name).toLowerCase() === lower);
-    return match || (exact ? null : results[0]);
+  // Kept for as long as the page is open so hovering the same name twice, or
+  // starting the search early, only costs one request.
+  const searches = new Map();
+
+  function searchResults(name) {
+    const key = name.toLowerCase();
+    if (!searches.has(key)) {
+      const pending = fetchJson(`${API_BASE}/items/search?q=${encodeURIComponent(name)}&limit=20`);
+      pending.then((data) => {
+        if (!data) searches.delete(key);
+      });
+      searches.set(key, pending.then((data) => (data && data.results) || []));
+    }
+    return searches.get(key);
   }
 
-  /** Icon type used by the popup: the weapon type for weapons, otherwise the slot. */
+  // Starts the search without waiting for it.
+  function preload(name) {
+    if (name) searchResults(getBaseName(name) || name);
+  }
+
+  // An armor and its helm can share a name, so slot (armor, helm, cape...) picks
+  // between them. A same-named item in another slot doesn't count.
+  function exactMatches(results, name, slot) {
+    const lower = name.toLowerCase();
+    const same = results.filter((item) => item.name === name);
+    const exacts = same.length ? same : results.filter((item) => String(item.name).toLowerCase() === lower);
+    return slot ? exacts.filter((item) => item.slot === slot) : exacts;
+  }
+
+  // Exact name match, else the first result. With exact: true, only exact matches.
+  // AQCloset has no "(AC)" or "(Merge)" in its names and finds nothing with them
+  // in, so we search without them. Names that really have one, like "Shadow Orb
+  // (Rare)", still come up and get matched first.
+  // With unique: true, two different items with that name count as no match.
+  // Ice Katana (1) and (2) are both just "Ice Katana" there and nothing says which is which.
+  async function searchItem(name, { exact = false, slot = null, unique = false } = {}) {
+    if (!name) return null;
+    const base = getBaseName(name) || name;
+    const results = await searchResults(base);
+    let matches = exactMatches(results, name, slot);
+    if (!matches.length) matches = exactMatches(results, base, slot);
+
+    if (matches.length) {
+      return unique && new Set(matches.map((item) => item.file)).size > 1 ? null : matches[0];
+    }
+    return exact ? null : results[0] || null;
+  }
+
   function itemType(item) {
     const raw = item.slot === 'weapon' ? item.wType || item.wtype : item.slot;
     return raw ? String(raw).toLowerCase() : null;
   }
 
-  /**
-   * Thumbnail URLs for an item (female variant only for armors).
-   * For display the URLs aren't checked: an <img> that fails just removes itself,
-   * which saves downloading every image twice. Pass { verify: true } where the
-   * URLs are stored for later (the farm list) to only keep ones that exist.
-   * Pass { exact: true } to only accept an item with exactly this name.
-   * @returns {Promise<{images: string[], type: string|null}>}
-   */
-  async function findItemPreview(name, { verify = false, exact = false } = {}) {
-    const item = await searchItem(name, { exact });
+  // Thumbnail URLs for an item (female too for armors). Not checked by default,
+  // a broken <img> just removes itself. Use verify: true when saving them.
+  async function findItemPreview(name, { verify = false, exact = false, slot = null } = {}) {
+    // A picture of the wrong item is worse than the wiki's, so don't guess here.
+    const item = await searchItem(name, { exact, slot, unique: true });
     if (!item || !item.id || !item.file || !item.slot) return { images: [], type: null };
 
     const base =
@@ -58,20 +86,13 @@ const Aqcloset = (() => {
     return { images: candidates.filter((_, i) => found[i]), type: itemType(item) };
   }
 
-  /** "#FFCC99" or "ffcc99" > "FFCC99"; null for anything that isn't a 6-digit hex color. */
   function fromHexColor(value) {
     const hex = String(value || '').trim().replace(/^#/, '');
     return /^[0-9a-f]{6}$/i.test(hex) ? hex.toUpperCase() : null;
   }
 
-  /**
-   * Wardrobe link wearing the character's current outfit (items, hair and
-   * colors from AQCloset's /api/character), optionally plus one item.
-   * The response looks like:
-   *   { ok, outfit: { gender, items: { armor: { name, file, slot }, ... },
-   *                   colors: { hair: '#FFCC99', skin, eye, base, trim, accessory },
-   *                   hair: { name, file } } }
-   */
+  // Wardrobe link with the character's current outfit (from AQCloset's
+  // /api/character), plus an extra item if given.
   async function buildWardrobeUrl(username, extraItem) {
     const params = new URLSearchParams(DEFAULT_OUTFIT);
     const setItem = (item) => {
@@ -85,7 +106,6 @@ const Aqcloset = (() => {
         if (outfit.gender) params.set('g', outfit.gender);
         if (outfit.hair && hasFile(outfit.hair.file)) params.set('hair', `${outfit.hair.name || ''}|${outfit.hair.file}`);
         Object.values(outfit.items || {}).forEach(setItem);
-        // Same parameters as the FlashVars colors: c_hair, c_skin, c_eye, c_base, c_trim, c_accessory.
         for (const [part, value] of Object.entries(outfit.colors || {})) {
           const hex = fromHexColor(value);
           if (hex) params.set(`c_${part}`, hex);
@@ -97,11 +117,8 @@ const Aqcloset = (() => {
     return `https://aqcloset.com/wardrobe?${params}`;
   }
 
-  /**
-   * "&strGender=F&strHelmName=Skull Hood&..." -> { strGender: 'F', ... }.
-   * Not URL-decoded on purpose: the values are plain text, and item names can
-   * contain "+" (e.g. "Coolest Invisible Ninja +5").
-   */
+  // "&strGender=F&..." -> { strGender: 'F' }. Not URL decoded on purpose, names
+  // can have "+" in them ("Coolest Invisible Ninja +5").
   function parseFlashVars(text) {
     const vars = {};
     for (const pair of String(text || '').split('&')) {
@@ -111,9 +128,8 @@ const Aqcloset = (() => {
     return vars;
   }
 
-  // [wardrobe slot, FlashVars name key, FlashVars file key, cosmetic key part].
-  // The armor's file is under strClassFile; cosmetic ("Cust") items are what the
-  // character actually shows, so they win over the equipped item.
+  // [slot, name key, file key, cosmetic part]. Cosmetic ("Cust") items are what
+  // the character actually shows, so they win.
   const FLASHVAR_SLOTS = [
     ['armor', 'strArmorName', 'strClassFile', 'Armor'],
     ['helm', 'strHelmName', 'strHelmFile', 'Helm'],
@@ -123,8 +139,7 @@ const Aqcloset = (() => {
     ['misc', 'strMiscName', 'strMiscFile', 'Misc'],
   ];
 
-  // [wardrobe parameter, FlashVars key]. FlashVars colors are decimal numbers
-  // (intColorHair=16764057); the wardrobe wants 6-digit hex (c_hair=FFCC99).
+  // FlashVars colors are decimal (16764057), the wardrobe wants hex (FFCC99).
   const FLASHVAR_COLORS = [
     ['c_hair', 'intColorHair'],
     ['c_skin', 'intColorSkin'],
@@ -136,14 +151,12 @@ const Aqcloset = (() => {
 
   const hasFile = (file) => !!file && file.toLowerCase() !== 'none';
 
-  /** "16764057" > "FFCC99"; null for anything that isn't a 24-bit color number. */
   function toHexColor(value) {
     if (value == null || !/^\d+$/.test(String(value).trim())) return null;
     const number = Number(value);
     return number <= 0xffffff ? number.toString(16).toUpperCase().padStart(6, '0') : null;
   }
 
-  /** The AQCloset wardrobe link for the outfit in a character page's FlashVars. */
   function wardrobeUrlFromFlashVars(flashVars) {
     const vars = parseFlashVars(flashVars);
     const params = new URLSearchParams(DEFAULT_OUTFIT);
@@ -165,5 +178,5 @@ const Aqcloset = (() => {
     return `https://aqcloset.com/wardrobe?${params}`;
   }
 
-  return { searchItem, findItemPreview, buildWardrobeUrl, parseFlashVars, wardrobeUrlFromFlashVars };
+  return { searchItem, preload, findItemPreview, buildWardrobeUrl, parseFlashVars, wardrobeUrlFromFlashVars };
 })();

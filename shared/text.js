@@ -1,10 +1,8 @@
-// Small string/DOM helpers shared by content scripts and the popup.
 
 const RANK_SUFFIX = /\s*\(Rank\s*(?:[1-9]|10)\)/i;
 const ITEM_TYPE_SUFFIX =
-  /\s*\((Class|Armor|Helm|Cape|Weapon|Pet|Misc|Necklace|Sword|Dagger|Axe|Mace|Polearm|Staff|Wand|Bow|Gun|0 AC|AC|Legend|Non-Legend|Merge|Rare|VIP|Monster)\)/gi;
+  /\s*\((Class|Armor|Helm|Cape|Weapon|Pet|Misc|Necklace|Sword|Dagger|Axe|Mace|Polearm|Staff|Wand|Bow|Gun|0 AC|AC|Non-AC|Legend|Non-Legend|Merge|Rare|VIP|Monster|House Item|\d+)\)/gi;
 
-/** "Void Highlord (Class)" -> "Void Highlord" */
 function getBaseName(name) {
   return String(name || '').replace(ITEM_TYPE_SUFFIX, '').trim();
 }
@@ -15,7 +13,6 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-/** Text of an element's direct text nodes only, ignoring nested elements. */
 function getOwnText(el) {
   if (!el) return '';
   let text = '';
@@ -25,26 +22,21 @@ function getOwnText(el) {
   return text.trim();
 }
 
-/** Wiki URL for a plain item name, or null for empty / "none". */
 function wikiUrlFromName(name) {
   const n = String(name || '').trim();
-  // Placeholder names like "???" have no wiki page (Wikidot would serve the homepage).
+  // Names like "???" have no wiki page.
   if (!n || n.toLowerCase() === 'none' || !/[\p{L}\p{N}]/u.test(n)) return null;
   return `${WIKI_ORIGIN}/${encodeURIComponent(n)}`;
 }
 
-/** Item name shown by a link, without our badges or a "(Rank N)" suffix. */
 function getItemLinkLabel(link) {
   const clone = link.cloneNode(true);
   clone.querySelectorAll('.aqwt-rarity, .aqwt-owned, .aqwt-farm-button, .aqwt-try-on-button').forEach((el) => el.remove());
   return clone.textContent.replace(RANK_SUFFIX, '').trim();
 }
 
-/**
- * Comparable form of an item name, so the same item matches across the wiki,
- * char pages, AQCloset and the inventory: no "(Rank 10)", "(AC)"-style suffix,
- * stack count ("x5"), case or apostrophe differences.
- */
+  // Normalized name so the same item matches everywhere: no "(Rank 10)", "(AC)",
+  // "x5", case or apostrophe differences.
 function normalizeItemName(name) {
   return getBaseName(
     String(name || '')
@@ -54,4 +46,35 @@ function normalizeItemName(name) {
   )
     .replace(/\s+/g, ' ')
     .toLowerCase();
+}
+
+// Copy to clipboard, with the old textarea trick as a fallback.
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+    document.body.appendChild(area);
+    area.select();
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch {
+      ok = false;
+    }
+    area.remove();
+    return ok;
+  }
+}
+
+function timeAgo(ms) {
+  const minutes = Math.round((Date.now() - ms) / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  return hours < 24 ? `${hours} h ago` : new Date(ms).toLocaleDateString();
 }

@@ -1,10 +1,7 @@
-// The Lists tab: the extension's event item lists (content/item-list-view.js),
-// exactly as on the wiki's Search Items by Tag page. The app ships the
-// extension's page scripts in app/content/, so this loads them from there
-// instead of keeping a copy: the lists, results and cards stay identical.
+// Lists tab: the same item lists as on the wiki. The app already ships the
+// extension's content scripts, so we load them from there instead of copying.
 (() => {
-  // What item-list-view.js needs that the popup doesn't load already, in the
-  // order the extension loads them on the wiki (see manifest.json).
+  // What item-list-view.js needs that the popup doesn't load already, in manifest order.
   const SCRIPTS = [
     '/shared/inventory.js',
     '/shared/inventory-import.js',
@@ -15,6 +12,8 @@
     '/content/farm-buttons.js',
     '/content/try-on-buttons.js',
     '/content/item-lists.config.js',
+    '/shared/item-types.js',
+    '/content/list-timing.js',
     '/content/item-list-view.js',
   ];
   const STYLES = [
@@ -27,7 +26,7 @@
     '/content/item-lists.css',
   ];
 
-  // Another plugin may have loaded some of these already; each loads once.
+  // Another plugin might have loaded some of these already.
   function loadScript(src) {
     if (document.querySelector(`script[src="${src}"]`)) return Promise.resolve();
     return new Promise((resolve, reject) => {
@@ -44,21 +43,14 @@
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = href;
-    // Before the plugin's own page.css, so page.css can adjust them for the app.
+    // Before page.css so page.css can override them.
     const own = document.querySelector('link[href$="/plugins/item-lists/page/page.css"]');
     if (own) own.before(link);
     else document.head.append(link);
   }
 
-  const REMEMBER_KEY = 'lodestar-item-lists-choice';
-  // Shown first in the dropdown; every other list is an event.
-  const PERSONAL = ['owned', 'farm'];
-
-  /**
-   * A dropdown in place of the row of list buttons (hidden by page.css). Picking a
-   * list clicks its button, so the list view does exactly what it does on the
-   * wiki. The choice is remembered and opened again next time.
-   */
+  // Dropdown above the lists. Picking one shows just that list. If more are
+  // ticked in the filter it says "Frostval + 2 more".
   function listPicker(view) {
     const select = document.createElement('select');
     select.className = 'item-lists-select';
@@ -70,46 +62,26 @@
       optgroup.append(...lists.map((list) => option(list.id, list.label, list.title)));
       return optgroup;
     };
-    select.append(
-      option('', 'Choose a list…'),
-      group('Your items', ITEM_LISTS.filter((list) => PERSONAL.includes(list.id))),
-      group('Events', ITEM_LISTS.filter((list) => !PERSONAL.includes(list.id)))
-    );
+    // Only there while several lists are shown.
+    const several = option('', '');
+    several.hidden = true;
+    select.append(option('', 'Choose a list…'), several, ...ListTiming.listGroups().map(([label, lists]) => group(label, lists)));
 
-    const buttonFor = (id) => view.querySelector(`.aqwt-list-button[data-list="${CSS.escape(id)}"]`);
-    const openButton = () => view.querySelector('.aqwt-list-button[aria-expanded="true"]');
-
-    function choose(id) {
-      const open = openButton();
-      if (!id) {
-        open?.click(); // clicking the open list closes it
-      } else if (open?.dataset.list !== id) {
-        buttonFor(id)?.click();
+    function reflect(ids) {
+      const first = ITEM_LISTS.find((list) => list.id === ids[0]);
+      several.hidden = ids.length < 2;
+      if (ids.length > 1) {
+        several.textContent = `${first.label} + ${ids.length - 1} more`;
+        select.value = '';
+        several.selected = true;
+      } else {
+        select.value = ids[0] || '';
       }
-      // The list's own colour on the dropdown's edge, like its button on the wiki.
-      const list = ITEM_LISTS.find((l) => l.id === id);
-      select.style.setProperty('--list-color', list?.color || 'var(--line)');
-      try {
-        if (id) localStorage.setItem(REMEMBER_KEY, id);
-        else localStorage.removeItem(REMEMBER_KEY);
-      } catch {
-        // storage blocked: just don't remember
-      }
+      select.style.setProperty('--list-color', first?.color || 'var(--line)');
     }
 
-    select.addEventListener('change', () => choose(select.value));
-
-    let saved = null;
-    try {
-      saved = localStorage.getItem(REMEMBER_KEY);
-    } catch {
-      saved = null;
-    }
-    if (saved && buttonFor(saved)) {
-      select.value = saved;
-      // After the view is on the page, so its observers see the cards.
-      requestAnimationFrame(() => choose(saved));
-    }
+    select.addEventListener('change', () => view.lists.select(select.value ? [select.value] : []));
+    view.addEventListener('aqwt-lists-change', (e) => reflect(e.detail.ids));
     return select;
   }
 
@@ -119,11 +91,8 @@
     return new Date(ms).toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
   }
 
-  /**
-   * Shown with the Owned list: the extension syncs the inventory from a button
-   * on account.aq.com, which the app doesn't have, so here it's pasted in from
-   * the same address instead. Open (unfolded) until an inventory is imported.
-   */
+  // The app has no Sync button like the extension, so the inventory gets pasted
+  // in from the same address instead. Open until something is imported.
   function inventoryImport(refresh) {
     const box = document.createElement('details');
     box.className = 'inventory-import';
@@ -196,7 +165,7 @@
     }
 
     go.addEventListener('click', () => importText(text.value));
-    // Pasting is the whole job, so a paste imports straight away.
+    // Pasting is all you do, so import right away.
     text.addEventListener('paste', () => setTimeout(() => text.value.trim() && importText(text.value)));
     fileInput.addEventListener('change', async () => {
       const file = fileInput.files[0];
@@ -218,33 +187,18 @@
     if (!root) return;
     try {
       STYLES.forEach(loadStyle);
-      for (const src of SCRIPTS) await loadScript(src); // in order: each builds on the ones before
+      for (const src of SCRIPTS) await loadScript(src); // in order, each needs the ones before
       const view = ItemListView.create({
         messages: {
           noInventory: 'No inventory yet. Import it with the steps above.',
           needsInventory: 'Import your inventory first (choose Owned items).',
         },
       });
-      const owned = () => view.querySelector('.aqwt-list-button[data-list="owned"]');
-      // Shows the Owned list again with the new inventory (closing and reopening it).
-      const importer = inventoryImport(() => {
-        const button = owned();
-        if (button?.getAttribute('aria-expanded') !== 'true') return;
-        button.click();
-        button.click();
-      });
-      // With the Owned list only: follows which list button is open.
-      new MutationObserver(() => importer.show(owned()?.getAttribute('aria-expanded') === 'true')).observe(view, {
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['aria-expanded'],
-      });
-      // The list picker with the filter beside it, as an icon (moved from the
-      // view's results heading, where the wiki shows it as a "Filter" button).
+      const importer = inventoryImport(() => view.lists.refresh());
+      view.addEventListener('aqwt-lists-change', (e) => importer.show(e.detail.ids.includes('owned')));
       const pickerRow = document.createElement('div');
       pickerRow.className = 'item-lists-picker';
-      view.filterControl.classList.add('is-icon');
-      pickerRow.append(listPicker(view), view.filterControl);
+      pickerRow.append(listPicker(view));
       root.replaceChildren(pickerRow, importer.element, view);
     } catch (err) {
       root.textContent = `Couldn't load the item lists: ${err.message}`;

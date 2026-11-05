@@ -1,26 +1,24 @@
-// Export / import of everything the extension stores, for moving to a fresh
-// install. Used by the popup's Settings view and the backup page.
+// Export/import of everything the extension saves.
 const Backup = (() => {
   const FORMAT = 'aqw-lodestar-backup';
   const FORMAT_VERSION = 1;
-  // Caches that are downloaded again automatically; left out to keep backups small.
-  const SKIPPED_KEYS = [STORAGE_KEYS.itemCatalog, STORAGE_KEYS.boostSchedule, STORAGE_KEYS.boostCache, STORAGE_KEYS.resourceCache, STORAGE_KEYS.imgurCheck];
+  // Caches get downloaded again anyway. Sync pairing belongs to this install only.
+  const SKIPPED_KEYS = [STORAGE_KEYS.itemCatalog, STORAGE_KEYS.pageLinks, STORAGE_KEYS.syncPairing, STORAGE_KEYS.syncStamps, STORAGE_KEYS.boostSchedule, STORAGE_KEYS.boostCache, STORAGE_KEYS.resourceCache, STORAGE_KEYS.imgurCheck];
   const LAYOUT_PREFIX = 'moduleOrder:';
 
-  /** Everything worth backing up. */
   async function currentData() {
     const all = await ext.storage.local.get(null);
     for (const key of SKIPPED_KEYS) delete all[key];
     return all;
   }
 
-  // One line per kind of data, for showing what's saved or what a backup holds.
+  // One line per kind of data, for the summary.
   function describe(data) {
     const count = (value) => (Array.isArray(value) ? value.length : 0);
     const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
     const layouts = Object.keys(data).filter((key) => key.startsWith(LAYOUT_PREFIX)).length;
     const syncedAt = data[STORAGE_KEYS.inventorySyncedAt];
-    const placement = data[STORAGE_KEYS.tooltipPlacement] === 'anchored' ? 'above the item' : 'at the side';
+    const placement = { anchored: 'above the item', off: 'off' }[data[STORAGE_KEYS.tooltipPlacement]] || 'at the side';
 
     return [
       plural(count(data[STORAGE_KEYS.farmItems]), 'item') + ' on the farm list',
@@ -33,7 +31,6 @@ const Backup = (() => {
     ];
   }
 
-  // Downloads the current data as a backup file.
   async function download() {
     const backup = {
       format: FORMAT,
@@ -53,11 +50,7 @@ const Backup = (() => {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  /**
-   * Reads a backup file's text.
-   * @returns {{data: object, exportedAt: string|undefined}}
-   * @throws {Error} with a readable message when it isn't a usable backup
-   */
+  // Parses a backup file. Throws a readable error if it's not one.
   function parse(text) {
     let backup;
     try {
@@ -76,7 +69,6 @@ const Backup = (() => {
     return { data, exportedAt: backup.exportedAt };
   }
 
-  // Saves a parsed backup's data, replacing what's stored under the same keys.
   function restore(data) {
     return ext.storage.local.set(data);
   }

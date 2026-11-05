@@ -10,8 +10,7 @@
   box-sizing: border-box;
 }
 
-/* Dark is the default; :root[data-theme="light"] overrides it.
-   search-bar.css reads the same variables. */
+/* Dark by default, data-theme="light" overrides. search-bar.css uses these too. */
 :root {
   --bg: #1A1A1A;
   --card: #272D2E;
@@ -44,9 +43,15 @@
   --green: #15803d;
 }
 
+/* The popup itself never scrolls. Max 600px (Chrome's limit), the farm list
+   takes what's left and scrolls on its own. */
 body {
+  display: flex;
+  flex-direction: column;
   width: 300px;
+  max-height: 600px;
   margin: 0;
+  overflow: hidden;
   font-family: 'Poppins', system-ui, sans-serif;
   font-size: 14px;
   color: var(--ink);
@@ -74,7 +79,6 @@ h2 {
   background: var(--line);
 }
 
-/* ---------- boosts ---------- */
 .boosts {
   padding: 0 12px;
 }
@@ -145,7 +149,6 @@ button.boost:focus-visible {
   color: var(--muted);
 }
 
-/* "Next boosts" list, opened by clicking a boost badge */
 .boost-schedule {
   margin-top: 6px;
   padding: 8px 10px;
@@ -154,7 +157,6 @@ button.boost:focus-visible {
   background: var(--card);
 }
 
-/* "Active now": the badge's boost, written out in full, as a row like the ones below, in green. */
 .boost-current {
   margin-bottom: 4px !important;
 }
@@ -221,7 +223,6 @@ button.boost:focus-visible {
   height: 22px;
 }
 
-/* ---------- farm list header ---------- */
 .farmHeader {
   display: flex;
   align-items: center;
@@ -253,10 +254,35 @@ button.boost:focus-visible {
   color: var(--acc-ink);
 }
 
-/* ---------- farm list ---------- */
-#list {
-  max-height: 360px;
+/* Logo, tabs and footer keep their size, the page fills the rest. */
+body > * {
+  flex-shrink: 0;
+}
+
+body > #main-view:not([hidden]),
+body > .settings-view:not([hidden]) {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#main-view > * {
+  flex-shrink: 0;
+}
+
+#main-view > .farm-list {
+  position: relative;
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-height: 72px;
   margin: 0 0 6px;
+}
+
+#list {
+  min-height: 0;
+  margin: 0;
   padding: 0 4px;
   list-style: none;
   overflow-y: auto;
@@ -402,7 +428,11 @@ button.boost:focus-visible {
   margin-bottom: -1px;
 }
 
-/* Cursor-following preview of an item's image(s), shown on row hover. */
+.join-command {
+  margin: 1px 0 2px 26px;
+}
+
+/* Image preview that follows the cursor. */
 .lip-hover-tooltip {
   position: fixed;
   top: 0;
@@ -431,10 +461,12 @@ button.boost:focus-visible {
   background: var(--card);
 }
 
-/* Chevron shown while #list has more content below. */
+/* Scroll hint at the bottom of the farm list. */
 .lip-scroll-indicator {
-  position: fixed;
-  z-index: 500;
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  z-index: 5;
   display: none;
   opacity: 0;
   transform: translateX(-50%);
@@ -467,7 +499,6 @@ button.boost:focus-visible {
   }
 }
 
-/* ---------- "Add item from link" modal ---------- */
 .lip-modal-overlay {
   position: fixed;
   inset: 0;
@@ -553,17 +584,6 @@ button.boost:focus-visible {
   color: #e05d5d;
 }
 
-/* ---------- "Check bag" result ---------- */
-.check-status {
-  margin: 6px 4px 0;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.check-status.is-error {
-  color: #e05d5d;
-}
-
 .setting-row {
   display: flex;
   flex-direction: column;
@@ -575,44 +595,6 @@ button.boost:focus-visible {
   color: var(--muted);
 }
 
-.segmented {
-  display: flex;
-  padding: 2px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--card);
-}
-
-.segmented label {
-  flex: 1;
-  cursor: pointer;
-}
-
-.segmented input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.segmented span {
-  display: block;
-  padding: 5px 8px;
-  border-radius: 999px;
-  text-align: center;
-  transition: background .2s ease, color .2s ease;
-}
-
-.segmented input:checked + span {
-  background: var(--acc);
-  color: var(--acc-ink);
-}
-
-.segmented input:focus-visible + span {
-  outline: 2px solid var(--ring);
-  outline-offset: 1px;
-}
-
-/* ---------- tab row: page tabs, then Settings and the theme switch ---------- */
 .tabbar {
   display: flex;
   align-items: center;
@@ -620,7 +602,6 @@ button.boost:focus-visible {
   padding: 8px 12px 0;
 }
 
-/* The page tabs, in the same pill style as the settings switches. */
 .tabs {
   display: flex;
   flex: 1;
@@ -676,8 +657,7 @@ button.boost:focus-visible {
   color: var(--acc-ink);
 }
 
-/* Only one page (the extension, or the app without plugin pages): no tabs to
-   pick, so Settings and the theme switch go back up beside the logo. */
+/* Only one page: Settings and the theme button go next to the logo. */
 .tabs.is-single {
   display: none;
 }
@@ -694,8 +674,6 @@ button.boost:focus-visible {
   outline-offset: 1px;
 }
 
-/* Round buttons: Settings and the theme switch right of the tabs, and the
-   farm list's add and clear buttons. */
 .header-buttons {
   display: flex;
   flex: none;
@@ -740,7 +718,6 @@ button.boost:focus-visible {
   stroke-linejoin: round;
 }
 
-/* ---------- pages added as tabs ---------- */
 .tab-page {
   padding: 0 12px 14px;
 }
@@ -751,7 +728,14 @@ button.boost:focus-visible {
   font-size: 12px;
 }
 
-/* ---------- settings view ---------- */
+.settings-view .settings-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0 -12px;
+  padding: 0 12px;
+  overflow-y: auto;
+}
+
 .settings-view {
   padding: 4px 12px 14px;
 }
@@ -765,6 +749,10 @@ button.boost:focus-visible {
 
 .settings-header h2 {
   margin: 0;
+}
+
+.settings-panel .settings-group:last-child {
+  border-bottom: 0;
 }
 
 .settings-group {
@@ -789,28 +777,220 @@ button.boost:focus-visible {
 
 .settings-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
-.pill-button {
-  padding: 6px 14px;
-  border: 1px solid var(--acc);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--acc);
-  font-family: inherit;
+.transfer-code-output,
+.transfer-paste textarea {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px;
+}
+
+.transfer-paste textarea {
+  resize: vertical;
+  word-break: break-all;
+}
+
+.transfer-code-output:focus-visible,
+.transfer-paste textarea:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.transfer-paste .settings-actions {
+  margin-top: 8px;
+}
+
+.transfer-summary {
+  margin: 8px 0 4px;
+  padding-left: 18px;
+  font-size: 12px;
+}
+
+.sync-code-input {
+  box-sizing: border-box;
+  width: 9em;
+  margin-bottom: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 16px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.sync-code-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.sync-code {
+  margin: 4px 0;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 4px;
+}
+
+.sync-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 12px;
+}
+
+.sync-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.is-synced .sync-dot {
+  background: var(--green);
+}
+
+.about-name {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.about-version {
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.about-text {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.about-text:last-child {
+  margin-bottom: 0;
+}
+
+.credits {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.credits dt {
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.credits dt:first-child {
+  margin-top: 0;
+}
+
+.credits dd {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+#settings-view a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--muted);
+  text-underline-offset: 2px;
+}
+
+#settings-view a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Disclaimer, pinned to the bottom. */
+.app-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding: 7px 10px 8px;
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+  transition: background .25s ease;
+  text-align: center;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  color: var(--ink);
+}
+
+.link-button:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.settings-sub + .settings-sub {
+  margin-top: 12px;
+}
+
+.settings-sub h4 {
+  margin: 0 0 6px;
+  color: var(--muted);
   font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
-  transition: background .2s ease, color .2s ease;
 }
 
-.pill-button:hover {
-  background: var(--acc);
-  color: var(--acc-ink);
+.settings-group h3 + .segmented,
+.settings-group h3 + .settings-actions {
+  margin-top: 2px;
 }
 
-.pill-button:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
+.settings-group .segmented {
+  font-size: 12px;
+}
+
+.sync-connect-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.sync-connect-row .sync-code-input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.segmented-small span {
+  padding: 3px 6px;
+  font-size: 11px;
 }

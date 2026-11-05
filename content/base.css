@@ -1,5 +1,4 @@
-/* Palette for everything the extension injects into pages. Prefixed so it
-   can't collide with the host site's own CSS variables. */
+/* Colors for everything we add to pages. Prefixed so they don't clash with the site's own. */
 :root {
   --aqwt-bg: #1A1A1A;
   --aqwt-card: #272D2E;

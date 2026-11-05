@@ -1,17 +1,12 @@
-// The Classes tab: a class search (ClassSearch, the plugin's take on the
-// website's command menu) and the chosen class's card (ClassCard), like the
-// class page on aqw.app. The guide itself is downloaded by main.js.
+// Classes tab: search for a class and see its loadout, like on aqw.app.
 (() => {
   const PLUGIN = 'class-enhancements';
   const IMAGE_URL = (name) => `https://aqw.app/classes/${encodeURIComponent(name)}.png`;
   const REMEMBER_KEY = 'lodestar-class-enhancements-class';
   const STANDARD = 'Standard';
-  const TRANSITION_MS = 400; // boss buttons ignore clicks while the values slide
+  const TRANSITION_MS = 400; // ignore clicks while sliding
 
-  // ---------- icons ----------
-
-  // Equipment uses the extension's own item icons; the consumables are drawn
-  // here (in the text colour) since the extension has none for them.
+  // Equipment uses the extension's icons. Consumables don't have any so we draw them.
   const IMAGE_ICONS = {
     weapon: '/icons/aqwsword.png',
     class: '/icons/class.webp',
@@ -26,7 +21,6 @@
   const svg = (body) =>
     `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${body}</svg>`;
   const SVG_ICONS = {
-    // round-bottomed flask
     search: svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
     chevron: svg('<path d="m7 10 5 5 5-5"/>'),
     circle: svg('<circle cx="12" cy="12" r="8.5"/>'),
@@ -34,7 +28,6 @@
     refresh: svg('<path d="M20 11a8 8 0 0 0-14.7-4.3L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.7 4.3L20 16"/><path d="M20 21v-5h-5"/>'),
   };
 
-  /** The icon for an equipment slot or a consumable's name ("Potent Malevolence Philtre"). */
   function iconFor(type) {
     const t = String(type || '').trim().toLowerCase();
     const key = IMAGE_ICONS[t] ? t : t.includes('philtre') ? 'philtre' : t.includes('scroll') ? 'scroll' : IMAGE_ICONS[t] ? t : 'potion';
@@ -57,15 +50,8 @@
     return node;
   }
 
-  // ---------- the class search ----------
-
-  /**
-   * A search box over a list of items with a dropdown of matches, like the
-   * website's command menu: type to filter, arrows and Enter to pick, Escape to
-   * close. While closed it shows the chosen item.
-   * @param {{items: {name: string, type?: string}[], placeholder: string, value: string,
-   *          fallbackType?: string, onSelect: (item) => void}} options
-   */
+  // Search box with a dropdown of matches. Type to filter, arrows + Enter to pick,
+  // Escape to close.
   function ClassSearch({ items, placeholder, value, fallbackType = 'Class', onSelect }) {
     const root = el('div', 'ce-search');
     const field = el('label', 'ce-search-field');
@@ -97,7 +83,7 @@
 
     const normalize = (text) => text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
-    /** Whether every letter of the query appears in the name, in order. */
+    // Every letter of the query in the name, in order.
     function inOrder(name, query) {
       let at = 0;
       for (const ch of query) {
@@ -108,7 +94,7 @@
       return true;
     }
 
-    /** Best matches first: name starts with the query, then a word does, then anywhere. */
+    // Starts with the query first, then a word starting with it, then anywhere.
     function filter(query) {
       const q = normalize(query);
       if (!q) return items.slice();
@@ -121,14 +107,13 @@
         if (name.startsWith(q)) score = 0;
         else if (words.some((w) => w.startsWith(q))) score = 1;
         else if (name.includes(q)) score = 2;
-        else if (initials.startsWith(q.replace(/ /g, ''))) score = 3; // "vh" → Void Highlord
-        else if (inOrder(name.replace(/ /g, ''), q.replace(/ /g, ''))) score = 4; // "vhl" → Void HighLord
+        else if (initials.startsWith(q.replace(/ /g, ''))) score = 3;
+        else if (inOrder(name.replace(/ /g, ''), q.replace(/ /g, ''))) score = 4;
         if (score >= 0) scored.push([score, item]);
       }
       return scored.sort((a, b) => a[0] - b[0]).map(([, item]) => item);
     }
 
-    /** The name with the typed part marked. */
     function highlighted(name, query) {
       const span = el('span', 'ce-search-name');
       const q = query.trim().toLowerCase();
@@ -157,7 +142,7 @@
         option.setAttribute('aria-selected', String(item.name === current));
         option.append(iconFor(item.type || fallbackType), highlighted(item.name, query));
         if (item.name === current) option.append(Object.assign(el('span', 'ce-search-current'), { innerHTML: SVG_ICONS.check }));
-        option.addEventListener('mousedown', (e) => e.preventDefault()); // keep focus in the box
+        option.addEventListener('mousedown', (e) => e.preventDefault());
         option.addEventListener('click', () => choose(item));
         option.addEventListener('mousemove', () => setActive(i, false));
         list.append(option);
@@ -232,8 +217,6 @@
     };
   }
 
-  // ---------- the class card ----------
-
   const EQUIPMENT = [
     ['Weapon', 'sword'],
     ['Class', 'class'],
@@ -246,7 +229,7 @@
     ['Active', 'consumable'],
   ];
 
-  /** One "icon  Label ......... value" line; the value slides when it changes. */
+  // One loadout row. The value slides when it changes.
   function Row(label, iconType) {
     const row = el('div', 'ce-row');
     if (label === 'Active') row.classList.add('is-top');
@@ -282,7 +265,7 @@
     };
   }
 
-  /** The boss buttons (Standard first), with a green pill that slides to the chosen one. */
+  // Boss buttons, Standard first, with a green pill that slides to the chosen one.
   function BossButtons(onSelect) {
     const wrap = el('div', 'ce-bosses');
     wrap.setAttribute('role', 'radiogroup');
@@ -338,7 +321,7 @@
       next.focus();
       next.click();
     });
-    // The pill follows its button when the card reflows (window resized, columns change).
+    // Move the pill when the card reflows.
     new ResizeObserver(() => movePill(false)).observe(wrap);
 
     return {
@@ -350,7 +333,7 @@
           button.type = 'button';
           button.dataset.boss = name;
           button.setAttribute('role', 'radio');
-          // Sheet names like "ultra-dage" read as "Ultra Dage" (capitalised by page.css).
+          // "ultra-dage" shows as "Ultra Dage" (page.css capitalizes).
           button.append(el('span', 'ce-boss-mark'), el('span', 'ce-boss-name', name.replace(/[-_]+/g, ' ')));
           wrap.append(button);
         }
@@ -360,10 +343,7 @@
     };
   }
 
-  /**
-   * The chosen class: name, boss buttons, the loadout, and the class picture.
-   * update(entry) switches class; the chosen boss is kept when the new class has it.
-   */
+  // The chosen class. update(entry) switches class and keeps the boss if it can.
   function ClassCard() {
     const card = el('article', 'ce-card');
     const info = el('div', 'ce-card-info');
@@ -395,7 +375,6 @@
     info.append(title, el('hr', 'ce-sep'), bosses.element, el('hr', 'ce-sep'), equipmentList, el('hr', 'ce-sep'), consumableList);
     card.append(info, media);
 
-    /** Standard first, then the bosses in the guide's order. */
     function bossNames() {
       const names = Object.keys(entry.bossLoadouts).filter((name) => name !== STANDARD);
       return [STANDARD, ...names];
@@ -432,8 +411,6 @@
     };
   }
 
-  // ---------- the tab ----------
-
   function relativeTime(ms) {
     const minutes = Math.round((Date.now() - ms) / 60000);
     if (minutes < 1) return 'just now';
@@ -447,6 +424,13 @@
     const root = document.getElementById('ce-root');
     if (!root) return;
     const host = window.lodestarPlugins;
+
+    // The "Class picture" option in Settings.
+    const showPicture = (on) => root.classList.toggle('ce-no-picture', !on);
+    host.options('class-enhancements').then((options) => showPicture(options.picture !== false), () => {});
+    window.addEventListener('lodestar:plugin-option', (e) => {
+      if (e.detail.id === 'class-enhancements' && e.detail.key === 'picture') showPicture(e.detail.value);
+    });
 
     const footer = el('p', 'ce-footer');
     const footerText = el('span');
@@ -466,7 +450,7 @@
       try {
         localStorage.setItem(REMEMBER_KEY, entry.name);
       } catch {
-        // storage blocked: just don't remember
+        // storage blocked, just don't remember
       }
     }
 

@@ -1,5 +1,4 @@
-// Right-click support: remembers which link was right-clicked so the
-// background's context-menu items can use its text, and saves farm entries.
+// Remembers the right-clicked link so the context menu can use its text.
 (() => {
   const TOAST_MS = 1200;
   const TOAST_OFFSET = 16;

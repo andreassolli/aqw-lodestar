@@ -1,11 +1,7 @@
-// AQW Lodestar desktop app: the extension's popup in its own window, with an
-// option to keep that window on top of every other window.
-//
-// The popup files come straight from the extension (copied into app/ by
-// scripts/copy-extension.mjs) and are served from app://lodestar/. preload.js
-// gives them the extension API they expect; this file answers those calls:
-// storage (storage.js), messages to the background (background-host.js runs the
-// extension's background.js here) and opening links in the default browser.
+// AQW Lodestar desktop app: the extension popup in its own window, with stay on
+// top. The popup files are copied from the extension into app/ and served from
+// app://lodestar/. preload.js gives them the extension API and this file answers
+// those calls.
 
 const electron = require('electron');
 const { app, BrowserWindow, Menu, Tray, dialog, ipcMain, nativeImage, net, protocol, screen, shell } = electron;
@@ -16,26 +12,26 @@ const { createStorage } = require('./storage');
 const { startBackground } = require('./background-host');
 const { importFromChrome } = require('./chrome-import');
 const { createPluginHost } = require('./plugin-host');
+const { createSyncServer } = require('./sync-server');
 
 const APP_DIR = path.join(__dirname, 'app');
 const ORIGIN = 'app://lodestar';
 const POPUP_URL = `${ORIGIN}/popup/popup.html`;
 const BACKUP_URL = `${ORIGIN}/options/options.html`;
 const IS_MAC = process.platform === 'darwin';
-const APP_ICON = path.join(APP_DIR, 'desktop', 'icon.png'); // the compass (from build/icon.png)
+const APP_ICON = path.join(APP_DIR, 'desktop', 'icon.png');
 
-// Storage keys too big to send to the windows on every change (nothing in the popup watches them).
+// Too big to send to the windows on every change, and nothing watches them.
 const QUIET_KEYS = new Set(['itemCatalog']);
 
-// Linux: run through X11 (XWayland on Wayland desktops). Wayland doesn't let an
-// app keep its own window on top, so "stay on top" only works this way.
+// Linux: use X11. Wayland won't let an app keep itself on top.
 if (process.platform === 'linux') app.commandLine.appendSwitch('ozone-platform', 'x11');
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true } },
 ]);
 
-// One copy of the app at a time: opening it again brings the window forward.
+// Only one copy of the app. Opening it again brings the window forward.
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
@@ -50,9 +46,10 @@ if (!gotLock) {
 let mainWindow = null;
 let tray = null;
 let backupWindow = null;
-const pluginWindows = new Map(); // plugin id -> its popout window
+const pluginWindows = new Map();
 let storage = null;
 let background = null;
+let syncServer = null;
 let plugins = null;
 const stateFile = () => path.join(app.getPath('userData'), 'window-state.json');
 const DEFAULT_STATE = { width: 340, height: 640, pinned: false };
@@ -61,7 +58,7 @@ const DEFAULT_STATE = { width: 340, height: 640, pinned: false };
 function loadWindowState() {
   try {
     const state = { ...DEFAULT_STATE, ...JSON.parse(fs.readFileSync(stateFile(), 'utf8')) };
-    // Forget the position if that screen is gone (e.g. an unplugged monitor).
+    // Forget the position if that screen is gone.
     if (typeof state.x === 'number' && typeof state.y === 'number') {
       const area = screen.getDisplayMatching({ x: state.x, y: state.y, width: state.width, height: state.height }).workArea;
       const visible = state.x < area.x + area.width - 40 && state.x + state.width > area.x + 40 && state.y >= area.y - 10 && state.y < area.y + area.height - 40;
@@ -96,15 +93,13 @@ function rememberBounds() {
   saveWindowState();
 }
 
-/** Keeps the window above all others (or stops), and tells the page and menu. */
 function setPinned(pinned) {
   windowState.pinned = pinned;
   saveWindowState();
   if (!mainWindow) return;
 
-  // 'floating' sits above normal windows. On the Mac the window also joins every
-  // Space, including a full-screen game or browser, so it doesn't vanish there.
-  // Plugin pages opened in their own window stay on top along with it.
+  // 'floating' is above normal windows. On Mac it also shows on every Space,
+  // including a fullscreen game. Popped out plugin windows follow along.
   for (const window of [mainWindow, ...pluginWindows.values()]) applyPinned(window, pinned);
 
   mainWindow.webContents.send('window:pinned', pinned);
@@ -118,11 +113,8 @@ function applyPinned(window, pinned) {
   if (IS_MAC) window.setVisibleOnAllWorkspaces(pinned, { visibleOnFullScreen: true });
 }
 
-/**
- * A plugin page in a window of its own (the popout button on its tab): the same
- * popup page, showing only that plugin's tab. Size and position are remembered
- * per plugin, and it stays on top when the main window does.
- */
+// A plugin page in its own window. Same popup page, just that tab. Remembers its
+// size and position and stays on top with the main window.
 function openPluginWindow(id) {
   const existing = pluginWindows.get(id);
   if (existing) {
@@ -173,7 +165,7 @@ function showWindow() {
   mainWindow.focus();
 }
 
-/** Click: bring the window forward, or hide it if it's already in front. */
+// Click brings the window forward, or hides it if it's already in front.
 function toggleWindow() {
   if (mainWindow && mainWindow.isVisible() && mainWindow.isFocused()) mainWindow.hide();
   else showWindow();
@@ -189,14 +181,12 @@ function trayMenu() {
 }
 
 function updateTrayMenu() {
-  // Linux desktops only show a tray menu (no click events), so it's attached there.
+  // Linux only shows a tray menu, no click events.
   if (tray && process.platform === 'linux') tray.setContextMenu(trayMenu());
 }
 
 function createTray() {
-  // The Mac menu bar wants a black "template" image, which macOS recolours for
-  // light and dark menu bars; elsewhere the coloured compass. The @2x files are
-  // picked up automatically on high-resolution screens.
+  // Mac wants a black template image so it can recolor it for the menu bar.
   const file = IS_MAC ? 'trayTemplate.png' : 'tray.png';
   const image = nativeImage.createFromPath(path.join(APP_DIR, 'desktop', 'tray', file));
   if (IS_MAC) image.setTemplateImage(true);
@@ -211,7 +201,6 @@ function createTray() {
   }
 }
 
-/** Pages of the app open in the app; everything else in the default browser. */
 function openUrl(url) {
   if (typeof url !== 'string') return;
   if (url.startsWith(`${ORIGIN}/options/`)) {
@@ -221,7 +210,7 @@ function openUrl(url) {
   }
 }
 
-/** Links clicked in a page go to the browser instead of replacing the popup. */
+// Links open in the browser instead of replacing the popup.
 function guardNavigation(contents) {
   contents.on('will-navigate', (event, url) => {
     if (url.startsWith(`${ORIGIN}/`)) return;
@@ -254,8 +243,8 @@ function createMainWindow() {
     minWidth: 320,
     minHeight: 360,
     backgroundColor: '#1A1A1A',
-    autoHideMenuBar: true, // Windows and Linux: the menu shows when Alt is pressed
-    // The window/taskbar icon on Windows and Linux (the Mac uses the app bundle's).
+    autoHideMenuBar: true, // Windows/Linux: menu shows when you press Alt
+    // Mac uses the icon from the app bundle.
     icon: IS_MAC ? undefined : APP_ICON,
     show: false,
     webPreferences: webPreferences(),
@@ -270,14 +259,12 @@ function createMainWindow() {
   mainWindow.on('move', rememberBounds);
   mainWindow.on('closed', () => {
     mainWindow = null;
-    // Plugins may keep hidden windows of their own (notifications); closing the
-    // main window still quits, as before plugins.
+    // Plugins can have hidden windows, closing the main one still quits.
     app.quit();
   });
   mainWindow.loadURL(POPUP_URL);
 }
 
-/** The backup page (import / export), above the main window. */
 function openBackupWindow(url = `${BACKUP_URL}#import`) {
   if (backupWindow) {
     backupWindow.focus();
@@ -297,7 +284,7 @@ function openBackupWindow(url = `${BACKUP_URL}#import`) {
   guardNavigation(backupWindow.webContents);
   backupWindow.on('closed', () => {
     backupWindow = null;
-    // An import can change the theme and the farm list; start the popup fresh.
+    // An import can change the theme and farm list, so reload.
     if (mainWindow) mainWindow.webContents.reload();
   });
   backupWindow.loadURL(url);
@@ -310,7 +297,7 @@ function buildMenu() {
       label: 'File',
       submenu: [{ label: 'Back up && Restore…', click: () => openBackupWindow(BACKUP_URL) }, { type: 'separator' }, IS_MAC ? { role: 'close' } : { role: 'quit' }],
     },
-    { role: 'editMenu' }, // copy and paste shortcuts in the text fields
+    { role: 'editMenu' }, // copy/paste shortcuts
     {
       label: 'View',
       submenu: [
@@ -348,6 +335,10 @@ function registerIpc() {
     event.returnValue = { version: app.getVersion(), platform: process.platform };
   });
 
+  ipcMain.handle('sync:status', () => syncServer.status());
+  ipcMain.handle('sync:start-pairing', () => syncServer.startPairing());
+  ipcMain.handle('sync:unpair', () => syncServer.unpair());
+
   ipcMain.handle('storage', (_event, op, arg) => {
     if (!['get', 'set', 'remove', 'clear'].includes(op)) throw new Error(`Unknown storage call ${op}`);
     return storage.local[op](arg);
@@ -359,7 +350,6 @@ function registerIpc() {
     return {};
   });
 
-  // Settings → "Import from Chrome": copies the extension's data from the browser's profile.
   ipcMain.handle('chrome:import', (_event, id) =>
     importFromChrome({ storage, backupsDir: path.join(app.getPath('userData'), 'backups'), version: app.getVersion(), id }).catch((err) => ({
       error: err.message,
@@ -375,7 +365,6 @@ function registerIpc() {
   });
 }
 
-/** Settings → Plugins, and messages between plugins and their pages. */
 function registerPluginIpc() {
   const pluginsDir = path.join(app.getPath('userData'), 'plugins');
   const result = (fn) => async (...args) => {
@@ -402,6 +391,8 @@ function registerPluginIpc() {
     })
   );
   ipcMain.handle('plugins:set-enabled', result((_event, id, enabled) => plugins.setEnabled(id, Boolean(enabled))));
+  ipcMain.handle('plugins:options', result((_event, id) => plugins.options(id)));
+  ipcMain.handle('plugins:set-option', result((_event, id, key, value) => plugins.setOption(id, key, value)));
   ipcMain.handle('plugins:remove', result((_event, id) => plugins.remove(id)));
   ipcMain.handle('plugins:keep', result((_event, id) => plugins.keep(id)));
   ipcMain.handle('plugins:open-folder', () => shell.openPath(pluginsDir));
@@ -410,22 +401,19 @@ function registerPluginIpc() {
     app.relaunch();
     app.quit();
   });
-  // lodestarPlugins.invoke(id, channel, data) from a plugin's page.
   ipcMain.handle('plugin:invoke', result((_event, id, channel, data) => plugins.handlePageMessage(id, channel, data)));
 }
 
-// `npm run start:no-plugins` (or LODESTAR_NO_PLUGINS=1): run the base app only.
+// `npm run start:no-plugins` or LODESTAR_NO_PLUGINS=1 runs without plugins.
 const NO_PLUGINS = process.argv.includes('--no-plugins') || process.env.LODESTAR_NO_PLUGINS === '1';
 
-/** Finds plugins, applies installs/removals from last time, and starts the enabled ones. */
 function startPlugins() {
   plugins = createPluginHost({
     pluginsDir: path.join(app.getPath('userData'), 'plugins'),
     dataDir: path.join(app.getPath('userData'), 'plugin-data'),
-    // Running from source: also load the plugins in desktop/plugins.
+    // From source, also load desktop/plugins.
     devDirs: app.isPackaged ? [] : [path.join(__dirname, 'plugins')],
-    // Plugins that come with the app (package.json → build.extraResources). From
-    // source, desktop/plugins already has them.
+    // The built-in ones (extraResources in package.json). From source they're in desktop/plugins already.
     bundledDirs: app.isPackaged ? [path.join(process.resourcesPath, 'plugins')] : [],
     appVersion: app.getVersion(),
     electronVersion: process.versions.electron,
@@ -441,8 +429,7 @@ function startPlugins() {
   }
   plugins.scan();
   plugins.loadAll({
-    // On top of the api in plugin-host.js: Electron itself, the shared storage
-    // (farm list, inventory, settings) and opening links in the browser.
+    // Extra api for plugins: Electron, the shared storage and opening links.
     extraApi: () => ({ electron, storage, openUrl, appIcon: APP_ICON }),
     sendToPages: (id, channel, data) => {
       for (const window of BrowserWindow.getAllWindows()) window.webContents.send('plugin:event', { id, channel, data });
@@ -450,7 +437,7 @@ function startPlugins() {
   });
 }
 
-/** Serves app/ at app://lodestar/, and plugin files at app://lodestar/plugins/<id>/; nothing outside them. */
+// Serves app/ and the plugin folders at app://lodestar/, nothing else.
 function registerProtocol() {
   protocol.handle('app', (request) => {
     const url = new URL(request.url);
@@ -461,6 +448,11 @@ function registerProtocol() {
       : path.normalize(path.join(APP_DIR, pathname));
     if (url.host !== 'lodestar' || !file || (!plugin && !file.startsWith(APP_DIR + path.sep))) {
       return new Response('Not found', { status: 404 });
+    }
+    if (plugin && fs.existsSync(file) && fs.statSync(file).isDirectory()) {
+      // A folder answers with the names of the .json files in it.
+      const names = fs.readdirSync(file).filter((name) => name.endsWith('.json')).sort();
+      return Response.json(names);
     }
     return net.fetch(pathToFileURL(file).toString());
   });
@@ -485,8 +477,17 @@ app.whenReady().then(() => {
     fetch: (input, init) => net.fetch(input, init),
   });
 
-  // The installed app gets its Dock icon from the app bundle; when run with
-  // `npm start` it's the plain Electron app, so set the compass here.
+  syncServer = createSyncServer({
+    storage,
+    keys: background.STORAGE_KEYS,
+    LodestarSync: require(path.join(APP_DIR, 'shared', 'sync.js')),
+    onStatus: (status) => {
+      for (const window of BrowserWindow.getAllWindows()) window.webContents.send('sync:status', status);
+    },
+  });
+  syncServer.start();
+
+  // When run with npm start it's the plain Electron app, so set the icon.
   if (IS_MAC && !app.isPackaged) app.dock?.setIcon(APP_ICON);
 
   startPlugins();
@@ -496,11 +497,13 @@ app.whenReady().then(() => {
   createMainWindow();
   createTray();
 
-  // Clicking the Dock icon brings the window back, also after hiding it from the menu bar.
+  // Clicking the Dock icon brings the window back.
   app.on('activate', showWindow);
 });
 
 app.on('window-all-closed', () => app.quit());
 
-// Plugins stop their work (and close their own windows) first.
-app.on('before-quit', () => plugins && plugins.deactivateAll());
+app.on('before-quit', () => {
+  if (plugins) plugins.deactivateAll();
+  if (syncServer) syncServer.stop();
+});

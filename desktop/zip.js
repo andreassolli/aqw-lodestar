@@ -1,15 +1,10 @@
-// Reading and writing zip files with Node's own zlib (no dependencies). Used to
-// install plugins (read) and to package them (write, scripts/build-plugin.mjs).
+// Zip read/write with Node's zlib, no dependencies.
 
 const zlib = require('node:zlib');
 
-/**
- * The files in a zip, from its central directory. Folders are skipped.
- * @param {Buffer} buffer
- * @returns {{ name: string, data: Buffer, mode: number }[]}
- */
+// Files in a zip, folders skipped.
 function readZip(buffer) {
-  // The end-of-central-directory record is in the last 64 KiB (after an optional comment).
+  // The end of central directory record is somewhere in the last 64 KiB.
   let end = -1;
   for (let i = buffer.length - 22; i >= Math.max(0, buffer.length - 65557); i--) {
     if (buffer.readUInt32LE(i) === 0x06054b50) {
@@ -60,17 +55,12 @@ function crc32(buffer) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-/**
- * A zip of [path, data, mode?] entries, paths with "/".
- * @param {[string, Buffer, number?][]} entries
- * @returns {Buffer}
- */
 function writeZip(entries) {
   const locals = [];
   const centrals = [];
   let offset = 0;
   const dosTime = 0;
-  const dosDate = ((2024 - 1980) << 9) | (1 << 5) | 1; // fixed, so the same files give the same zip
+  const dosDate = ((2024 - 1980) << 9) | (1 << 5) | 1; // fixed so the same files give the same zip
 
   for (const [name, data, mode = 0o644] of entries) {
     const nameBytes = Buffer.from(name, 'utf8');
@@ -94,7 +84,7 @@ function writeZip(entries) {
 
     const central = Buffer.alloc(46);
     central.writeUInt32LE(0x02014b50, 0);
-    central.writeUInt16LE(0x0314, 4); // made by Unix, so the file mode below is read
+    central.writeUInt16LE(0x0314, 4); // made by Unix, so the file mode is used
     central.writeUInt16LE(20, 6);
     central.writeUInt16LE(0x0800, 8);
     central.writeUInt16LE(deflate ? 8 : 0, 10);

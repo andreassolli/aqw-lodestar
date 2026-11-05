@@ -1,10 +1,7 @@
-// Marks items in the saved inventory (see inventory-sync.js): a checkmark on
-// the wiki, character pages and our own tooltip and list cards, a green border
-// around item list cards, and a green border around the item image on AQCloset.
-(() => {
-  // [selector, how to mark]: a checkmark 'after' the element, in the 'title'
-  // (see placeInTitle), or 'image': a green border on the item image of the
-  // enclosing .object.
+// Checkmarks on items you own: wiki, character pages, tooltips and cards.
+// Green border on list cards and AQCloset items.
+Features.run('ownedMarks', () => {
+  // [selector, how]: checkmark 'after' it, in the 'title', or green border on the 'image'.
   const TARGETS = [
     ['.aqwt-tooltip-title, #page-title', 'title'],
     ...(PAGE.isWiki ? [['#page-content a[href]', 'after']] : []),
@@ -12,11 +9,13 @@
     ...(PAGE.isAqcloset ? [['.object .label .name', 'image']] : []),
   ];
   const SELECTOR = TARGETS.map(([selector]) => selector).join(', ');
-  const SKIP_AREAS = '.aqwt-list-buttons, .pager, #breadcrumbs, .page-tags';
-  // The buttons farm-buttons.js and try-on-buttons.js add to a wiki page title.
+  const SKIP_AREAS = '.pager, #breadcrumbs, .page-tags';
   const TITLE_BUTTONS = '.aqwt-farm-button, .aqwt-try-on-button';
 
-  let owned = new Map(); // normalized name > total quantity
+  let owned = new Map(); // normalized name -> quantity
+  // Whether a wiki link is an item, so maps and monsters don't get a checkmark.
+  // Asked once per path.
+  const isItemPath = new Map();
 
   function createMark(quantity) {
     const mark = document.createElement('span');
@@ -26,12 +25,7 @@
     return mark;
   }
 
-  /**
-   * Wiki page title: just before the "Add to farm list" / "Try on" buttons
-   * (they're appended at the end, so if they come later they still land after it).
-   * Tooltip and list card titles: in the same badge row as the rarity badge,
-   * so it wraps along with the badges instead of sitting apart.
-   */
+  // Page title: before the farm/try on buttons. Cards: in the badge row.
   function placeInTitle(title, mark) {
     if (title.id === 'page-title') {
       title.insertBefore(mark, title.querySelector(`:scope > :is(${TITLE_BUTTONS})`));
@@ -42,15 +36,45 @@
 
   function markElement(el) {
     if (el.dataset.aqwtOwned || el.closest(SKIP_AREAS)) return;
-    // A tooltip/card title is marked as a whole; its link would add a second checkmark.
+    // The title gets marked as a whole, its link would add a second checkmark.
     if (el.matches('a') && el.closest('.aqwt-tooltip-title')) return;
 
-    el.dataset.aqwtOwned = '1'; // checked, owned or not
+    el.dataset.aqwtOwned = '1';
 
     const quantity = owned.get(normalizeItemName(getItemLinkLabel(el)));
     if (!quantity) return;
 
-    // Item list cards also get a green border.
+    // Wiki links wait until we know they're items.
+    const path = PAGE.isWiki && el.matches('#page-content a[href]') ? wikiPathOf(el.href) : null;
+    if (path) {
+      whenItemLink(path, getItemLinkLabel(el)).then((isItem) => {
+        // skip if it got removed or already marked by a refresh
+        if (isItem && el.isConnected && el.dataset.aqwtOwned && !el.nextElementSibling?.classList.contains('aqwt-owned')) addMark(el, quantity);
+      });
+      return;
+    }
+    addMark(el, quantity);
+  }
+
+  // Paths to check, sent together once per frame.
+  let toClassify = [];
+  function whenItemLink(path, name) {
+    if (!isItemPath.has(path)) {
+      isItemPath.set(path, new Promise((resolve) => toClassify.push({ path, name, resolve })));
+      if (toClassify.length === 1) {
+        requestAnimationFrame(async () => {
+          const batch = toClassify;
+          toClassify = [];
+          const answers = await classifyWikiLinks(batch.map(({ path: p, name: n }) => ({ path: p, name: n })));
+          // No catalog, just mark by name like before.
+          batch.forEach((entry, i) => entry.resolve(answers ? answers[i] : true));
+        });
+      }
+    }
+    return isItemPath.get(path);
+  }
+
+  function addMark(el, quantity) {
     if (el.matches('.aqwt-tooltip-title')) el.closest('.aqwt-list-card')?.classList.add('aqwt-owned-card');
 
     const placement = TARGETS.find(([selector]) => el.matches(selector))[1];
@@ -72,7 +96,6 @@
   function refresh(ownedMap) {
     owned = ownedMap;
     document.querySelectorAll('.aqwt-owned').forEach((mark) => mark.remove());
-    // A badge row that only held the checkmark is now empty.
     document.querySelectorAll('.aqwt-title-tags:empty').forEach((tags) => tags.remove());
     document.querySelectorAll('.aqwt-owned-object').forEach((object) => object.classList.remove('aqwt-owned-object'));
     document.querySelectorAll('.aqwt-owned-card').forEach((card) => card.classList.remove('aqwt-owned-card'));
@@ -80,7 +103,7 @@
     markWithin(document);
   }
 
-  // New content (tooltips, list cards, AQCloset items) is marked in one pass per frame.
+  // Mark new stuff (tooltips, cards, AQCloset items) once per frame.
   let pending = [];
   let scheduled = false;
   new MutationObserver((mutations) => {
@@ -100,4 +123,4 @@
   }).observe(document.body, { childList: true, subtree: true });
 
   watchOwnedItems(refresh);
-})();
+});

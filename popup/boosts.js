@@ -1,12 +1,10 @@
-// "Active server boosts": the current boosts from the Artix calendar, and,
-// when a badge is clicked, when each kind of boost is next on the calendar.
+// Server boosts from the Artix calendar. Click a badge to see when each one is next.
 const Boosts = (() => {
   const CALENDAR_URL = 'https://www.artix.com/calendar/';
   const CACHE_LIFETIME_MS = 12 * 60 * 60 * 1000;
   const DAY_MS = 24 * 60 * 60 * 1000;
 
-  // Each kind of boost, matched by keywords in the calendar title (lowercased, "#" removed).
-  // Add or adjust entries here; an event counts for every kind whose keyword is in its title.
+  // Boost kinds, matched by keywords in the calendar title. Add more here.
   const GROUPS = {
     core: {
       label: 'Core boosts',
@@ -35,8 +33,7 @@ const Boosts = (() => {
     },
   };
   const ALL_TYPES = Object.values(GROUPS).flatMap((group) => group.types);
-  // Changes whenever the kinds or keywords above change, so a cache built for an
-  // older list is fetched again instead of missing the new kinds.
+  // Changes when the kinds above change so old caches get refetched.
   const TYPES_SIGNATURE = ALL_TYPES.map((type) => `${type.id}:${type.keywords.join('|')}`).join(';');
 
   let openGroup = null;
@@ -45,10 +42,8 @@ const Boosts = (() => {
   const decodeUnicodeEscapes = (text) =>
     text.replace(/\\u([\dA-F]{4})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
 
-  // "Double EXP Weekend 3.14.25" > "Double EXP Weekend"
   const cleanEventName = (text) => text.replace(/\s+\d{1,2}\.\d{1,2}\.\d{2,4}$/, '').trim();
 
-  // "2026-10-17" (local midnight) or a full date-time string, as ms.
   function parseDate(value) {
     if (!value) return null;
     const time = new Date(/T|\s\d/.test(value) ? value : `${value}T00:00:00`).getTime();
@@ -60,7 +55,7 @@ const Boosts = (() => {
     return ALL_TYPES.filter((type) => type.keywords.some((keyword) => lower.includes(keyword))).map((type) => type.id);
   }
 
-  // Boost events in the calendar page: one chunk per "title:", with start (and end, if given) inside it.
+  // One chunk per "title:" with the start (and end) inside it.
   function parseCalendar(html) {
     const parsed = [];
     for (const chunk of html.split(/title:\s*/).slice(1)) {
@@ -83,7 +78,7 @@ const Boosts = (() => {
     return event.start <= now && (event.end == null || now < event.end);
   }
 
-  // The current event for a group: one running now; without end dates, the latest that has started.
+  // The one running now, or the latest one that started if there are no end dates.
   function activeEvent(group, now) {
     const ids = new Set(group.types.map((type) => type.id));
     const started = events.filter((event) => event.types.some((id) => ids.has(id)) && event.start <= now);
@@ -112,7 +107,6 @@ const Boosts = (() => {
     return `in ${days} days`;
   }
 
-  // "Double EXP Boost" > "2x EXP"
   const shortLabel = (text) => text.replace(' Boost', '').replace('Double', '2x').replace('Triple', '3x');
 
   function createBadge(groupId, now) {
@@ -172,10 +166,7 @@ const Boosts = (() => {
     return row;
   }
 
-  /**
-   * The boost on the badge, written out in full (the badge text can be cut off),
-   * with when it ends. Shown above the "Next ..." list while one is running.
-   */
+  // The badge's boost in full (the badge can cut it off) and when it ends.
   function createCurrentRow(group, now) {
     const current = activeEvent(group, now);
     if (!current) return null;
@@ -215,7 +206,7 @@ const Boosts = (() => {
     heading.className = 'boost-schedule-heading';
     heading.textContent = `Next ${group.label.toLowerCase()}`;
 
-    // Soonest first: running now, then by next start date; not-on-the-calendar last.
+    // Running now first, then by next start, not on the calendar last.
     const sortKey = (type) => {
       const { current, next } = statusFor(type, now);
       if (current) return -Infinity;
@@ -240,7 +231,7 @@ const Boosts = (() => {
     renderSchedule(now);
   }
 
-  // Kinds are matched from the name every time, never trusted from storage.
+  // Always match kinds from the name, don't trust what's stored.
   function withCurrentTypes(storedEvents) {
     return storedEvents
       .map((event) => ({ ...event, types: typesFor(event.name || '') }))
@@ -275,7 +266,6 @@ const Boosts = (() => {
     if (stale) {
       if (!(await refresh()) && !cached) render();
     }
-    // The old caches are replaced by boostSchedule.
     ext.storage.local.remove([STORAGE_KEYS.boostCache, STORAGE_KEYS.resourceCache]);
   }
 

@@ -1,24 +1,24 @@
-// Item lists on the wiki's "Search Items by Tag" page. Each entry becomes a
-// button; clicking it shows every catalog item that matches its filter.
+// The item lists. Each one is a list you can tick in the filter.
 //
 //   id      unique, letters and dashes
-//   label   button text
-//   title   button tooltip (optional)
-//   color   button color (optional), any CSS color: '#2ecc71'
-//   date    when the event runs (optional, for your reference): 'October'
-//   source  'catalog' (default): every wiki item; 'inventory': only items in
-//           your synced inventory; 'farm': your farm list, in its own order
-//           (the filter still applies on top of either)
-//   filter  any combination of these; an item must pass all that are given:
-//     allTags       has every one of these tags          ['seasonal', 'tlapd']
-//     anyTags       has at least one of these tags       ['frostval', 'frostvalbadge']
-//     noneTags      has none of these tags               ['misc']
-//     rarities      rarity is one of these               ['seasonal', 'rare', 'lqs', 'legendary',
-//                                                        'upgrade', 'benevolent', 'champion',
-//                                                        'collector', 'secret', 'pseudo-rare']
-//     nameIncludes  name contains this text (any case)   'pirate'
+//   label   name in the filter
+//   title   tooltip (optional)
+//   color   color mark (optional): '#2ecc71'
+//   date    when it runs, just a note (optional): 'October'
+//   months  months it runs, 1-12 (optional): [10], or [6, 7, 8] for June-August.
+//           'friday13th' for every Friday the 13th. Used to show what's on now.
+//   day     day of the month (optional). On now from a week before to a week after.
+//   source  'catalog' (default), 'inventory' (your synced items) or 'farm' (your farm list)
+//   filter  an item has to match everything given:
+//     allTags       has all of these tags                ['seasonal', 'tlapd']
+//     anyTags       has at least one                     ['frostval', 'frostvalbadge']
+//     noneTags      has none of them                     ['misc']
+//     rarities      rarity is one of these               ['seasonal', 'rare', 'lqs', 'legendary', ...]
+//     nameIncludes  name contains this (any case)        'pirate'
+//     belongsTo     linked from the page, or somewhere   { page: '/aranx-s-birthday', places: ['Aranx'] }
+//                   named after one of the places
 //
-// Tag names are the wiki's own (shown at the bottom of every item page).
+// Tag names are the ones at the bottom of each wiki item page.
 const ITEM_LISTS = [
   {
     id: 'owned',
@@ -41,6 +41,7 @@ const ITEM_LISTS = [
     color: '#cc0000',
     filter: { allTags: ['seasonal', 'akibanewyear'], noneTags: ['misc'] },
     date: "January",
+    months: [1],
   },
   {
     id: 'australiaday',
@@ -49,6 +50,7 @@ const ITEM_LISTS = [
     color: '#d6b588',
     filter: { allTags: ['seasonal', 'australiaday'], noneTags: ['misc'] },
     date: "January",
+    months: [1],
   },
   {
     id: 'newyear',
@@ -57,6 +59,7 @@ const ITEM_LISTS = [
     color: '#ff0000',
     filter: { allTags: ['seasonal', 'newyear'], noneTags: ['misc'] },
     date: "January",
+    months: [1],
   },
   {
     id: 'groundhorc',
@@ -65,6 +68,7 @@ const ITEM_LISTS = [
     color: '#8b4513',
     filter: { allTags: ['seasonal', 'groundhorc'], noneTags: ['misc'] },
     date: "February",
+    months: [2],
   },
   {
     id: 'heroesheartday',
@@ -73,14 +77,7 @@ const ITEM_LISTS = [
     color: '#ff69b4',
     filter: { allTags: ['seasonal', 'heroesheartday'], noneTags: ['misc'] },
     date: "February",
-  },
-  {
-    id: 'lorelympics',
-    label: '🏅 Lorelympics',
-    title: 'Every seasonal Lorelympics item',
-    color: '#ffd700',
-    filter: { allTags: ['seasonal', 'lorelympics'], noneTags: ['misc'] },
-    date: "February or July-August",
+    months: [2],
   },
   {
     id: 'superbowl',
@@ -89,6 +86,7 @@ const ITEM_LISTS = [
     color: '#ff0000',
     filter: { allTags: ['seasonal', 'superbowl'], noneTags: ['misc'] },
     date: "February",
+    months: [2],
   },
   {
     id: 'grenwog',
@@ -97,6 +95,7 @@ const ITEM_LISTS = [
     color: '#f7e1b5',
     filter: { allTags: ['seasonal', 'grenwog'], noneTags: ['misc'] },
     date: "March-April",
+    months: [3, 4],
   },
   {
     id: 'goodluckday',
@@ -105,6 +104,7 @@ const ITEM_LISTS = [
     color: '#00ff00',
     filter: { allTags: ['seasonal', 'goodluckday'], noneTags: ['misc'] },
     date: "March",
+    months: [3],
   },
   {
     id: 'aprilfools',
@@ -113,6 +113,7 @@ const ITEM_LISTS = [
     color: '#ffce18',
     filter: { allTags: ['seasonal', 'aprilfools'], noneTags: ['misc'] },
     date: "April",
+    months: [4],
   },
   {
     id: 'mothersday',
@@ -121,6 +122,7 @@ const ITEM_LISTS = [
     color: '#ff69b4',
     filter: { allTags: ['seasonal', 'mothersday'], noneTags: ['misc'] },
     date: "May",
+    months: [5],
   },
   {
     id: 'maythe4th',
@@ -129,6 +131,7 @@ const ITEM_LISTS = [
     color: '#0000ff',
     filter: { allTags: ['seasonal', 'maythe4th'], noneTags: ['misc'] },
     date: "May",
+    months: [5],
   },
   {
     id: 'fathersday',
@@ -137,6 +140,7 @@ const ITEM_LISTS = [
     color: '#1e90ff',
     filter: { allTags: ['seasonal', 'fathersday'], noneTags: ['misc'] },
     date: "June",
+    months: [6],
   },
   {
     id: 'summerbreak',
@@ -145,6 +149,7 @@ const ITEM_LISTS = [
     color: '#ffcc00',
     filter: { allTags: ['seasonal', 'summerbreak'], noneTags: ['misc'] },
     date: "June-August",
+    months: [6, 7, 8],
   },
   {
     id: 'aqworldcup',
@@ -153,6 +158,7 @@ const ITEM_LISTS = [
     color: '#008000',
     filter: { allTags: ['seasonal', 'aqworldcup'], noneTags: ['misc'] },
     date: "June-July",
+    months: [6, 7],
   },
   {
     id: 'freedomday',
@@ -161,6 +167,7 @@ const ITEM_LISTS = [
     color: '#b22234',
     filter: { allTags: ['seasonal', 'freedomday'], noneTags: ['misc'] },
     date: "July",
+    months: [7],
   },
   {
     id: 'frostvalinjuly',
@@ -169,6 +176,7 @@ const ITEM_LISTS = [
     color: '#5dade2',
     filter: { allTags: ['seasonal', 'frostvalinjuly'], noneTags: ['misc'] },
     date: "July",
+    months: [7],
   },
   {
     id: 'back2school',
@@ -177,6 +185,7 @@ const ITEM_LISTS = [
     color: '#ffc067',
     filter: { allTags: ['seasonal', 'back2school'], noneTags: ['misc'] },
     date: "August-September",
+    months: [8, 9],
   },
   {
     id: 'indonesianday',
@@ -185,6 +194,7 @@ const ITEM_LISTS = [
     color: '#ff0000',
     filter: { allTags: ['seasonal', 'indonesianday'], noneTags: ['misc'] },
     date: "August",
+    months: [8],
   },
   {
     id: 'tlapd',
@@ -193,6 +203,7 @@ const ITEM_LISTS = [
     color: '#e5534b',
     filter: { allTags: ['seasonal', 'tlapd'], noneTags: ['misc'] },
     date: "September",
+    months: [9],
   },
   {
     id: 'brazilianday',
@@ -201,6 +212,7 @@ const ITEM_LISTS = [
     color: '#ffcc00',
     filter: { allTags: ['seasonal', 'brazilianday'], noneTags: ['misc'] },
     date: "September",
+    months: [9],
   },
   {
     id: 'mogloween',
@@ -209,6 +221,7 @@ const ITEM_LISTS = [
     color: '#ff5b00',
     filter: { allTags: ['seasonal', 'mogloween'], noneTags: ['misc'] },
     date: "October",
+    months: [10],
   },
   {
     id: 'aqwbirthday',
@@ -217,6 +230,7 @@ const ITEM_LISTS = [
     color: '#ffbf00',
     filter: { allTags: ['seasonal', 'aqwbirthday'], noneTags: ['misc'] },
     date: "October",
+    months: [10],
   },
   {
     id: 'earthday',
@@ -225,6 +239,7 @@ const ITEM_LISTS = [
     color: '#00a86b',
     filter: { allTags: ['seasonal', 'earthday'], noneTags: ['misc'] },
     date: "October",
+    months: [10],
   },
   {
     id: 'harvestday',
@@ -233,6 +248,7 @@ const ITEM_LISTS = [
     color: '#ff8c00',
     filter: { allTags: ['seasonal', 'harvestday'], noneTags: ['misc'] },
     date: "October",
+    months: [10],
   },
   {
     id: 'tacoday',
@@ -241,6 +257,7 @@ const ITEM_LISTS = [
     color: '#ffcc00',
     filter: { allTags: ['seasonal', 'tacoday'], noneTags: ['misc'] },
     date: "October",
+    months: [10],
   },
   {
     id: 'blackfriday',
@@ -249,6 +266,7 @@ const ITEM_LISTS = [
     color: '#04d9ff',
     filter: { allTags: ['seasonal', 'blackfriday'], noneTags: ['misc'] },
     date: "November",
+    months: [11],
   },
   {
     id: 'cybermonday',
@@ -257,6 +275,7 @@ const ITEM_LISTS = [
     color: '#df00ff',
     filter: { allTags: ['seasonal', 'cybermonday'], noneTags: ['misc'] },
     date: "November",
+    months: [11],
   },
   {
     id: 'cincodemayo',
@@ -265,6 +284,7 @@ const ITEM_LISTS = [
     color: '#895129',
     filter: { allTags: ['seasonal', 'cincodemayo'], noneTags: ['misc'] },
     date: "November",
+    months: [11],
   },
   {
     id: 'frostval',
@@ -273,6 +293,7 @@ const ITEM_LISTS = [
     color: '#5dade2',
     filter: { allTags: ['seasonal', 'frostval'], noneTags: ['misc'] },
     date: "December",
+    months: [12],
   },
   {
     id: 'Carnaval',
@@ -280,6 +301,8 @@ const ITEM_LISTS = [
     title: 'Every seasonal Carnaval item',
     color: '#d6b588',
     filter: { allTags: ['seasonal', 'carnaval'], noneTags: ['misc'] },
+    date: "February-March",
+    months: [2, 3],
   },
   {
     id: 'friday13th',
@@ -288,6 +311,7 @@ const ITEM_LISTS = [
     color: '#780606',
     filter: { allTags: ['seasonal', 'friday13th'], noneTags: ['misc'] },
     date: "Friday 13th",
+    months: 'friday13th',
   },
   {
     id: 'pancakeday',
@@ -296,6 +320,39 @@ const ITEM_LISTS = [
     color: '#ffcc00',
     filter: { allTags: ['seasonal', 'pancakeday'], noneTags: ['misc'] },
     date: "Every Tuesday in seventh week before Easter",
+    months: [2, 3],
   },
 
+  // Staff birthdays. An item counts if it's seasonal + staffbirthday and is
+  // either linked from their wiki page or sold somewhere named after them.
+  {
+    id: 'birthday-nulgath',
+    label: "🎂 Nulgath's Birthday",
+    title: "Items from Nulgath's staff birthday",
+    color: '#16a085',
+    filter: { allTags: ['seasonal', 'staffbirthday'], noneTags: ['misc'], belongsTo: { page: '/nulgath-s-birthday-event', places: ["Nulgath", "Quibble Coinbiter's"] } },
+    date: "January 16th",
+    months: [1],
+    day: 16,
+  },
+  {
+    id: 'birthday-dage-the-evil',
+    label: "🎂 Dage's Birthday",
+    title: "Items from Dage the Evil's staff birthday",
+    color: '#7f8c8d',
+    filter: { allTags: ['seasonal', 'staffbirthday'], noneTags: ['misc'], belongsTo: { page: '/dage-the-evil-s-birthday', places: ['Dage', 'Dark Birthday'] } },
+    date: "March 2nd",
+    months: [3],
+    day: 2,
+  },
+  {
+    id: 'birthday-beleen',
+    label: "🎂 Beleen's Birthday",
+    title: "Items from Beleen's staff birthday",
+    color: '#a29bfe',
+    filter: { allTags: ['seasonal', 'staffbirthday'], noneTags: ['misc'], belongsTo: { page: '/beleen-s-birthday', places: ['Beleen'] } },
+    date: "December 14th",
+    months: [12],
+    day: 14,
+  },
 ];

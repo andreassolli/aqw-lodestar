@@ -1,4 +1,209 @@
-/* The Ultra tab (page.html). */
+/* Ultra tab */
+
+.attack-pattern-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.attack-pattern-toolbar button,
+#attack-entry-form button,
+#attack-boss-form button {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color, #555);
+  border-radius: 6px;
+  background: var(--button-background, #292929);
+  color: inherit;
+  cursor: pointer;
+}
+
+#attack-entry-form,
+#attack-boss-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-color, #555);
+  border-radius: 8px;
+}
+
+#attack-entry-form[hidden],
+#attack-boss-form[hidden] {
+  display: none;
+}
+
+#attack-entry-form label,
+#attack-boss-form label {
+  display: flex;
+  flex: 1 1 180px;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#attack-entry-form input,
+#attack-entry-form select,
+#attack-boss-form input,
+.attack-column-setting input[type="text"] {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border-color, #555);
+  border-radius: 5px;
+  background: var(--input-background, #202020);
+  color: inherit;
+}
+
+#attack-column-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+#attack-column-settings h3 {
+  margin: 0 0 4px;
+}
+
+.attack-column-setting {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.attack-column-setting input[type="text"] {
+  flex: 1;
+}
+
+.attack-column-setting input[type="color"] {
+  width: 42px;
+  height: 36px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.attack-remove-column {
+  padding: 6px 10px;
+  border: 1px solid var(--border-color, #555);
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.attack-remove-column:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.attack-table {
+  display: grid;
+  grid-template-columns: repeat(
+    var(--column-count),
+    minmax(0, 1fr)
+  );
+  grid-auto-rows: auto;
+  gap: 2px;
+  align-items: stretch;
+  width: 100%;
+}
+
+.attack-column-header {
+  min-width: 0;
+  padding: 12px 6px;
+  background: var(--column-color, #345a86);
+  color: white;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+  border-radius: 6px 6px 0 0;
+}
+
+.attack-table > .attack {
+  min-width: 0;
+  align-self: stretch;
+  box-sizing: border-box;
+  border-radius: 0;
+  margin: 0;
+  height: 100%;
+}
+
+.attack {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px;
+  margin: 0;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+  background: var(--attack-background, rgba(0, 0, 0, 0.18));
+}
+
+.attack-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.attack.custom-color {
+  background: var(--entry-color);
+  color: var(--entry-text, #fff);
+}
+
+.attack-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+}
+
+.attack-color {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 40%);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.attack-color:hover,
+.attack-reset-color:hover {
+  opacity: 1;
+}
+
+.attack-reset-color {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+.attack-remove {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+.attack-remove:hover {
+  opacity: 1;
+}
+
+#attack-pattern-content {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.attack-table {
+  min-width: 600px;
+}
 
 .attack-pattern-header {
     width: 100%;
@@ -39,91 +244,6 @@
     cursor: pointer;
 }
 
-.attack-pattern {
-    border: 2px solid var(--foreground-70, #666);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.attack-pattern .pattern-section {
-    display: flex;
-    align-items: stretch;
-}
-
-.attack-pattern .section-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px;
-    flex: 0 0 76px;
-    box-sizing: border-box;
-    border-right: 2px solid var(--foreground-70, #666);
-}
-
-.attack-pattern .section-label p {
-    width: 100%;
-    margin: 0;
-    text-align: center;
-    overflow-wrap: anywhere;
-}
-
-.attack-pattern .intro-label {
-    border-bottom: 2px solid var(--foreground-70, #666);
-}
-
-.attack-pattern .section-content {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
-}
-
-.attack-pattern .attack {
-    margin: 0;
-    padding: 12px 8px;
-    width: 100%;
-    box-sizing: border-box;
-    text-align: center;
-    overflow-wrap: anywhere;
-}
-
-.attack-pattern .attack + .attack {
-    border-top: 1px solid rgb(255 255 255 / 12%);
-}
-
-.attack-pattern .attack.normal {
-    background: transparent;
-    color: var(--foreground, inherit);
-}
-
-.attack-pattern .attack.truth {
-    background: #c026d3;
-    color: #fff;
-}
-
-.attack-pattern .attack.listen {
-    background: #0284c7;
-    color: #fff;
-}
-
-.attack-pattern .attack.zone {
-    background: #b91c1c;
-    color: #fff;
-}
-
-/* Highlight the boss's spoken dialogue. */
-.attack-pattern .attack.truth,
-.attack-pattern .attack.listen,
-.attack-pattern .attack.zone {
-    color: #facc15;
-}
-
-/* Keep the Intro and Loop labels visually distinct. */
-.attack-pattern .loop-label {
-    border-top: 2px solid var(--foreground-70, #666);
-}
-
-/* Small popup windows */
 @media (max-width: 360px) {
     .attack-pattern-header {
         align-items: flex-start;
@@ -133,29 +253,95 @@
     .attack-pattern-selector {
         width: 100%;
     }
-
-    .attack-pattern .section-label {
-        flex-basis: 60px;
-        padding: 8px 4px;
-    }
-
-    .attack-pattern .attack {
-        padding: 10px 6px;
-        font-size: 12px;
-    }
 }
 
-/* Whether the plugin is listening to the game (from main.js). */
-.ultra-status {
-    margin: -6px 0 12px;
-    font-size: 11px;
-    color: var(--muted);
+.attack-column-setting input.hex-input[type="text"] {
+  flex: 0 0 90px;
+  font-family: ui-monospace, monospace;
 }
 
-.ultra-status.is-listening {
-    color: var(--green);
+.attack-type-label {
+  flex: 1;
 }
 
-.ultra-status.is-error {
-    color: #ef4444;
+.attack-edit {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+.attack-edit:hover {
+  opacity: 1;
+}
+
+#attack-mode-toggle {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color, #555);
+  border-radius: 6px;
+  background: var(--button-background, #292929);
+  color: inherit;
+  cursor: pointer;
+}
+
+#attack-mode-toggle[aria-pressed="true"] {
+  background: #2e7d32;
+  color: #fff;
+}
+
+.attack-pattern-toolbar[hidden],
+#attack-column-settings[hidden] {
+  display: none;
+}
+
+.view-mode .attack-actions {
+  display: none;
+}
+
+.attack-add-type {
+  align-self: flex-start;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color, #555);
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* Entries are centered and tighter. */
+.attack {
+  align-items: center;
+  justify-content: center;
+  padding: 0.35em 0.5em;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.attack-text {
+  text-align: center;
+}
+
+.attack-column-header {
+  padding: 0.4em 0.3em;
+}
+
+/* Display mode scales the whole table with the window so it all fits.
+   Font size is the smaller of what the width and the height allow. */
+#attack-pattern-content.view-mode {
+  container-type: inline-size;
+  overflow: visible;
+}
+
+.view-mode .attack-table {
+  min-width: 0;
+  gap: 1px;
+  font-size: clamp(
+    8px,
+    min(
+      calc(100cqw / (var(--column-count) * 6)),
+      calc((100vh - var(--page-chrome, 200px)) / (var(--row-count) * 1.9))
+    ),
+    40px
+  );
 }

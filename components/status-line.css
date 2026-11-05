@@ -1,0 +1,9 @@
+.check-status {
+  margin: 6px 4px 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.check-status.is-error {
+  color: #e05d5d;
+}

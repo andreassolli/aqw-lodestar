@@ -1,19 +1,13 @@
-// account.aq.com: rarity badges on item links (from the daily item catalog), a
-// "try on" button that opens the character's outfit in the AQCloset wardrobe
-// (built from the character page's own FlashVars), and a menu to download the
-// character's picture (render/capture.js, render/main-world.js).
+// account.aq.com: rarity badges, a try on button for the character's outfit and
+// the character picture download.
 (() => {
-  /** Wiki path of an item link ("/void-highlord-class"), or null. */
   function linkPath(link) {
     const href = link.getAttribute('href');
     const path = href && href.split('.com')[1];
     return path || null;
   }
 
-  /**
-   * Adds rarity badges to item links, looked up in the daily item catalog (by
-   * name, then by wiki path) through the background. Links are checked once.
-   */
+  // Rarity badges on item links. Each link is only checked once.
   async function tagLinks(links) {
     const todo = links.filter((link) => !link.dataset.aqwtRarity && !link.querySelector('.aqwt-rarity'));
     if (!todo.length) return;
@@ -21,7 +15,7 @@
 
     const response = await lookupItems(todo.map((link) => ({ name: getItemLinkLabel(link), path: linkPath(link) })));
     if (!response || !Array.isArray(response.items)) {
-      todo.forEach((link) => delete link.dataset.aqwtRarity); // try again with the next batch
+      todo.forEach((link) => delete link.dataset.aqwtRarity);
       return;
     }
     response.items.forEach((match, i) => {
@@ -34,7 +28,7 @@
   function tagItemLinks() {
     tagLinks([...document.querySelectorAll('a.item')]);
 
-    // The inventory table fills in after load: collect new links and look them up once per frame.
+    // The inventory table loads in late, so check new links once per frame.
     let pending = [];
     let scheduled = false;
     new MutationObserver((mutations) => {
@@ -61,13 +55,12 @@
       <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>
     </svg>`;
 
-  /** The character page's FlashVars (the outfit it shows), or null. */
   function readFlashVars() {
     const param = [...document.querySelectorAll('param')].find((p) => p.name.toLowerCase() === 'flashvars');
     if (param && param.value) return param.value;
     const embed = document.querySelector('embed[flashvars]');
     if (embed) return embed.getAttribute('flashvars');
-    // The Flash player script (Ruffle) may have replaced the original elements.
+    // Ruffle may have replaced the original elements.
     const match = document.documentElement.innerHTML.match(/(?:name="FlashVars" value|flashvars)="([^"]*)"/i);
     if (!match) return null;
     const decoder = document.createElement('textarea');
@@ -75,7 +68,7 @@
     return decoder.value;
   }
 
-  const pageFlashVars = readFlashVars(); // read early, before the Flash player script changes the page
+  const pageFlashVars = readFlashVars(); // read before Ruffle changes the page
 
   function addTryOnButton() {
     if (document.getElementById('aqwt-custom-action-btn')) return;
@@ -94,8 +87,7 @@
       const flashVars = pageFlashVars || readFlashVars();
       const shownCharacter = flashVars ? Aqcloset.parseFlashVars(flashVars).strName || '' : '';
 
-      // The page already describes the outfit; only ask AQCloset when the name in
-      // the box is a different character that hasn't been searched yet.
+      // The page already has the outfit. Only ask AQCloset if someone else was searched.
       if (flashVars && (!username || username.toLowerCase() === shownCharacter.toLowerCase())) {
         window.open(Aqcloset.wardrobeUrlFromFlashVars(flashVars), '_blank', 'noopener');
         return;
@@ -106,10 +98,10 @@
     column.appendChild(button);
   }
 
-  addTryOnButton();
+  Features.run('itemButtons', addTryOnButton);
 
   const RENDER_SCALE = 3;
-  const RENDER_DELAY_MS = 4000; // ms the SWF runs before capture; tune for the pose you want
+  const RENDER_DELAY_MS = 4000; // ms before capture, change it to get a different pose
 
   const DOWNLOAD_ICON = `
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -133,20 +125,18 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
 
-  /* Option 1: the image Ruffle is showing on this page */
-  function findPageCanvas() {
-    const host = document.querySelector('ruffle-player, ruffle-embed, ruffle-object');
-    return host?.shadowRoot?.querySelector('canvas') || null;
-  }
-
   async function downloadShown() {
-    const canvas = findPageCanvas();
-    if (!canvas) throw new Error('The character is not rendered on this page yet');
-    saveBlob(await AqwCapture.grabBlob(canvas), `${shownCharacterName()}.webp`);
+    saveBlob(await askPageWorld({ mode: 'shown' }), `${shownCharacterName()}.webp`);
   }
 
   async function renderWithOwnSwf(flashVars) {
-    const swf = ext.runtime.getURL('render/CharacterRender.swf');
+    const swf = ext.runtime.getURL('render/TestRender1.swf');
+    return askPageWorld({ swf, flashVars, scale: RENDER_SCALE, delay: RENDER_DELAY_MS });
+  }
+
+  // Asks main-world.js for a picture. { mode: 'shown' } is the one on the page,
+  // anything else is an HD render.
+  function askPageWorld(request) {
     const id = crypto.randomUUID();
 
     return new Promise((resolve, reject) => {
@@ -163,10 +153,7 @@
       }
 
       window.addEventListener('message', onMessage);
-      window.postMessage(
-        { source: 'aqwt-render-request', id, swf, flashVars, scale: RENDER_SCALE, delay: RENDER_DELAY_MS },
-        location.origin,
-      );
+      window.postMessage({ source: 'aqwt-render-request', id, ...request }, location.origin);
     });
   }
 
@@ -176,7 +163,6 @@
     saveBlob(await renderWithOwnSwf(flashVars), `${shownCharacterName()}-hd.webp`);
   }
 
-  /* UI: one button, small menu */
   function addDownloadMenu() {
     if (document.getElementById('aqwt-download-menu')) return;
     const column = document.querySelector('.col-3.col-md-4.col-lg-4');
@@ -241,7 +227,7 @@
     row?.classList.add('aqwt-search-row');
   }
 
-  addDownloadMenu();
+  Features.run('characterDownload', addDownloadMenu);
   makeSearchRowFlex();
-  tagItemLinks();
+  Features.run('rarityBadges', tagItemLinks);
 })();

@@ -1,43 +1,29 @@
-// Imgur blocks visitors from the UK (every image becomes a "not viewable in
-// your region" picture), and most wiki item images are hosted there.
+// Imgur blocks the UK (every image turns into a "not available" picture) and most
+// wiki images are on Imgur. Where it's blocked we load them through a proxy
+// instead, and wiki-images.js swaps the item picture for the AQCloset one.
 //
-// Setting "Imgur images" (popup settings):
-//   'auto'    (default) replace Imgur images only when Imgur is blocked here;
-//             the background checks that (see checkImgurBlocked)
-//   'replace' always replace them
-//   'direct'  never
-// "Replace" means: load the image through an image proxy outside the UK
-// (DuckDuckGo, WordPress, Google or wsrv.nl, whichever works). On wiki item
-// pages the item's own
-// image is swapped for its AQCloset thumbnail instead, when AQCloset has the
-// item (content/wiki-images.js).
-//
-// In pages and the popup, every Imgur <img> is kept in line with this,
-// including ones added later. Images another script handles carry
-// data-aqwt-image-owner and are left alone. Needs shared/constants.js first.
+// Every Imgur <img> gets handled, including ones added later. Images with
+// data-aqwt-image-owner are left to whoever owns them.
 const ImageProxy = (() => {
-  // Image proxies, tried in this order until one works. Imgur rate-limits busy
-  // proxies (wsrv.nl answers "error: 429" when it's limited), so there are
-  // several, run by different companies. The one that last worked is tried
-  // first next time.
+  // Tried in order until one works. Imgur rate limits busy proxies, so we have a
+  // few. The last one that worked goes first next time.
   const enc = encodeURIComponent;
   const PROXIES = [
     { name: 'duckduckgo', build: (u) => `https://external-content.duckduckgo.com/iu/?u=${enc(u)}` },
     { name: 'wp.com', build: (u) => `https://i0.wp.com/${u.replace(/^https?:\/\//, '')}?ssl=1` },
     { name: 'google', build: (u) => `https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&url=${enc(u)}` },
-    { name: 'wsrv.nl', build: (u) => `https://wsrv.nl/?n=-1&url=${enc(u)}` }, // n=-1: keep GIF animation
+    { name: 'wsrv.nl', build: (u) => `https://wsrv.nl/?n=-1&url=${enc(u)}` }, // n=-1 keeps GIFs animated
   ];
-  const PREFERRED_KEY = 'imgurProxyPreferred'; // name of the proxy that last worked
+  const PREFERRED_KEY = 'imgurProxyPreferred';
   const ORIGINAL_ATTR = 'data-aqwt-original-src';
   const OWNER_ATTR = 'data-aqwt-image-owner';
-  const LEGACY_KEY = 'imgurProxy'; // older boolean setting: true = always
 
   let active = false;
-  let preferred = 0; // index into PROXIES
+  let preferred = 0;
   const listeners = [];
   const hasDocument = typeof document !== 'undefined';
-  const handled = new WeakSet(); // <img>s with the fallback chain attached
-  const proxiedOriginals = new Map(); // proxied URL handed out by url() -> original
+  const handled = new WeakSet();
+  const proxiedOriginals = new Map();
 
   function isImgur(src) {
     try {
@@ -50,12 +36,10 @@ const ImageProxy = (() => {
 
   const absolute = (src) => new URL(src, location.href).href;
 
-  /** The proxied address of an image; attempt counts from the preferred proxy. */
   function proxied(src, attempt = 0) {
     return PROXIES[(preferred + attempt) % PROXIES.length].build(absolute(src));
   }
 
-  /** The URL to load for an image: proxied if it's on Imgur and replacing is on. */
   function url(src) {
     if (!active || !src || !isImgur(src)) return src;
     const result = proxied(src);
@@ -69,12 +53,7 @@ const ImageProxy = (() => {
     ext.storage.local.set({ [PREFERRED_KEY]: PROXIES[index].name }).catch(() => {});
   }
 
-  /**
-   * Points an <img> at the proxies: on an error it moves to the next one, and
-   * when one works that proxy becomes the first choice. currentAttempt is for
-   * an image that's already loading proxy number `currentAttempt`; onFail
-   * runs when every proxy has failed.
-   */
+  // On error move to the next proxy. When one works it becomes the first choice.
   function useProxy(img, original, currentAttempt = null, onFail = null) {
     img.setAttribute(ORIGINAL_ATTR, original);
     img.removeAttribute('srcset');
@@ -117,7 +96,7 @@ const ImageProxy = (() => {
     const current = img.getAttribute('src');
     if (!current) return;
     if (isImgur(current)) useProxy(img, absolute(current));
-    // Set from url() elsewhere (tooltips, cards): give it the fallbacks too.
+    // Set from url() somewhere else, give it the fallbacks too.
     else if (proxiedOriginals.has(current)) useProxy(img, proxiedOriginals.get(current), 0);
   }
 
@@ -137,12 +116,10 @@ const ImageProxy = (() => {
   }
 
   async function computeActive() {
-    const stored = await ext.storage.local.get([STORAGE_KEYS.imgurImages, LEGACY_KEY, PREFERRED_KEY]);
+    const stored = await ext.storage.local.get(PREFERRED_KEY);
     const pick = PROXIES.findIndex((proxy) => proxy.name === stored[PREFERRED_KEY]);
     if (pick >= 0) preferred = pick;
-    const mode = stored[STORAGE_KEYS.imgurImages] || (stored[LEGACY_KEY] === true ? 'replace' : 'auto');
-    if (mode === 'replace') return true;
-    if (mode === 'direct') return false;
+    // Only replace where Imgur is blocked. The old imgurImages setting is ignored.
     return isBlockedHere();
   }
 
@@ -174,7 +151,7 @@ const ImageProxy = (() => {
       const pick = PROXIES.findIndex((proxy) => proxy.name === changes[PREFERRED_KEY].newValue);
       if (pick >= 0) preferred = pick;
     }
-    if (changes[STORAGE_KEYS.imgurImages] || changes[STORAGE_KEYS.imgurCheck]) update();
+    if (changes[STORAGE_KEYS.imgurCheck]) update();
   });
 
   return {
@@ -186,7 +163,6 @@ const ImageProxy = (() => {
     OWNER_ATTR,
     ORIGINAL_ATTR,
     isActive: () => active,
-    /** fn(active) whenever replacing turns on or off. */
     onChange: (fn) => listeners.push(fn),
   };
 })();

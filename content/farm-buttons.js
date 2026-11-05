@@ -1,9 +1,6 @@
-// "Add to farm list" buttons: one next to the title on wiki item pages, and
-// a small one on each item list card (item-lists.js uses FarmButtons.create).
-// Every button shows whether its item is already on the list, and updates
-// when the list changes anywhere (the popup, the right-click menu, ...).
+// "Add to farm list" buttons on item pages and list cards. They show if the item
+// is already on the list and update when it changes anywhere.
 const FarmButtons = (() => {
-  // Pages carrying these tags aren't items.
   const NON_ITEM_TAGS = ['npc', 'quest', 'shop', 'location', 'monster', 'war', 'cutscene', 'minigame', 'disambiguation', 'enhancement'];
   const PLUS_ICON =
     '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>';
@@ -31,10 +28,6 @@ const FarmButtons = (() => {
     button.innerHTML = (saved ? CHECK_ICON : PLUS_ICON) + (compact ? '' : `<span>${label}</span>`);
   }
 
-  /**
-   * @param {{url: string, buildEntry: () => Promise<object|null>, compact?: boolean}} options
-   *   buildEntry makes the farm entry when clicked; compact = icon only (cards)
-   */
   function create({ url, buildEntry, compact = false }) {
     const button = document.createElement('button');
     button.type = 'button';
@@ -89,7 +82,7 @@ const FarmButtons = (() => {
     if (area === 'local' && changes[STORAGE_KEYS.farmItems]) refreshSaved(changes[STORAGE_KEYS.farmItems].newValue || []);
   });
   refreshSaved();
-  addPageButton();
+  Features.run('itemButtons', addPageButton);
 
   return { create };
 })();

@@ -1,6 +1,6 @@
 # Class Enhancements (Lodestar desktop plugin)
 
-*Comes with the app, turned off.* Turn it on in Settings → Plugins (it starts
+*Comes with the app, turned off.* Turn it on in Settings → Options → Features (it starts
 when Lodestar restarts) and a **Classes** tab appears, with the class guide from
 [aqw.app](https://aqw.app):
 

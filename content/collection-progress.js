@@ -1,8 +1,5 @@
-// Wiki collection lists (e.g. "List of All Collection Chests"): a counter of
-// how many listed items you own, and owned items shown in green. Checks the
-// saved inventory directly, matching names the same way as the checkmarks.
-(() => {
-  // Wiki pages that get the counter, with what to call their items.
+// Collection list pages: counts how many you own and marks owned ones green.
+Features.run('ownedMarks', () => {
   const PAGES = {
     '/list-of-all-collection-chests': 'collection chests',
   };
@@ -50,4 +47,4 @@
     owned = ownedMap;
     update();
   });
-})();
+});

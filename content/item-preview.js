@@ -1,19 +1,19 @@
-// Builds the item preview (images + short wiki details) used by the hover
-// tooltip and the TLAPD list, so both render items identically.
+// Builds the item preview (images + short details). Used by the tooltip and the
+// list cards so they look the same.
 const ItemPreview = (() => {
   const MAX_SECTIONS = 5;
   const MAX_LIST_ITEMS = 3;
   const DETAIL_START_MARKERS = ['Location:', 'Locations:', 'Price:', 'Base Stats:'];
   const HIDDEN_FIELDS = ['Sellback', 'Description', 'Rarity'];
 
-  const cache = new Map(); // "url::name" -> Promise<preview|null>
+  const cache = new Map();
 
   function isTagsList(el) {
     const links = el.querySelectorAll('a[href]');
     return links.length > 0 && [...links].every((a) => (a.getAttribute('href') || '').includes('/system:page-tags/'));
   }
 
-  /** Page content children, with Male/Female tab panes flattened in so they aren't skipped. */
+  // Flattens the Male/Female tabs so their content isn't skipped.
   function flattenTabs(content) {
     return [...content.children].flatMap((child) =>
       child.classList.contains('yui-navset')
@@ -22,7 +22,7 @@ const ItemPreview = (() => {
     );
   }
 
-  /** Drop "<strong>Label:</strong>" fields with no value, unless the value is the list that follows. */
+  // Drops empty "Label:" fields unless a list follows them.
   function stripEmptyFields(html, nextIsList) {
     const segments = html.split(/<br\s*\/?>/i);
     return segments
@@ -37,6 +37,13 @@ const ItemPreview = (() => {
 
   function cleanSection(child, next) {
     const clone = child.cloneNode(true);
+    // Folded blocks and pictures are the page's own gallery ("+ Normal", "+ Animated")
+    // and can hold spoilers. The tooltip has its one picture row. Small icons can stay.
+    clone.querySelectorAll('.collapsible-block').forEach((block) => block.remove());
+    clone.querySelectorAll('img').forEach((img) => {
+      if (!(img.getAttribute('src') || '').includes('/image-tags/')) img.remove();
+    });
+    if (clone.matches('.collapsible-block')) return null;
     let html = clone.innerHTML;
     for (const field of HIDDEN_FIELDS) {
       html = html.replace(new RegExp(`<strong>\\s*${field}\\s*:?\\s*</strong>[\\s\\S]*?(<br\\s*/?>|$)`, 'i'), '');
@@ -44,7 +51,7 @@ const ItemPreview = (() => {
 
     const nextIsList = !!next && (next.tagName === 'UL' || next.tagName === 'OL') && !isTagsList(next);
     clone.innerHTML = stripEmptyFields(html, nextIsList);
-    if (!clone.textContent.trim()) return null;
+    if (!clone.textContent.trim() && !clone.querySelector('img')) return null;
 
     if ((clone.tagName === 'UL' || clone.tagName === 'OL') && clone.children.length > MAX_LIST_ITEMS) {
       while (clone.children.length > MAX_LIST_ITEMS) clone.lastElementChild.remove();
@@ -53,6 +60,10 @@ const ItemPreview = (() => {
       clone.appendChild(more);
     }
     return clone;
+  }
+
+  function endsWithHiddenField(child) {
+    return new RegExp(`<strong>\\s*(${HIDDEN_FIELDS.join('|')})\\s*:?\\s*</strong>\\s*(<br\\s*/?>\\s*)?$`, 'i').test(child.innerHTML);
   }
 
   function collectSections(content) {
@@ -65,7 +76,7 @@ const ItemPreview = (() => {
       if (child.tagName === 'HR') break;
 
       const text = child.textContent.trim();
-      if (!text || text.includes('List of all tags')) continue;
+      if (!text || text.includes('List of all tags') || /^Thanks to\b/i.test(text)) continue;
 
       if (!started) {
         started =
@@ -79,15 +90,14 @@ const ItemPreview = (() => {
 
       const section = cleanSection(child, children[i + 1]);
       if (section) sections.push(section);
+
+      // "Sellback:" can have its values in a list of their own, which goes with it.
+      if (endsWithHiddenField(child) && children[i + 1]?.tagName === 'UL') i++;
     }
     return sections;
   }
 
-  /**
-   * The row of badges after a card title (rarity, owned checkmark): one inline
-   * group, so the badges wrap together like tags instead of each on its own.
-   * owned-marks.js adds its checkmark to the same group.
-   */
+  // Badges after a card title (rarity, owned). Grouped so they wrap together.
   function titleTags(heading) {
     let tags = heading.querySelector(':scope > .aqwt-title-tags');
     if (!tags) {
@@ -117,33 +127,129 @@ const ItemPreview = (() => {
     } else {
       const paragraphs = [...content.querySelectorAll('p')];
       const fallback = paragraphs.find((p) => p.textContent.includes('Location:')) || paragraphs[2] || paragraphs[1];
-      if (fallback) details.appendChild(fallback.cloneNode(true));
+      const section = fallback && cleanSection(fallback);
+      if (section) details.appendChild(section);
     }
     return details;
   }
 
-  async function loadWikiPreview(url) {
-    const page = await WikiParser.loadItemPage(url);
+  const MAX_QUEST_LINES = 8;
+
+  function questField(details, label, value) {
+    if (!value) return null;
+    const line = document.createElement('p');
+    const strong = document.createElement('strong');
+    strong.textContent = `${label}: `;
+    line.append(strong, value);
+    details.appendChild(line);
+    return line;
+  }
+
+  function questList(details, label, lines) {
+    if (!lines || !lines.length) return;
+    questField(details, label, ' ');
+    const list = document.createElement('ul');
+    for (const text of lines.slice(0, MAX_QUEST_LINES)) {
+      const row = document.createElement('li');
+      row.textContent = text;
+      list.appendChild(row);
+    }
+    if (lines.length > MAX_QUEST_LINES) {
+      const more = document.createElement('li');
+      more.textContent = `...and ${lines.length - MAX_QUEST_LINES} more`;
+      list.appendChild(more);
+    }
+    details.appendChild(list);
+  }
+
+  function buildQuestPreview(quest) {
+    const details = buildDetails(null, quest.title);
+    questField(details, 'From', quest.from);
+    questField(details, 'Location', quest.location);
+    questField(details, 'Join', ' ')?.classList.add('aqwt-quest-join');
+    questField(details, 'Requires', quest.requires);
+    questList(details, 'Items needed', quest.items);
+    questList(details, 'Rewards', quest.rewards);
+    questList(details, 'Quests', quest.quests);
+    return { images: [], fallbackImages: [], tags: [], details, isItem: false, joinMap: WikiParser.findQuestMap(quest.locationHref) };
+  }
+
+  async function loadWikiPreview(url, name) {
+    const [pageUrl, hash = ''] = url.split('#');
+    const page = await WikiParser.loadItemPage(pageUrl);
     if (!page) return null;
 
     const { doc, images } = page;
+    if (WikiParser.isQuestPage(doc)) {
+      const quest = WikiParser.parseQuest(doc, hash, name);
+      return quest ? buildQuestPreview(quest) : null;
+    }
     if (!images.length && WikiParser.isNonItemCategory(doc)) return null;
 
     const content = doc.querySelector('#page-content');
     const tags = WikiParser.parseTags(doc);
     const rarity = getRarity({ rarity: WikiParser.extractField(content, 'Rarity'), tags });
-    return { images, tags, details: buildDetails(content, WikiParser.getTitle(doc), rarity) };
+    // isItem: true = Items, false = map/monster/NPC, null = can't tell
+    const title = WikiParser.getTitle(doc);
+    return { images, tags, title, details: buildDetails(content, title, rarity), isItem: WikiParser.isItemCategory(doc) };
   }
 
-  async function loadPreview({ url, name, pageImages }) {
-    const closetPromise = pageImages && pageImages.length
-      ? Promise.resolve({ images: pageImages })
-      : Aqcloset.findItemPreview(name);
+  // Names with the same base would run the same search, so only keep one.
+  function closetNames(...names) {
+    const byBase = new Map();
+    for (const name of names.filter(Boolean)) {
+      if (!byBase.has(getBaseName(name))) byBase.set(getBaseName(name), name);
+    }
+    return [...byBase.values()];
+  }
 
-    const [wiki, closet] = await Promise.all([loadWikiPreview(url), closetPromise]);
+  // We know which item this is, so only take an exact match in the right slot.
+  // Falling back to the first search result is how an armor ended up showing its helm.
+  async function findClosetExact(name, wiki, type) {
+    const slot = ItemTypes.closetSlot(type || ItemTypes.itemType({ tags: wiki ? wiki.tags : [] }));
+    for (const candidate of closetNames(wiki && wiki.title, name)) {
+      const found = await Aqcloset.findItemPreview(candidate, { exact: true, slot });
+      if (found.images.length) return found;
+    }
+    return { images: [] };
+  }
 
-    // AQCloset thumbnails are cleaner than scraped wiki images, so prefer them;
-    // the wiki images stand in if the thumbnails fail to load.
+  /**
+   * Links show what they lead to. Maps, monsters and NPCs can share an item's
+   * name and AQCloset would find that item, so for those we only show their own
+   * wiki page. A link is an item if the catalog has it or the page is under Items.
+   */
+  async function loadPreview({ url, name, pageImages, fromLink = false, itemType = null, ac = null }) {
+    const page = itemType ? await findItemPage({ name, itemType, ac }) : null;
+    const pageUrl = page ? WIKI_ORIGIN + page.path : url;
+    const type = itemType ? ItemTypes.fromSiteType(itemType) : null;
+
+    // The wiki is the slow part, so have the picture search running at the same time.
+    if (!pageImages || !pageImages.length) Aqcloset.preload(name);
+    const wiki = await loadWikiPreview(pageUrl, name);
+
+    if (fromLink) {
+      // Only ask the catalog when the page can't tell us. Waking it up from
+      // storage is slow and most pages have breadcrumbs.
+      let isItem = wiki ? wiki.isItem : null;
+      if (isItem === null) {
+        const path = wikiPathOf(url);
+        const known = path ? await classifyWikiLinks([{ path, name }]) : null;
+        isItem = !known || known[0];
+      }
+      if (!isItem) return wiki && (wiki.images.length || wiki.details) ? wiki : null;
+    }
+
+    let closet;
+    if (pageImages && pageImages.length) {
+      closet = { images: pageImages };
+    } else if (fromLink || itemType) {
+      closet = await findClosetExact(name, wiki, type);
+    } else {
+      closet = await Aqcloset.findItemPreview(name, { slot: ItemTypes.closetSlot(ItemTypes.itemType({ tags: wiki ? wiki.tags : [] })) });
+    }
+
+    // AQCloset images look cleaner, the wiki ones are the backup.
     const wikiImages = wiki ? wiki.images : [];
     const images = closet.images.length ? closet.images : wikiImages;
     const fallbackImages = closet.images.length ? wikiImages : [];
@@ -152,27 +258,27 @@ const ItemPreview = (() => {
     return images.length || details ? { images, fallbackImages, details, tags } : null;
   }
 
-  /**
-   * Cached; concurrent calls for the same item share one request.
-   * @param {{url: string, name: string, pageImages?: string[]}} target
-   * @returns {Promise<{images: string[], fallbackImages: string[], details: HTMLElement|null, tags: string[]}|null>}
-   */
+  // The type is part of it, two items in a table can share a name.
+  function previewKey({ url, name, itemType, ac }) {
+    return [url, name || '', itemType || '', ac ?? ''].join('::');
+  }
+
+  // Cached. Calls for the same item share one request.
   function load(target) {
-    const key = `${target.url}::${target.name || ''}`;
+    const key = previewKey(target);
     if (!cache.has(key)) {
       const pending = loadPreview(target).catch((err) => {
         console.error('Item preview error:', err);
         return null;
       });
       pending.then((preview) => {
-        if (!preview) cache.delete(key); // allow a retry later
+        if (!preview) cache.delete(key);
       });
       cache.set(key, pending);
     }
     return cache.get(key);
   }
 
-  /** Turns the title text into a link to the item's page; hover-tooltip.js skips it. */
   function linkTitle(details, url) {
     const heading = details.querySelector('.aqwt-tooltip-title');
     const text = heading && heading.firstChild;
@@ -186,10 +292,15 @@ const ItemPreview = (() => {
     heading.replaceChild(link, text);
   }
 
-  /**
-   * Renders a preview into an element with the .aqwt-card styling.
-   * @param {{titleUrl?: string}} [options] - titleUrl makes the title a link
-   */
+  // The map takes another page to find, so it fills in after the tooltip is up.
+  async function showJoin(details, joinMap) {
+    const line = details.querySelector('.aqwt-quest-join');
+    if (!line) return;
+    const map = await joinMap;
+    if (map) line.lastChild.textContent = `/join ${map}`;
+    line.classList.toggle('is-ready', Boolean(map));
+  }
+
   function fill(container, preview, options = {}) {
     container.replaceChildren();
 
@@ -203,7 +314,7 @@ const ItemPreview = (() => {
           img.loading = 'lazy';
           const fail = () => {
             img.remove();
-            // All preferred images failed: show the stand-ins once, if there are any.
+            // All the main images failed, show the backups if there are any.
             const fallback = preview.fallbackImages || [];
             if (!row.children.length && fallback.length && !row.dataset.fellBack) {
               row.dataset.fellBack = '1';
@@ -212,7 +323,7 @@ const ItemPreview = (() => {
           };
           row.appendChild(img);
           if (ImageProxy.isActive() && ImageProxy.isImgur(src)) {
-            ImageProxy.useProxy(img, src, null, fail); // tries each image proxy before giving up
+            ImageProxy.useProxy(img, src, null, fail);
           } else {
             img.onerror = fail;
             img.src = src;
@@ -223,12 +334,13 @@ const ItemPreview = (() => {
       container.appendChild(row);
     }
     if (preview.details) {
-      // Cloned so the same item can be shown in the tooltip and the list at once.
+      // Cloned so it can show in the tooltip and a list at the same time.
       const details = preview.details.cloneNode(true);
       if (options.titleUrl) linkTitle(details, options.titleUrl);
       container.appendChild(details);
+      if (preview.joinMap) showJoin(details, preview.joinMap);
     }
   }
 
-  return { load, fill, titleTags };
+  return { load, fill, titleTags, previewKey };
 })();

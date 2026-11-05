@@ -1,28 +1,29 @@
-/* Desktop app tweaks on top of the extension's popup.css. */
+/* Desktop tweaks on top of popup.css. */
 
-/* The popup is a fixed 300 px; the app window can be any width. */
+/* The window can be any size. Farm and Settings fill it and scroll inside,
+   plugin pages scroll the whole window. */
 body {
   width: auto;
   min-width: 300px;
+  min-height: 100vh;
+  max-height: none;
+  overflow: visible;
+}
+
+body:has(> #main-view:not([hidden])),
+body:has(> .settings-view:not([hidden])) {
+  height: 100vh;
+  overflow: hidden;
 }
 
 
-/* Settings that only matter on web pages, which the app doesn't have:
-   tooltip position, and filling in AQCloset's import in a browser tab. */
-.settings-group:has(input[name="tooltip-placement"]),
-.settings-group:has(#fill-aqcloset) {
-  display: none;
-}
-
-/* The pin button sits in the top row, right of the logo. */
 .pin-corner {
   position: absolute;
   top: 9px;
   right: 12px;
 }
 
-/* Without plugin pages, Settings and the theme switch sit beside the logo too:
-   left of the pin, with the logo narrowing in a narrow window. */
+/* No plugin pages: Settings and the theme button sit next to the logo. */
 .tabbar:has(.tabs.is-single) {
   right: 52px;
 }
@@ -33,10 +34,8 @@ body {
   background-position: left center;
 }
 
-/* With plugin pages, the tabs, Settings and the theme switch are in a row of
-   their own under the logo, so only the pin shares its row: the logo grows to
-   fill the space up to the pin (keeping its 5:1 shape), up to 340 px in a wide
-   window, and the pin stays level with its middle. */
+/* With plugin pages the tabs get their own row and the logo grows up to the
+   pin (max 340px, keeps its 5:1 shape). */
 .is-desktop:not(:has(.tabs.is-single)) {
   --logo-width: clamp(200px, calc(100vw - 72px), 340px);
 }
@@ -52,7 +51,6 @@ body {
   top: calc(6px + (var(--logo-width) / 5 - 34px) / 2);
 }
 
-/* The pin button, lit up while the window stays on top. */
 #pin-toggle svg {
   transition: transform .25s cubic-bezier(.16, 1, .3, 1);
 }
@@ -67,7 +65,6 @@ body {
   transform: rotate(-30deg);
 }
 
-/* "Other copies found" under Import from Chrome. */
 .import-other {
   display: grid;
   gap: 4px;
@@ -96,7 +93,7 @@ body {
   cursor: progress;
 }
 
-/* Plugin pages in the tab row: an icon file shown in the tab's text colour. */
+/* Plugin tab icons use the tab's text color. */
 .tab-icon {
   flex: none;
   width: 14px;
@@ -106,13 +103,11 @@ body {
   mask: var(--icon) center / contain no-repeat;
 }
 
-/* Plugin pages: the same space under the tab row as the Farm page. */
 .plugin-page {
   position: relative;
   padding-top: 16px;
 }
 
-/* "Open in its own window", top right of a plugin page that allows it. */
 .plugin-page .plugin-popout {
   position: absolute;
   top: 12px;
@@ -144,7 +139,7 @@ body {
   stroke-linejoin: round;
 }
 
-/* A plugin page in its own window: just the page, no logo, tabs or pin. */
+/* Popped out plugin window: just the page. */
 .is-popout #logo,
 .is-popout .tabbar,
 .is-popout .pin-corner {
@@ -155,7 +150,6 @@ body {
   padding-top: 12px;
 }
 
-/* Settings → Plugins */
 .plugin-list {
   display: grid;
   gap: 8px;
@@ -242,8 +236,42 @@ body {
   display: none;
 }
 
-/* With three or more tabs, each takes the room its name needs (shared out
-   evenly beyond that), so a longer name like "Classes" isn't cut short. */
+/* With 3+ tabs each gets the room its name needs so "Classes" isn't cut off. */
 .tabs:has(.tab:nth-child(3)) .tab {
   flex: 1 1 auto;
+}
+
+/* Built-in plugins in Features, with their options as smaller switches. */
+.feature-list-plugins {
+  margin-bottom: 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--line);
+}
+
+.feature-sub {
+  margin: 0 0 4px 14px;
+  padding-left: 10px;
+  border-left: 2px solid var(--line);
+}
+
+.feature-sub .feature-item {
+  padding: 3px 0;
+}
+
+.feature-sub .feature-switch {
+  width: 26px;
+  height: 15px;
+}
+
+.feature-sub .feature-switch::after {
+  width: 11px;
+  height: 11px;
+}
+
+.feature-sub .feature-switch:checked::after {
+  translate: 11px 0;
+}
+
+#features-group .plugin-restart {
+  margin-top: 8px;
 }

@@ -1,19 +1,16 @@
-// Desktop app: plugin pages as tabs, and Settings → Plugins (install, turn on
-// or off, remove). Loaded after desktop.js (see scripts/copy-extension.mjs).
-// The plugins themselves are run by desktop/plugin-host.js in the main process.
+// Desktop: plugin pages as tabs, and the Plugins section in Settings.
+// The plugins themselves run in plugin-host.js.
 (() => {
   const host = window.lodestarPlugins;
   if (!host) return;
 
-  // Set in a plugin page's own window (the popout button): only that page is shown.
+  // Set when a plugin page is popped out, then only that page shows.
   const POPOUT = new URLSearchParams(location.search).get('popout');
   const POPOUT_ICON =
     '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
 
   const PUZZLE_ICON =
     '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15.4 4.2a2.3 2.3 0 1 0-4.6 0V6H7a1 1 0 0 0-1 1v3.8h1.8a2.3 2.3 0 1 1 0 4.6H6V19a1 1 0 0 0 1 1h3.8v-1.8a2.3 2.3 0 1 1 4.6 0V20H19a1 1 0 0 0 1-1v-3.8h-1.8a2.3 2.3 0 1 1 0-4.6H20V7a1 1 0 0 0-1-1h-3.6z"/></svg>';
-
-  // ---------- plugin pages as tabs ----------
 
   async function addPages() {
     const tabs = document.querySelector('.tabs');
@@ -33,7 +30,7 @@
       button.setAttribute('aria-selected', 'false');
       button.tabIndex = -1;
       if (page.icon) {
-        // A mask, so the plugin's icon takes the tab's text colour like the built-in ones.
+        // A mask so the icon takes the tab's text color.
         const icon = document.createElement('span');
         icon.className = 'tab-icon';
         icon.style.setProperty('--icon', `url("${page.icon}")`);
@@ -84,7 +81,6 @@
     }
   }
 
-  /** "Open in its own window", top right of a plugin page that allows it. */
   function popoutButton(page) {
     const button = document.createElement('button');
     button.type = 'button';
@@ -96,13 +92,68 @@
     return button;
   }
 
-  // ---------- Settings → Plugins ----------
+  // Our own plugins get switches in Features. The Plugins section is only for
+  // installing, updating and removing zips.
+  const OWN_PLUGINS = ['item-lists', 'class-enhancements', 'ultra-assistant'];
+  const isOwn = (plugin) => plugin.builtIn || plugin.source === 'development' || OWN_PLUGINS.includes(plugin.id);
+
+  const featuresGroup = document.getElementById('features-group');
+  const featuresHelp = document.getElementById('features-help');
+  if (featuresHelp) featuresHelp.dataset.help = "Turn off what you don't use. A change applies when Lodestar restarts.";
+  const ownList = document.createElement('ul');
+  ownList.className = 'feature-list feature-list-plugins';
+  const featuresRestart = document.createElement('div');
+  featuresRestart.className = 'plugin-restart';
+  featuresRestart.hidden = true;
+  featuresRestart.innerHTML = '<span>Restart Lodestar to apply the changes.</span><button type="button" class="pill-button">Restart now</button>';
+  featuresRestart.querySelector('button').addEventListener('click', () => host.restart());
+  featuresGroup?.querySelector('.feature-list')?.before(ownList);
+  featuresGroup?.append(featuresRestart);
+
+  // What the switch turns on. Uses "summary" or the start of the description.
+  function summary(plugin) {
+    if (plugin.summary) return plugin.summary;
+    return (plugin.description || '').split(/(?<=[.:])\s/)[0].replace(/:$/, '.');
+  }
+
+  function renderOwn(plugins) {
+    ownList.replaceChildren();
+    for (const plugin of plugins) {
+      const [text, kind] = describe(plugin);
+      const about = kind === 'pending' || kind === 'error' ? text : summary(plugin);
+      const { item, input } = SwitchRow.create({ id: `plugin-${plugin.id}`, label: plugin.name, description: about }, plugin.enabled, (on) =>
+        act(() => host.setEnabled(plugin.id, on))
+      );
+      input.disabled = plugin.status === 'incompatible' || plugin.status === 'pending' || plugin.pendingRemoval;
+
+      const options = plugin.options || [];
+      if (options.length) {
+        const sub = document.createElement('ul');
+        sub.className = 'feature-list feature-sub';
+        for (const option of options) {
+          const row = SwitchRow.create(option, option.value, async (on) => {
+            try {
+              await host.setOption(plugin.id, option.id, on);
+              // Let open pages update right away.
+              window.dispatchEvent(new CustomEvent('lodestar:plugin-option', { detail: { id: plugin.id, key: option.id, value: on } }));
+            } catch (err) {
+              row.input.checked = !on;
+              setStatus(err.message, true);
+            }
+          });
+          row.input.disabled = !plugin.enabled;
+          sub.append(row.item);
+        }
+        item.append(sub);
+      }
+      ownList.append(item);
+    }
+  }
 
   const group = document.createElement('div');
   group.className = 'settings-group plugins-group';
   group.innerHTML = `
-    <h3>Plugins</h3>
-    <p class="settings-hint">Extra features, most with a tab of their own. Install more from a plugin's .zip file; changes apply when Lodestar restarts.</p>
+    <h3>Plugins <button type="button" class="help-tip" data-help="Install a plugin from its .zip file, or update or remove one you installed. Lodestar's own plugins are turned on and off in Features above. Changes apply when Lodestar restarts."></button></h3>
     <ul class="plugin-list" id="plugin-list"></ul>
     <div class="settings-actions">
       <button type="button" id="plugin-install" class="pill-button">Install plugin…</button>
@@ -113,24 +164,16 @@
       <button type="button" id="plugin-restart-now" class="pill-button">Restart now</button>
     </div>
     <p id="plugin-status" class="check-status" role="status" hidden></p>`;
-  const importGroup = document.getElementById('import-chrome')?.closest('.settings-group');
-  const dataGroup = document.getElementById('export-data')?.closest('.settings-group');
-  const anchor = importGroup || dataGroup;
-  if (anchor) anchor.before(group);
-  else document.getElementById('settings-view')?.append(group);
+  (document.getElementById('settings-options') || document.getElementById('settings-view'))?.append(group);
 
   const list = group.querySelector('#plugin-list');
   const statusLine = group.querySelector('#plugin-status');
   const restartBox = group.querySelector('#plugin-restart');
   let changed = false;
 
-  function setStatus(message, isError = false) {
-    statusLine.hidden = !message;
-    statusLine.textContent = message || '';
-    statusLine.classList.toggle('is-error', isError);
-  }
+  const setStatus = StatusLine(statusLine);
 
-  /** One line on what the plugin is doing, and what will change after a restart. */
+  // One line on what the plugin is doing and what changes after a restart.
   function describe(plugin) {
     if (plugin.pendingRemoval && plugin.builtIn) return ['Goes back to the version that comes with Lodestar when it restarts.', 'pending'];
     if (plugin.pendingRemoval) return ['Removed when Lodestar restarts.', 'pending'];
@@ -165,7 +208,10 @@
   }
 
   async function render() {
-    const plugins = await host.list();
+    const all = await host.list();
+    renderOwn(all.filter(isOwn));
+    // Installed zips: other people's plugins and newer versions of ours.
+    const plugins = all.filter((plugin) => !isOwn(plugin) || plugin.source === 'installed');
     list.replaceChildren();
     if (!plugins.length) {
       const empty = document.createElement('li');
@@ -219,28 +265,29 @@
       actions.className = 'settings-actions plugin-actions';
       if (plugin.pendingRemoval) {
         actions.append(button('Keep', () => act(() => host.keep(plugin.id))));
-      } else if (plugin.status !== 'pending' && plugin.status !== 'incompatible') {
+      } else if (plugin.status !== 'pending' && plugin.status !== 'incompatible' && !isOwn(plugin)) {
         actions.append(
           button(plugin.enabled ? 'Turn off' : 'Turn on', () => act(() => host.setEnabled(plugin.id, !plugin.enabled)))
         );
       }
       if (!plugin.pendingRemoval && plugin.source === 'installed') {
-        // An update to a built-in plugin is removed by going back to the built-in version.
+        // Removing an update to a built-in plugin goes back to the built-in one.
         actions.append(button(plugin.builtIn ? 'Use built-in version' : 'Remove', () => act(() => host.remove(plugin.id))));
       }
       if (actions.childElementCount) item.append(actions);
       list.append(item);
     }
 
-    const pending = plugins.some((plugin) => describe(plugin)[1] === 'pending');
+    const pending = all.some((plugin) => describe(plugin)[1] === 'pending');
     restartBox.hidden = !(pending || changed);
+    featuresRestart.hidden = restartBox.hidden;
   }
 
   group.querySelector('#plugin-install').addEventListener('click', async () => {
     setStatus('');
     try {
       const installed = await host.install();
-      if (!installed) return; // cancelled
+      if (!installed) return;
       changed = true;
       setStatus(`${installed.replaces ? 'Updated' : 'Installed'} ${installed.name}${installed.version ? ` ${installed.version}` : ''}. Restart Lodestar to start it.`);
     } catch (err) {

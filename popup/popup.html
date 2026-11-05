@@ -3,15 +3,21 @@
 <head>
   <meta charset="utf-8" />
   <title>Saved Items</title>
+  <!-- Reusable pieces (components/README.md), then the popup's own styles. -->
+  <link rel="stylesheet" href="../components/pill-button.css" />
+  <link rel="stylesheet" href="../components/choice.css" />
+  <link rel="stylesheet" href="../components/switch-row.css" />
+  <link rel="stylesheet" href="../components/tab-list.css" />
+  <link rel="stylesheet" href="../components/status-line.css" />
+  <link rel="stylesheet" href="../components/copy-button.css" />
+  <link rel="stylesheet" href="../components/help-tip.css" />
   <link rel="stylesheet" href="popup.css" />
   <link rel="stylesheet" href="search-bar.css" />
 </head>
 <body>
   <header id="logo" aria-label="AQW Lodestar"></header>
-  <!-- Tabs: each [data-tab] button shows the panel named in its aria-controls
-       and hides the others (popup/tabs.js). To add a page: add a tab button
-       here and a <section class="tab-panel" hidden> with the matching id below.
-       The desktop app adds a tab for each plugin page. -->
+  <!-- Each [data-tab] button shows its aria-controls panel (tabs.js). To add a page,
+       add a button here and a <section class="tab-panel" hidden> below. -->
   <nav class="tabbar" aria-label="Lodestar">
     <div class="tabs" role="tablist" aria-label="Pages">
       <button class="tab" id="tab-farm" type="button" role="tab" data-tab="farm" aria-controls="main-view" aria-selected="true">
@@ -62,7 +68,12 @@
     </div>
   </div>
 
-  <ul id="list"></ul>
+  <div class="farm-list">
+    <ul id="list"></ul>
+    <div class="lip-scroll-indicator" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+  </div>
   <p id="empty-message" hidden>
     Nothing here yet. Right-click a link and choose <strong>Add to "Items to farm"</strong>.
   </p>
@@ -78,49 +89,131 @@
       <h2>Settings</h2>
     </div>
 
-    <div class="settings-group">
-      <h3>Tooltip</h3>
-      <div class="setting-row">
-        <span class="setting-label" id="tooltip-placement-label">Position</span>
+    <!-- Options, Data and About. The app adds its own groups and removes [data-extension-only]. -->
+    <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+      <button type="button" role="tab" id="settings-tab-options" class="settings-tab" data-tab-name="options" aria-controls="settings-options" aria-selected="true">Options</button>
+      <button type="button" role="tab" id="settings-tab-data" class="settings-tab" data-tab-name="data" aria-controls="settings-data" aria-selected="false" tabindex="-1">Data</button>
+      <button type="button" role="tab" id="settings-tab-about" class="settings-tab" data-tab-name="about" aria-controls="settings-about" aria-selected="false" tabindex="-1">About</button>
+    </div>
+
+    <div class="settings-panel" id="settings-options" role="tabpanel" aria-labelledby="settings-tab-options">
+      <div class="settings-group" data-extension-only>
+        <h3 id="tooltip-placement-label">Item tooltip <button type="button" class="help-tip" data-help="Pictures and details of an item when you hover it on the wiki, account.aq.com and AQCloset: at the side of the window, just above the item, or not at all."></button></h3>
         <div class="segmented" role="radiogroup" aria-labelledby="tooltip-placement-label">
-          <label><input type="radio" name="tooltip-placement" value="side" checked><span>Side of screen</span></label>
-          <label><input type="radio" name="tooltip-placement" value="anchored"><span>Above the item</span></label>
+          <label><input type="radio" name="tooltip-placement" value="side" checked><span>To the side</span></label>
+          <label><input type="radio" name="tooltip-placement" value="anchored"><span>Above</span></label>
+          <label><input type="radio" name="tooltip-placement" value="off"><span>Off</span></label>
         </div>
       </div>
+
+      <div class="settings-group" id="features-group">
+        <h3>Features <button type="button" class="help-tip" data-help="Turn off what you don't use. A change applies the next time a page loads." id="features-help"></button></h3>
+        <ul class="feature-list" id="feature-list"></ul>
+      </div>
     </div>
 
-    <div class="settings-group">
-      <h3>Images</h3>
-      <div class="setting-row">
-        <span class="setting-label" id="imgur-images-label">Imgur images</span>
-        <div class="segmented" role="radiogroup" aria-labelledby="imgur-images-label">
-          <label><input type="radio" name="imgur-images" value="auto" checked><span>Automatic</span></label>
-          <label><input type="radio" name="imgur-images" value="replace"><span>Always</span></label>
-          <label><input type="radio" name="imgur-images" value="direct"><span>Off</span></label>
+    <div class="settings-panel" id="settings-data" role="tabpanel" aria-labelledby="settings-tab-data" hidden>
+      <!-- Sync with the desktop app, or move your stuff with a transfer code. -->
+      <div class="settings-group" id="sync-transfer-group">
+        <h3>Sync and transfer</h3>
+
+        <div class="settings-sub" id="sync-group" data-extension-only>
+          <h4>Desktop app <button type="button" class="help-tip" data-help="Keeps your farm list and settings the same here and in the Lodestar desktop app on this computer. In the app, open Settings → Data and press Connect the extension, then type the code it shows here. The side you start with replaces the other's, once; after that, a change on either side reaches the other."></button></h4>
+          <div id="sync-connect">
+            <div class="sync-connect-row">
+              <input type="text" id="sync-code" class="sync-code-input" maxlength="7" placeholder="App code" autocomplete="off" spellcheck="false" aria-label="Code from the desktop app" />
+              <button type="button" id="sync-connect-button" class="pill-button">Connect</button>
+            </div>
+            <div class="segmented segmented-small" role="radiogroup" aria-label="Start with">
+              <label><input type="radio" name="sync-mode" value="push" checked><span>Keep this browser's</span></label>
+              <label><input type="radio" name="sync-mode" value="pull"><span>Keep the app's</span></label>
+            </div>
+          </div>
+          <div id="sync-connected" hidden>
+            <p class="sync-state"><span class="sync-dot" aria-hidden="true"></span><span id="sync-state-text"></span></p>
+            <div class="settings-actions">
+              <button type="button" id="sync-now" class="pill-button">Sync now</button>
+              <button type="button" id="sync-stop" class="pill-button">Stop syncing</button>
+            </div>
+          </div>
+          <p id="sync-status" class="check-status" role="status" hidden></p>
+        </div>
+
+        <div class="settings-sub">
+          <h4>Transfer code <button type="button" class="help-tip" data-help="Your farm list, settings and AQCloset layouts as one line of text, to paste into Lodestar on another device. The inventory isn't in it: sync it again there. Pasting a code replaces the farm list and settings in it."></button></h4>
+          <div class="settings-actions">
+            <button type="button" id="copy-transfer-code" class="pill-button">Copy code</button>
+            <button type="button" id="paste-transfer-code" class="pill-button" aria-expanded="false" aria-controls="transfer-paste">Paste a code…</button>
+          </div>
+          <input type="text" id="transfer-code-output" class="transfer-code-output" readonly aria-label="Your transfer code" hidden />
+          <div id="transfer-paste" class="transfer-paste" hidden>
+            <textarea id="transfer-input" rows="3" spellcheck="false" autocomplete="off" placeholder="Paste a code: LODESTAR1.…" aria-label="Transfer code"></textarea>
+            <div id="transfer-preview" hidden>
+              <ul class="transfer-summary" id="transfer-summary"></ul>
+              <p class="settings-hint">Replaces your farm list and these settings.</p>
+            </div>
+            <div class="settings-actions">
+              <button type="button" id="transfer-cancel" class="pill-button">Cancel</button>
+              <button type="button" id="transfer-apply" class="pill-button" disabled>Use this code</button>
+            </div>
+          </div>
+          <p id="transfer-status" class="check-status" role="status" hidden></p>
         </div>
       </div>
-      <p class="settings-hint">Imgur blocks the UK, and most wiki item pictures are on Imgur. When they're replaced, item pages show the AQCloset picture where AQCloset has the item, and the rest load through an image proxy outside the UK (DuckDuckGo, WordPress, Google or wsrv.nl, whichever works). "Automatic" only does this when Imgur is blocked where you are.</p>
+
+      <div class="settings-group">
+        <h3>Backup file <button type="button" class="help-tip" data-help="Everything Lodestar keeps (farm list, synced inventory, AQCloset layouts and settings) in a file, to load back after reinstalling. Importing replaces what's saved now."></button></h3>
+        <div class="settings-actions">
+          <button type="button" id="export-data" class="pill-button">Export</button>
+          <button type="button" id="import-data" class="pill-button">Import…</button>
+        </div>
+        <p id="settings-status" class="check-status" role="status" hidden></p>
+      </div>
+
+      <div class="settings-group" data-extension-only>
+        <h3>AQCloset <button type="button" class="help-tip" data-help="Fills AQCloset's inventory import with your synced inventory, so it can mark what you own. You still press Import on AQCloset yourself."></button></h3>
+        <div class="settings-actions">
+          <button type="button" id="fill-aqcloset" class="pill-button">Fill in on AQCloset</button>
+        </div>
+        <p id="aqcloset-status" class="check-status" role="status" hidden></p>
+      </div>
     </div>
 
-    <div class="settings-group">
-      <h3>AQCloset</h3>
-      <p class="settings-hint">Fill AQCloset's inventory import with your synced inventory, so it can mark what you own. You still press Import on AQCloset yourself.</p>
-      <div class="settings-actions">
-        <button type="button" id="fill-aqcloset" class="pill-button">Fill in on AQCloset</button>
+    <!-- Artix's fan project guidelines want this: not official, links to artix.com
+         and the game, and what content is theirs. -->
+    <div class="settings-panel" id="settings-about" role="tabpanel" aria-labelledby="settings-tab-about" hidden>
+      <div class="settings-group about-intro">
+        <p class="about-name">AQW Lodestar <span class="about-version" id="about-version"></span></p>
+        <p class="settings-hint">A free, fan-made companion for AdventureQuest Worlds. Its code is open source under the MIT license: <a href="https://github.com/andreassolli/aqw-lodestar" target="_blank" rel="noreferrer">github.com/andreassolli/aqw-lodestar</a>.</p>
       </div>
-      <p id="aqcloset-status" class="check-status" role="status" hidden></p>
-    </div>
 
-    <div class="settings-group">
-      <h3>Your data</h3>
-      <p class="settings-hint">Save your farm list, synced inventory, AQCloset layouts and settings to a file, or load them back after reinstalling.</p>
-      <div class="settings-actions">
-        <button type="button" id="export-data" class="pill-button">Export</button>
-        <button type="button" id="import-data" class="pill-button">Import…</button>
+      <div class="settings-group">
+        <h3>Not affiliated with Artix Entertainment</h3>
+        <p class="about-text">Lodestar is made by a fan. It isn't made, approved or endorsed by Artix Entertainment, and isn't connected to it.</p>
+        <p class="about-text">AdventureQuest Worlds, its name and logo, and its art, item pictures, item and character names and game files belong to <a href="https://www.artix.com/" target="_blank" rel="noreferrer">Artix Entertainment, LLC</a>. Play the game at <a href="https://www.aq.com/" target="_blank" rel="noreferrer">aq.com</a>.</p>
       </div>
-      <p id="settings-status" class="check-status" role="status" hidden></p>
+
+      <div class="settings-group">
+        <h3>Credits</h3>
+        <dl class="credits">
+          <dt><a href="http://aqwwiki.wikidot.com/" target="_blank" rel="noreferrer">AQW Wiki</a></dt>
+          <dd>Item details, pictures, locations and tags, and the item catalog made from them. Its text is shared under <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noreferrer">CC BY-SA 3.0</a>.</dd>
+          <dt><a href="https://aqcloset.com/" target="_blank" rel="noreferrer">AQCloset</a></dt>
+          <dd>Item thumbnails, and trying items on in its wardrobe.</dd>
+          <dt><a href="https://aqw.app/" target="_blank" rel="noreferrer">aqw.app</a></dt>
+          <dd>The class enhancement guide in the desktop app's Classes tab.</dd>
+          <dt>Image proxies</dt>
+          <dd>DuckDuckGo, WordPress, Google and wsrv.nl, for wiki pictures where Imgur is blocked.</dd>
+        </dl>
+      </div>
     </div>
   </section>
+
+  <!-- Disclaimer under every page, more in Settings > About. -->
+  <footer class="app-footer">
+    Fan-made, not affiliated with Artix Entertainment. <br/>AQW and its art © Artix Entertainment.
+    <button type="button" class="link-button" id="footer-about">Read more.</button>
+  </footer>
 
   <div id="add-item-modal" class="lip-modal-overlay">
     <div class="lip-modal" role="dialog" aria-modal="true" aria-labelledby="add-item-title">
@@ -134,8 +227,8 @@
     </div>
   </div>
 
-  <!-- shared -->
   <script src="../shared/constants.js"></script>
+  <script src="../shared/features.js"></script>
   <script src="../shared/text.js"></script>
   <script src="../shared/image-proxy.js"></script>
   <script src="../shared/messaging.js"></script>
@@ -143,7 +236,14 @@
   <script src="../shared/aqcloset.js"></script>
   <script src="../shared/farm-entry.js"></script>
   <script src="../shared/backup.js"></script>
-  <!-- popup components -->
+  <script src="../shared/transfer-code.js"></script>
+  <!-- components -->
+  <script src="../components/status-line.js"></script>
+  <script src="../components/choice.js"></script>
+  <script src="../components/switch-row.js"></script>
+  <script src="../components/tab-list.js"></script>
+  <script src="../components/copy-button.js"></script>
+  <script src="../components/help-tip.js"></script>
   <script src="theme-toggle.js"></script>
   <script src="boosts.js"></script>
   <script src="farm-list.js"></script>
@@ -151,6 +251,7 @@
   <script src="inventory-check.js"></script>
   <script src="tabs.js"></script>
   <script src="settings.js"></script>
+  <script src="settings-data.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
