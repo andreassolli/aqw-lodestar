@@ -1,7 +1,7 @@
 {
   "name": "aqw-lodestar-desktop",
   "productName": "AQW Lodestar",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "The AQW Lodestar popup as a desktop app: server boosts, Check bag and the farm list, with an option to stay on top of other windows.",
   "author": "Andreas Solli",
   "license": "MIT",
@@ -18,6 +18,9 @@
     "dist:linux": "npm run copy && electron-builder --linux --publish never",
     "plugin:build": "node scripts/build-plugin.mjs",
     "plugins:dev": "node scripts/build-plugin.mjs --dev"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.2.1",
@@ -41,9 +44,15 @@
       "zip.js",
       "plugin-host.js",
       "sync-server.js",
+      "updater.js",
       "app/**/*",
       "package.json"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "andreassolli",
+      "repo": "aqw-lodestar"
+    },
     "artifactName": "AQW-Lodestar-${version}-${os}-${arch}.${ext}",
     "afterPack": "build/adhoc-sign.cjs",
     "mac": {

@@ -275,3 +275,33 @@ body:has(> .settings-view:not([hidden])) {
 #features-group .plugin-restart {
   margin-top: 8px;
 }
+
+/* Update bar above the footer. */
+.update-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font-size: .82rem;
+}
+
+.update-bar[hidden] {
+  display: none;
+}
+
+.update-bar-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.update-bar-close {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+}

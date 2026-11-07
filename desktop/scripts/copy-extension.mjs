@@ -40,7 +40,7 @@ function patch(file, anchor, insert, { before = false } = {}) {
 }
 
 patch('popup/popup.html', '<link rel="stylesheet" href="search-bar.css" />', '<link rel="stylesheet" href="../desktop/desktop.css" />');
-patch('popup/popup.html', '<script src="popup.js"></script>', '<script src="../desktop/desktop.js"></script>\n  <script src="../desktop/sync.js"></script>\n  <script src="../desktop/plugins.js"></script>');
+patch('popup/popup.html', '<script src="popup.js"></script>', '<script src="../desktop/desktop.js"></script>\n  <script src="../desktop/sync.js"></script>\n  <script src="../desktop/updates.js"></script>\n  <script src="../desktop/plugins.js"></script>');
 patch('options/options.html', '<script src="backup.js"></script>', '<script src="../desktop/options.js"></script>');
 
 console.log('Copied the extension popup into desktop/app/');

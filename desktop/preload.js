@@ -20,6 +20,8 @@ ipcRenderer.on('storage:changed', (_event, changes) => {
 
 const pinnedListeners = new Set();
 const syncListeners = new Set();
+const updateListeners = new Set();
+ipcRenderer.on('update:status', (_event, status) => updateListeners.forEach((fn) => fn(status)));
 ipcRenderer.on('sync:status', (_event, status) => syncListeners.forEach((fn) => fn(status)));
 ipcRenderer.on('window:pinned', (_event, pinned) => {
   for (const listener of pinnedListeners) listener(pinned);
@@ -89,6 +91,16 @@ contextBridge.exposeInMainWorld('lodestarDesktop', {
     pinnedListeners.add(fn);
   },
   importFromChrome: (id) => ipcRenderer.invoke('chrome:import', id),
+  updates: {
+    version: info.version,
+    status: () => ipcRenderer.invoke('update:status'),
+    check: () => ipcRenderer.invoke('update:check'),
+    install: () => ipcRenderer.invoke('update:install'),
+    openDownload: () => ipcRenderer.invoke('update:open-download'),
+    onStatus: (fn) => {
+      updateListeners.add(fn);
+    },
+  },
   sync: {
     status: () => ipcRenderer.invoke('sync:status'),
     startPairing: () => ipcRenderer.invoke('sync:start-pairing'),

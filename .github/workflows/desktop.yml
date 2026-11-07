@@ -1,15 +1,19 @@
-# Builds the desktop app for Mac, Windows and Linux on GitHub's own machines.
+# Builds the desktop app for Mac, Windows and Linux on GitHub's own machines, and
+# the Chrome and Firefox extensions.
 #
-# Push a tag that starts with "desktop-v" (e.g. desktop-v1.0.0) and the
-# installers are attached to a GitHub release for that tag. You can also run it
-# by hand from the Actions tab ("Run workflow"); the files then appear under the
-# run's Artifacts instead.
+# Push a tag like v1.4.0 and everything is attached to a GitHub release for that
+# tag. The app's updater reads that release, so it needs the latest*.yml and
+# .blockmap files too. You can also run it by hand from the Actions tab ("Run
+# workflow"); the files then appear under the run's Artifacts instead.
+#
+# Don't use Re-run on an old run for a new version. A re-run builds the commit
+# that run started from, not the newest one.
 
 name: Desktop app
 
 on:
   push:
-    tags: ['desktop-v*']
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:
@@ -26,15 +30,21 @@ jobs:
             files: |
               desktop/dist/*.dmg
               desktop/dist/*.zip
+              desktop/dist/*.blockmap
+              desktop/dist/latest*.yml
           - os: windows-latest
             script: dist:win
             files: |
               desktop/dist/*.exe
+              desktop/dist/*.blockmap
+              desktop/dist/latest*.yml
           - os: ubuntu-latest
             script: dist:linux
             files: |
               desktop/dist/*.AppImage
               desktop/dist/*.deb
+              desktop/dist/*.blockmap
+              desktop/dist/latest*.yml
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -45,6 +55,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+
+      # The updater goes by the version in package.json, so it has to match the tag.
+      - name: Check the version matches the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "desktop/package.json says $version but the tag is $GITHUB_REF_NAME"
+            exit 1
+          fi
 
       - run: npm install
 
@@ -60,9 +81,26 @@ jobs:
           path: ${{ matrix.files }}
           if-no-files-found: error
 
+  extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: node scripts/build.mjs
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lodestar-extension
+          path: dist/*.zip
+          if-no-files-found: error
+
   release:
-    if: startsWith(github.ref, 'refs/tags/desktop-v')
-    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, extension]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -72,10 +110,12 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          name: AQW Lodestar Desktop ${{ github.ref_name }}
+          name: AQW Lodestar ${{ github.ref_name }}
           files: artifacts/*
           body: |
-            The Lodestar popup as a desktop app, with an option to stay on top of other windows.
+            The Lodestar extension for Chrome and Firefox, and the desktop app with an option to stay on top of other windows.
+
+            The Windows installer and the Linux AppImage update themselves after this. The Mac app, the portable Windows version and the `.deb` tell you when there's a new version to download.
 
             **Mac:** download the `.dmg`, open it and drag AQW Lodestar to Applications.
             The first time, right-click the app and choose Open (or allow it under

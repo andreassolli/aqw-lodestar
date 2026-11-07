@@ -472,10 +472,19 @@ npm start          # copies the popup files in and opens the app
 npm run dist:mac   # or dist:win / dist:linux: installers in desktop/dist/
 ```
 
-To release, raise `"version"` in `desktop/package.json` and push a tag starting
-with `desktop-v` (for example `git tag desktop-v1.0.0 && git push origin desktop-v1.0.0`).
+To release, raise `"version"` in both `desktop/package.json` and `manifest.json`
+and push a tag starting with `v` (for example `git tag v1.4.0 && git push origin v1.4.0`).
 The *Desktop app* workflow (`.github/workflows/desktop.yml`) builds on GitHub's
-Mac, Windows and Linux machines and attaches the installers to a release:
+Mac, Windows and Linux machines and attaches the installers, the extension zips
+and the update files to a release. Start a new build for a new version, re-running
+an old one builds that run's old commit.
+
+The Windows installer and the Linux AppImage update themselves from the newest
+release with `electron-updater`: they download in the background and install on
+restart. That needs `latest.yml`, `latest-linux.yml` and the `.blockmap` files on
+the release, so upload those too if you ever make one by hand. The Mac app, the
+portable Windows version and the `.deb` only say a new version is out (macOS only
+applies updates to apps with a paid Apple certificate).
 
 | File                                                        | For                           |
 | ----------------------------------------------------------- | ----------------------------- |

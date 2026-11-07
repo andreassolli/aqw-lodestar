@@ -13,6 +13,7 @@ const { startBackground } = require('./background-host');
 const { importFromChrome } = require('./chrome-import');
 const { createPluginHost } = require('./plugin-host');
 const { createSyncServer } = require('./sync-server');
+const { createUpdater } = require('./updater');
 
 const APP_DIR = path.join(__dirname, 'app');
 const ORIGIN = 'app://lodestar';
@@ -50,6 +51,7 @@ const pluginWindows = new Map();
 let storage = null;
 let background = null;
 let syncServer = null;
+let updater = null;
 let plugins = null;
 const stateFile = () => path.join(app.getPath('userData'), 'window-state.json');
 const DEFAULT_STATE = { width: 340, height: 640, pinned: false };
@@ -339,6 +341,11 @@ function registerIpc() {
   ipcMain.handle('sync:start-pairing', () => syncServer.startPairing());
   ipcMain.handle('sync:unpair', () => syncServer.unpair());
 
+  ipcMain.handle('update:status', () => updater.status());
+  ipcMain.handle('update:check', () => updater.check());
+  ipcMain.handle('update:install', () => updater.install());
+  ipcMain.handle('update:open-download', () => openUrl(updater.downloadPage));
+
   ipcMain.handle('storage', (_event, op, arg) => {
     if (!['get', 'set', 'remove', 'clear'].includes(op)) throw new Error(`Unknown storage call ${op}`);
     return storage.local[op](arg);
@@ -487,6 +494,15 @@ app.whenReady().then(() => {
   });
   syncServer.start();
 
+  updater = createUpdater({
+    packaged: app.isPackaged,
+    currentVersion: app.getVersion(),
+    fetch: (input, init) => net.fetch(input, init),
+    onStatus: (status) => {
+      for (const window of BrowserWindow.getAllWindows()) window.webContents.send('update:status', status);
+    },
+  });
+
   // When run with npm start it's the plain Electron app, so set the icon.
   if (IS_MAC && !app.isPackaged) app.dock?.setIcon(APP_ICON);
 
@@ -496,6 +512,7 @@ app.whenReady().then(() => {
   buildMenu();
   createMainWindow();
   createTray();
+  updater.start();
 
   // Clicking the Dock icon brings the window back.
   app.on('activate', showWindow);
