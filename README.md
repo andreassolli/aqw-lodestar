@@ -8,7 +8,7 @@
 
 **Desktop app**
 
-[![Desktop release](https://img.shields.io/github/v/release/andreassolli/aqw-lodestar?filter=desktop-v%2A&label=desktop&color=c0392b)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
+[![Desktop release](https://img.shields.io/github/v/release/andreassolli/aqw-lodestar?filter=v%2A&label=desktop&color=c0392b)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
 [![macOS](https://img.shields.io/badge/macOS-Apple%20silicon%20%26%20Intel-000000?logo=apple&logoColor=white)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
 [![Windows](https://img.shields.io/badge/Windows-x64%20%26%20ARM-0078D6?logo=windows&logoColor=white)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
 [![Linux](https://img.shields.io/badge/Linux-AppImage%20%26%20.deb-FCC624?logo=linux&logoColor=black)](https://github.com/andreassolli/aqw-lodestar/releases?q=desktop&expanded=true)
