@@ -25,7 +25,7 @@ try-on links and more to three sites:
 
 | Site                               | What Lodestar adds                                           |
 | ---------------------------------- | ------------------------------------------------------------ |
-| **AQW Wiki** (aqwwiki.wikidot.com) | Hover tooltips on item links, owned checkmarks, "Add to farm list" and "Try on" buttons on item pages, a Calculator tab on merge shops, a turn-in calculator on quests, event item lists on *Search Items by Tag*, collection progress, a dark theme, Imgur picture fixes |
+| **AQW Wiki** (aqwwiki.wikidot.com) | Hover tooltips on item links, owned checkmarks, "Add to farm list" and "Try on" buttons on item pages, a Calculator tab on merge shops, a turn-in calculator on quests, every item found in a location (by shop, monster and quest), event item lists on *Search Items by Tag*, collection progress, a dark theme, Imgur picture fixes |
 | **account.aq.com**                 | Inventory sync (inventory + bank), rarity badges, owned checkmarks, tooltips, foldable inventory categories, "open outfit in AQCloset", character image download (including an HD render with a transparent background), a dark theme |
 | **AQCloset** (aqcloset.com)        | Drag-to-reorder wardrobe panels, tooltips (with an on/off switch), owned borders, right-click menus, filling AQCloset's inventory import from the synced inventory |
 
@@ -128,6 +128,7 @@ content/               Content scripts, injected into the three sites
   item-list-view.js      The item lists' search, filter (lists, types) and cards (also used by the desktop app's Item Lists plugin)
   item-lists.js/.css     Places the item lists on the Search Items by Tag page; their styles
   collection-progress.js/.css  Owned counter on collection lists
+  location-items.js/.css Items found in a location (location pages) or its locations (map pages)
   wiki-images.js         Item picture swap where Imgur is blocked
   ── account.aq.com only ──
   inventory-sync.js/.css     "Sync inventory" button
@@ -316,6 +317,7 @@ Handled in `MESSAGE_HANDLERS` in `background.js`:
 | `FETCH_TEXT`    | `fetchText()`        | Fetches any text → string or `null`                          |
 | `QUERY_ITEMS`   | `queryItemCatalog()` | Items matching a list filter, from the catalog, inventory or farm list |
 | `LOOKUP_ITEMS`  | `lookupItems()`      | Rarity and tags for items by name / wiki path (character page badges) |
+| `LOCATION_ITEMS` | `queryLocationItems()` | Items whose catalog locations mention each wiki path, grouped by shop, monster and quest. Hubs over 350 items (and Battleon) come back as `skipped` |
 | `TRY_ON`        | `tryOnItem()`        | Opens AQCloset wearing the saved character's outfit plus an item |
 | `OPEN_WARDROBE` | account-page.js      | Opens a character's outfit in AQCloset                       |
 | `CHECK_IMGUR`   | image-proxy.js       | Whether Imgur is blocked here                                |

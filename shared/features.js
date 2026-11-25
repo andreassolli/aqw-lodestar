@@ -8,6 +8,7 @@ const Features = (() => {
     { id: 'ownedMarks', label: 'Owned items', description: 'Checkmarks on items you own.', desktop: true },
     { id: 'itemButtons', label: 'Add to farm list and Try on buttons', description: 'On item pages and cards.', desktop: true },
     { id: 'mergeCalc', label: 'Merge and quest calculator', description: 'What a merge or quest needs.' },
+    { id: 'locationItems', label: 'Items found in a location', description: 'On wiki location and map pages.' },
     { id: 'itemLists', label: 'Event item lists', description: 'On Search Items by Tag.' },
     { id: 'rarityBadges', label: 'Rarity badges', description: 'On account.aq.com.' },
     { id: 'characterDownload', label: 'Character picture download', description: 'On character pages.' },

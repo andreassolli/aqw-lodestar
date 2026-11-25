@@ -21,6 +21,11 @@ function lookupItems(entries) {
   return sendToBackground({ type: 'LOOKUP_ITEMS', entries });
 }
 
+// Items found in each of these wiki locations, grouped by shop, monster and quest.
+function queryLocationItems(paths) {
+  return sendToBackground({ type: 'LOCATION_ITEMS', paths });
+}
+
 function findItemPage(item) {
   return sendToBackground({ type: 'FIND_ITEM_PAGE', ...item });
 }

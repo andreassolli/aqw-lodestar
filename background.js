@@ -178,6 +178,87 @@ async function queryItems(filter = {}) {
   return { items, updatedAt: catalog.updatedAt };
 }
 
+// Items found in a location. Item pages already say where they're from
+// ("Shop - Map", or just "Map" for drops and quest rewards), so we flip that
+// around: wiki path -> the items whose locations mention it. Built once per
+// catalog, which is about 5,000 paths.
+
+// Hubs like Battleon have thousands of shop items, too many to be useful.
+const LOCATION_MAX_ITEMS = 350;
+const LOCATION_IGNORED = new Set(['/battleon']);
+
+let locationIndex = null;
+
+function catalogByLocation(catalog) {
+  if (locationIndex && locationIndex.catalog === catalog) return locationIndex.index;
+  const index = new Map(); // path -> [[itemPath, location entry], ...]
+  for (const [itemPath, item] of Object.entries(catalog.items)) {
+    for (const entry of item.locations || []) {
+      for (const raw of new Set(entry.paths || [])) {
+        const path = String(raw).toLowerCase().replace(/\/+$/, '');
+        if (!path) continue;
+        if (index.has(path)) index.get(path).push([itemPath, entry]);
+        else index.set(path, [[itemPath, entry]]);
+      }
+    }
+  }
+  locationIndex = { catalog, index };
+  return index;
+}
+
+// "Dropped by Fire Elemental (Monster) (1) (Level 9)" -> "Fire Elemental"
+const DROPPED_BY = /Dropped by\s+(.+)$/i;
+const QUEST_REWARD = /Reward from the\s+'(.+)'\s*\)?\s*quest/i;
+const stripParens = (name) => name.split(' (')[0].replace(/\)+\s*$/, '').trim();
+
+// Where an item comes from in this location: the shop/NPC before the map in
+// "Shop - Map", otherwise the monster or quest from its price.
+function locationSource(path, item, entry) {
+  const paths = (entry.paths || []).map((p) => String(p).toLowerCase().replace(/\/+$/, ''));
+  const at = paths.indexOf(path);
+  if (at > 0) {
+    const name = String(entry.name || '').split(' - ')[0].trim() || paths[0];
+    return { kind: 'shop', name, path: paths[0] };
+  }
+  const price = String(item.price || '');
+  const drop = price.match(DROPPED_BY);
+  if (drop) return { kind: 'drop', name: stripParens(drop[1]) };
+  const quest = price.match(QUEST_REWARD);
+  if (quest) return { kind: 'quest', name: quest[1].trim() };
+  return { kind: 'other', name: '' };
+}
+
+const SOURCE_ORDER = { shop: 0, drop: 1, quest: 2, other: 3 };
+
+// One location: its items grouped by where they come from, or just the count
+// if it's a hub we skip.
+function itemsInLocation(catalog, path) {
+  const key = String(path || '').toLowerCase().replace(/\/+$/, '');
+  const found = catalogByLocation(catalog).get(key) || [];
+  const total = new Set(found.map(([itemPath]) => itemPath)).size;
+  if (!total) return { path: key, total: 0, sources: [] };
+  if (LOCATION_IGNORED.has(key) || total > LOCATION_MAX_ITEMS) return { path: key, total, skipped: true };
+
+  const sources = new Map();
+  for (const [itemPath, entry] of found) {
+    const item = catalog.items[itemPath];
+    const source = locationSource(key, item, entry);
+    const id = `${source.kind}|${source.path || source.name.toLowerCase()}`;
+    if (!sources.has(id)) sources.set(id, { ...source, items: new Map() });
+    sources.get(id).items.set(itemPath, { url: `${WIKI_ORIGIN}${itemPath}`, name: item.name, rarity: item.rarity || null, tags: item.tags || [] });
+  }
+  const list = [...sources.values()]
+    .map((source) => ({ ...source, items: [...source.items.values()].sort(byName) }))
+    .sort((a, b) => SOURCE_ORDER[a.kind] - SOURCE_ORDER[b.kind] || a.name.localeCompare(b.name));
+  return { path: key, total, sources: list };
+}
+
+async function queryLocationItems(paths = []) {
+  const catalog = await loadCatalog();
+  if (catalog.error) return { error: `item catalog unavailable (${catalog.error})` };
+  return { locations: paths.map((path) => itemsInLocation(catalog, path)), updatedAt: catalog.updatedAt };
+}
+
 let catalogNameIndex = null;
 
 function catalogByName(catalog) {
@@ -412,6 +493,7 @@ const MESSAGE_HANDLERS = {
   FIND_ITEM_PAGE: findItemPageByType,
   QUERY_ITEMS: (message) => (ITEM_SOURCES[message.source] || queryItems)(message.filter),
   LOOKUP_ITEMS: (message) => lookupItems(message.entries),
+  LOCATION_ITEMS: (message) => queryLocationItems(message.paths),
   CLASSIFY_LINKS: (message) => classifyLinks(message.entries),
   FETCH_TEXT: (message) => fetchText(message.url),
   TRY_ON: (message) => openTryOn(message.name),

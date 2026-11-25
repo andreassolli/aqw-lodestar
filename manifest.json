@@ -74,7 +74,8 @@
         "content/list-timing.js",
         "content/item-list-view.js",
         "content/item-lists.js",
-        "content/collection-progress.js"
+        "content/collection-progress.js",
+        "content/location-items.js"
       ],
       "css": [
         "content/base.css",
@@ -86,6 +87,7 @@
         "content/merge-calc.css",
         "content/item-lists.css",
         "content/collection-progress.css",
+        "content/location-items.css",
         "content/farm-buttons.css",
         "content/try-on-buttons.css"
       ]

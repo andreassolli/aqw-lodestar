@@ -1,0 +1,82 @@
+/* "Items found here" on wiki location and map pages. Colors come from the
+   page so it fits both the wiki's theme and the dark theme. */
+.aqwt-location-items {
+  margin: 18px 0 14px;
+  padding: 12px 16px;
+  border: 1px solid rgba(128, 128, 128, .35);
+  border-radius: 10px;
+  background: rgba(128, 128, 128, .06);
+}
+
+#page-content .aqwt-location-title {
+  margin: 0 0 2px;
+  padding: 0;
+  border: 0;
+  font-size: 1.15rem;
+}
+
+.aqwt-location-status {
+  margin: 0 0 8px;
+  opacity: .7;
+  font-size: .85rem;
+}
+
+.aqwt-location-count {
+  opacity: .65;
+  font-weight: 400;
+}
+
+.aqwt-location-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.aqwt-location-kind {
+  margin: 6px 0 4px;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  opacity: .7;
+}
+
+.aqwt-location-source {
+  margin: 0 0 8px 0;
+}
+
+.aqwt-location-source-name {
+  margin: 0 0 2px;
+  font-weight: 600;
+}
+
+#page-content ul.aqwt-location-list {
+  margin: 0 0 0 4px;
+  padding: 0;
+  list-style: none;
+  columns: 260px auto;
+  column-gap: 24px;
+}
+
+.aqwt-location-item {
+  break-inside: avoid;
+  padding: 1px 0;
+}
+
+.aqwt-location-item > .aqwt-rarity {
+  margin-left: 6px;
+}
+
+.aqwt-location-section {
+  padding: 4px 0;
+  border-top: 1px solid rgba(128, 128, 128, .25);
+}
+
+.aqwt-location-section > summary {
+  cursor: pointer;
+  padding: 2px 0;
+  font-weight: 600;
+}
+
+.aqwt-location-section > .aqwt-location-groups {
+  padding: 4px 0 6px 18px;
+}
