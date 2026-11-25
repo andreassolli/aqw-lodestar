@@ -1,18 +1,13 @@
-/* "Items found here" on wiki location and map pages. Colors come from the
-   page so it fits both the wiki's theme and the dark theme. */
-.aqwt-location-items {
-  margin: 18px 0 14px;
-  padding: 12px 16px;
-  border: 1px solid rgba(128, 128, 128, .35);
-  border-radius: 10px;
-  background: rgba(128, 128, 128, .06);
+/* The "Items:" line on wiki location and map pages and the list it opens.
+   Colors come from the page so it fits both the wiki's theme and the dark theme. */
+.aqwt-location-toggle {
+  cursor: pointer;
 }
 
-#page-content .aqwt-location-title {
-  margin: 0 0 2px;
-  padding: 0;
-  border: 0;
-  font-size: 1.15rem;
+.aqwt-location-items {
+  margin: 0 0 14px;
+  padding: 2px 0 2px 14px;
+  border-left: 2px solid rgba(128, 128, 128, .35);
 }
 
 .aqwt-location-status {
@@ -64,6 +59,14 @@
 
 .aqwt-location-item > .aqwt-rarity {
   margin-left: 6px;
+}
+
+.aqwt-location-type-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .aqwt-location-section {
