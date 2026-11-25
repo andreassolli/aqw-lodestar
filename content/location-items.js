@@ -63,16 +63,16 @@ Features.run('locationItems', async () => {
     { id: 'zeroAc', label: '0 AC', test: (item) => item.tags.includes('0ac') },
     { id: 'acShop', label: 'Bought with AC', test: (item) => /\b[1-9][\d,]*\s*AC\b/i.test(item.price || '') },
   ];
-  // The 0 AC counter: free-to-bank gear you farm, so 0 AC tagged drops, quest
-  // rewards and merge items. Not Rare ones, not misc items (or untyped ones,
-  // which get the misc icon), and nothing with a price: "0 AC" collection chest
-  // buys, AC shop items and Gold shop items are left out. Items only listed
-  // under "Other" are left out too (see zeroAcItems).
+  // The 0 AC counter: free-to-bank gear you can get here, so 0 AC tagged items
+  // from drops, quests, merges and free shops (rep shops, "0 AC" prices). Not
+  // Rare ones, not misc items (or untyped ones, which get the misc icon), and
+  // nothing that costs AC or Gold. Items only listed under "Other" are left
+  // out too (see zeroAcItems).
   const countsForBar = (item) =>
     item.tags.includes('0ac') &&
     item.rarity !== 'rare' &&
     !['misc', null].includes(ItemTypes.itemType(item)) &&
-    !/\b[\d,]+\s*(AC|Gold)\b/i.test(item.price || '');
+    !/\b([1-9][\d,]*\s*AC|[\d,]+\s*Gold)\b/i.test(item.price || '');
   const ticked = new Set();
   let owned = new Map();
   const isOwned = (item) => owned.has(normalizeItemName(item.name));
@@ -155,15 +155,20 @@ Features.run('locationItems', async () => {
   function updateCounter() {
     const text = counter.querySelector('.aqwt-collection-counter-text');
     const fill = counter.querySelector('.aqwt-collection-counter-bar span');
-    counter.hidden = !zeroAcItems.length;
+    counter.title = '0 AC tagged items from drops, quests, merges and free shops. Rare, misc and AC or Gold bought items are not counted.';
+    if (!zeroAcItems.length) {
+      text.textContent = 'No 0 AC items to collect here.';
+      fill.style.width = '0%';
+      return;
+    }
     if (!owned.size) {
-      text.textContent = 'Sync your inventory on account.aq.com to see which of the 0 AC drop, merge and quest items here you own.';
+      text.textContent = 'Sync your inventory on account.aq.com to see which of the 0 AC items here you own.';
       fill.style.width = '0%';
       return;
     }
     const have = zeroAcItems.filter(isOwned).length;
     const percent = Math.round((have / zeroAcItems.length) * 100);
-    text.innerHTML = `You own <strong>${have}</strong> of <strong>${zeroAcItems.length}</strong> 0 AC drop, merge and quest items here (${percent}%)`;
+    text.innerHTML = `You own <strong>${have}</strong> of <strong>${zeroAcItems.length}</strong> 0 AC items here (${percent}%)`;
     fill.style.width = `${percent}%`;
   }
 
