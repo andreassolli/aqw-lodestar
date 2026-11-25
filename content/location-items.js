@@ -1,7 +1,9 @@
-// Location and map pages: an "Items:" line above the screen pictures that opens
-// every item you can get there, grouped by shop, monster and quest. A location
-// page shows its own items; a map page (like Doomwood) shows each location it
-// links to. The data comes from the item catalog (background.js, LOCATION_ITEMS).
+// Location and map pages: an "Items:" line (before Access Points, or above the
+// pictures on map pages) that opens every item you can get there, grouped by
+// shop, monster and quest, with filters, owned checkmarks and a 0 AC counter.
+// A location page shows its own items; a map page (like Doomwood) shows each
+// location it links to. The data comes from the item catalog (background.js,
+// LOCATION_ITEMS).
 Features.run('locationItems', async () => {
   const content = document.querySelector('#page-content');
   if (!content) return;
@@ -52,8 +54,24 @@ Features.run('locationItems', async () => {
     return icon;
   }
 
+  // "Show only" filters. Ticking several shows items matching any of them.
+  //   member  Member only (tagged legend)
+  //   zeroAc  tagged 0ac, so it can go in the bank for free
+  //   acShop  bought for AC in a shop ("350 AC"), not merged or dropped
+  const FILTERS = [
+    { id: 'member', label: 'Member', test: (item) => item.tags.includes('legend') },
+    { id: 'zeroAc', label: '0 AC', test: (item) => item.tags.includes('0ac') },
+    { id: 'acShop', label: 'Bought with AC', test: (item) => /\b[1-9][\d,]*\s*AC\b/i.test(item.price || '') },
+  ];
+  const isZeroAc = FILTERS[1].test;
+  const ticked = new Set();
+  let owned = new Map();
+  const isOwned = (item) => owned.has(normalizeItemName(item.name));
+  const passes = (item) => !ticked.size || FILTERS.some((filter) => ticked.has(filter.id) && filter.test(item));
+
   function itemRow(item) {
     const li = el('li', 'aqwt-location-item');
+    li.aqwtItem = item;
     li.append(typeIcon(item), wikiLink(item.url, item.name));
     if (item.rarity && typeof RARITY_LABELS !== 'undefined' && RARITY_LABELS[item.rarity]) li.appendChild(createRarityBadge(item.rarity));
     return li;
@@ -66,7 +84,7 @@ Features.run('locationItems', async () => {
       const heading = el('p', 'aqwt-location-source-name');
       if (source.path) heading.appendChild(wikiLink(source.path, source.name));
       else heading.textContent = source.name;
-      heading.appendChild(el('span', 'aqwt-location-count', ` (${source.items.length})`));
+      heading.appendChild(el('span', 'aqwt-location-count'));
       block.appendChild(heading);
     }
     const list = el('ul', 'aqwt-location-list');
@@ -85,20 +103,12 @@ Features.run('locationItems', async () => {
       group.append(...sources.map(sourceBlock));
       wrap.appendChild(group);
     }
+    wrap.appendChild(el('p', 'aqwt-location-none', 'Nothing here matches the filter.'));
     return wrap;
   }
 
   const formatDate = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : null);
   const plural = (n) => `${n.toLocaleString()} ${n === 1 ? 'item' : 'items'}`;
-
-  // Right above the screen pictures, so it reads like "Map Name:" and "Room
-  // Limit:". Map pages have their pictures in "New / Old" blocks.
-  function placeLine(line) {
-    const pictures = content.querySelector(':scope > .yui-navset, :scope > .collapsible-block');
-    if (pictures) return content.insertBefore(line, pictures);
-    const footer = [...content.children].reverse().find((child) => /in our free web game/i.test(child.textContent));
-    content.insertBefore(line, footer || null);
-  }
 
   const candidates = isLocation ? [{ path: here, name: '' }] : linkedLocations();
   const response = await queryLocationItems(candidates.map((c) => c.path));
@@ -111,40 +121,118 @@ Features.run('locationItems', async () => {
     .filter((result) => result.total && !result.skipped);
   if (!shown.length) return;
 
-  const total = new Set(shown.flatMap((result) => result.sources.flatMap((source) => source.items.map((item) => item.url)))).size;
-  const label = isLocation ? plural(total) : `${plural(total)} from ${shown.length} ${shown.length === 1 ? 'location' : 'locations'}`;
+  const allItems = [...new Map(shown.flatMap((result) => result.sources.flatMap((source) => source.items)).map((item) => [item.url, item])).values()];
+  const zeroAcItems = allItems.filter(isZeroAc);
+  const label = isLocation ? plural(allItems.length) : `${plural(allItems.length)} from ${shown.length} ${shown.length === 1 ? 'location' : 'locations'}`;
 
-  const line = el('p', 'aqwt-location-line');
   const toggle = el('a', 'aqwt-location-toggle');
   toggle.href = '#';
   toggle.setAttribute('role', 'button');
   toggle.setAttribute('aria-expanded', 'false');
   toggle.dataset.aqwtNoTooltip = '';
-  line.append(el('strong', null, 'Items:'), ' ', toggle);
 
   const panel = el('div', 'aqwt-location-items');
   panel.hidden = true;
   panel.id = 'aqwt-location-items';
   toggle.setAttribute('aria-controls', panel.id);
 
-  // Built on first open, a map can link to a lot of locations.
-  function build() {
-    const updated = formatDate(response.updatedAt);
-    if (updated) panel.appendChild(el('p', 'aqwt-location-status', `Catalog updated ${updated}`));
-    if (isLocation) {
-      panel.appendChild(groupedItems(shown[0]));
+  // Like the collection chests counter: how many of the 0 AC items you own.
+  const counter = el('div', 'aqwt-collection-counter aqwt-location-counter');
+  counter.innerHTML = '<div class="aqwt-collection-counter-text" role="status"></div><div class="aqwt-collection-counter-bar"><span></span></div>';
+
+  function updateCounter() {
+    const text = counter.querySelector('.aqwt-collection-counter-text');
+    const fill = counter.querySelector('.aqwt-collection-counter-bar span');
+    counter.hidden = !zeroAcItems.length;
+    if (!owned.size) {
+      text.textContent = 'Sync your inventory on account.aq.com to see which of the 0 AC items here you own.';
+      fill.style.width = '0%';
       return;
     }
-    for (const result of shown) {
-      const details = el('details', 'aqwt-location-section');
-      const summary = el('summary');
-      summary.append(wikiLink(result.path, result.name), el('span', 'aqwt-location-count', ` (${plural(result.total)})`));
-      details.appendChild(summary);
-      details.addEventListener('toggle', () => {
-        if (details.open && details.childElementCount === 1) details.appendChild(groupedItems(result));
+    const have = zeroAcItems.filter(isOwned).length;
+    const percent = Math.round((have / zeroAcItems.length) * 100);
+    text.innerHTML = `You own <strong>${have}</strong> of <strong>${zeroAcItems.length}</strong> 0 AC items here (${percent}%)`;
+    fill.style.width = `${percent}%`;
+  }
+
+  function filterBar() {
+    const bar = el('div', 'aqwt-calc-filters aqwt-location-filters');
+    bar.appendChild(el('span', 'aqwt-calc-filters-label', 'Show only:'));
+    for (const filter of FILTERS) {
+      const option = el('label', 'aqwt-calc-filter-opt');
+      const input = el('input', 'aqwt-hidden-toggle');
+      input.type = 'checkbox';
+      const icon = el('span', 'aqwt-checkbox-icon');
+      input.addEventListener('change', () => {
+        if (input.checked) ticked.add(filter.id);
+        else ticked.delete(filter.id);
+        icon.classList.toggle('is-checked', input.checked);
+        applyView();
       });
-      panel.appendChild(details);
+      option.append(input, icon, el('span', null, filter.label));
+      bar.appendChild(option);
     }
+    return bar;
+  }
+
+  // Owned checkmarks and the filter, on everything built so far. Empty shops,
+  // groups and locations hide, and the counts follow the filter.
+  function applyView() {
+    for (const li of panel.querySelectorAll('.aqwt-location-item')) {
+      const item = li.aqwtItem;
+      li.hidden = !passes(item);
+      const mark = li.querySelector('.aqwt-location-owned');
+      if (isOwned(item) && !mark) {
+        const check = el('span', 'aqwt-location-owned');
+        check.title = 'In your inventory';
+        check.setAttribute('aria-label', check.title);
+        li.querySelector('a').after(check);
+      } else if (!isOwned(item) && mark) {
+        mark.remove();
+      }
+    }
+    const visibleIn = (node) => node.querySelectorAll('.aqwt-location-item:not([hidden])').length;
+    for (const block of panel.querySelectorAll('.aqwt-location-source')) {
+      const count = visibleIn(block);
+      block.hidden = !count;
+      const counted = block.querySelector('.aqwt-location-count');
+      if (counted) counted.textContent = ` (${count})`;
+    }
+    for (const group of panel.querySelectorAll('.aqwt-location-group')) group.hidden = !visibleIn(group);
+    for (const groups of panel.querySelectorAll('.aqwt-location-groups')) groups.querySelector('.aqwt-location-none').hidden = Boolean(visibleIn(groups));
+    for (const section of panel.querySelectorAll('.aqwt-location-section')) {
+      const items = section.aqwtResult.sources.flatMap((source) => source.items);
+      const count = new Set(items.filter(passes).map((item) => item.url)).size;
+      section.hidden = !count;
+      section.querySelector('summary .aqwt-location-count').textContent = ` (${plural(count)})`;
+    }
+    updateCounter();
+  }
+
+  // Built on first open, a map can link to a lot of locations.
+  function build() {
+    panel.append(counter, filterBar());
+    if (isLocation) {
+      panel.appendChild(groupedItems(shown[0]));
+    } else {
+      for (const result of shown) {
+        const details = el('details', 'aqwt-location-section');
+        details.aqwtResult = result;
+        const summary = el('summary');
+        summary.append(wikiLink(result.path, result.name), el('span', 'aqwt-location-count'));
+        details.appendChild(summary);
+        details.addEventListener('toggle', () => {
+          if (details.open && details.childElementCount === 1) {
+            details.appendChild(groupedItems(result));
+            applyView();
+          }
+        });
+        panel.appendChild(details);
+      }
+    }
+    const updated = formatDate(response.updatedAt);
+    if (updated) panel.appendChild(el('p', 'aqwt-location-status', `Catalog updated ${updated}`));
+    applyView();
   }
 
   function setOpen(open) {
@@ -159,6 +247,35 @@ Features.run('locationItems', async () => {
   });
   setOpen(false);
 
-  placeLine(line);
+  watchOwnedItems((map) => {
+    owned = map;
+    if (panel.childElementCount) applyView();
+  });
+
+  // Location pages: in the "Map Name / Room Limit / Access Points" paragraph,
+  // right before Access Points. The paragraph gets split there so the list can
+  // open in between.
+  const accessLabel = [...content.querySelectorAll(':scope > p > strong')].find((strong) => /^Access Points:?$/i.test(strong.textContent.trim()));
+  if (accessLabel) {
+    const info = accessLabel.parentElement;
+    const rest = el('p', 'aqwt-location-after');
+    let node = accessLabel;
+    while (node) {
+      const next = node.nextSibling;
+      rest.appendChild(node);
+      node = next;
+    }
+    info.classList.add('aqwt-location-before');
+    info.append(el('strong', null, 'Items:'), ' ', toggle);
+    info.after(panel, rest);
+    return;
+  }
+
+  // Map pages: its own line above the pictures ("New / Old" blocks).
+  const line = el('p', 'aqwt-location-line');
+  line.append(el('strong', null, 'Items:'), ' ', toggle);
+  const pictures = content.querySelector(':scope > .yui-navset, :scope > .collapsible-block');
+  const footer = [...content.children].reverse().find((child) => /in our free web game/i.test(child.textContent));
+  content.insertBefore(line, pictures || footer || null);
   line.after(panel);
 });

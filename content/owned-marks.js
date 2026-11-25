@@ -9,7 +9,8 @@ Features.run('ownedMarks', () => {
     ...(PAGE.isAqcloset ? [['.object .label .name', 'image']] : []),
   ];
   const SELECTOR = TARGETS.map(([selector]) => selector).join(', ');
-  const SKIP_AREAS = '.pager, #breadcrumbs, .page-tags';
+  // The location items list draws its own checkmarks (location-items.js).
+  const SKIP_AREAS = '.pager, #breadcrumbs, .page-tags, .aqwt-location-items';
   const TITLE_BUTTONS = '.aqwt-farm-button, .aqwt-try-on-button';
 
   let owned = new Map(); // normalized name -> quantity

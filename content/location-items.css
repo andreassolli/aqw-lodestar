@@ -4,6 +4,45 @@
   cursor: pointer;
 }
 
+/* The info paragraph is split around the list; keep it looking like one. */
+#page-content p.aqwt-location-before {
+  margin-bottom: 0;
+}
+
+#page-content p.aqwt-location-after {
+  margin-top: 0;
+}
+
+#page-content .aqwt-location-items:not([hidden]) {
+  margin: 6px 0 10px;
+}
+
+.aqwt-location-counter {
+  margin: 4px 0 10px;
+}
+
+.aqwt-location-filters {
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.aqwt-location-none {
+  opacity: .7;
+  font-style: italic;
+}
+
+/* Same look as owned-marks.css, own class so its refresh leaves these alone. */
+.aqwt-location-owned {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin: 0 3px 0 5px;
+  vertical-align: middle;
+  border-radius: 50%;
+  background: #2ecc71 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% no-repeat;
+  cursor: help;
+}
+
 .aqwt-location-items {
   margin: 0 0 14px;
   padding: 2px 0 2px 14px;

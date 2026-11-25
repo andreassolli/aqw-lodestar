@@ -245,7 +245,7 @@ function itemsInLocation(catalog, path) {
     const source = locationSource(key, item, entry);
     const id = `${source.kind}|${source.path || source.name.toLowerCase()}`;
     if (!sources.has(id)) sources.set(id, { ...source, items: new Map() });
-    sources.get(id).items.set(itemPath, { url: `${WIKI_ORIGIN}${itemPath}`, name: item.name, rarity: item.rarity || null, tags: item.tags || [] });
+    sources.get(id).items.set(itemPath, { url: `${WIKI_ORIGIN}${itemPath}`, name: item.name, rarity: item.rarity || null, tags: item.tags || [], price: item.price || null });
   }
   const list = [...sources.values()]
     .map((source) => ({ ...source, items: [...source.items.values()].sort(byName) }))
