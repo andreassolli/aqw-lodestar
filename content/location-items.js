@@ -63,11 +63,16 @@ Features.run('locationItems', async () => {
     { id: 'zeroAc', label: '0 AC', test: (item) => item.tags.includes('0ac') },
     { id: 'acShop', label: 'Bought with AC', test: (item) => /\b[1-9][\d,]*\s*AC\b/i.test(item.price || '') },
   ];
-  // The 0 AC counter: free-to-bank items you farm, so 0 AC tagged drops, quest
-  // rewards and merge items. Not Rare ones, and nothing with a price: "0 AC"
-  // collection chest buys, AC shop items and Gold shop items are left out.
+  // The 0 AC counter: free-to-bank gear you farm, so 0 AC tagged drops, quest
+  // rewards and merge items. Not Rare ones, not misc items (or untyped ones,
+  // which get the misc icon), and nothing with a price: "0 AC" collection chest
+  // buys, AC shop items and Gold shop items are left out. Items only listed
+  // under "Other" are left out too (see zeroAcItems).
   const countsForBar = (item) =>
-    item.tags.includes('0ac') && item.rarity !== 'rare' && !/\b[\d,]+\s*(AC|Gold)\b/i.test(item.price || '');
+    item.tags.includes('0ac') &&
+    item.rarity !== 'rare' &&
+    !['misc', null].includes(ItemTypes.itemType(item)) &&
+    !/\b[\d,]+\s*(AC|Gold)\b/i.test(item.price || '');
   const ticked = new Set();
   let owned = new Map();
   const isOwned = (item) => owned.has(normalizeItemName(item.name));
@@ -126,7 +131,10 @@ Features.run('locationItems', async () => {
   if (!shown.length) return;
 
   const allItems = [...new Map(shown.flatMap((result) => result.sources.flatMap((source) => source.items)).map((item) => [item.url, item])).values()];
-  const zeroAcItems = allItems.filter(countsForBar);
+  const fromShopDropOrQuest = new Set(
+    shown.flatMap((result) => result.sources.filter((source) => source.kind !== 'other').flatMap((source) => source.items.map((item) => item.url)))
+  );
+  const zeroAcItems = allItems.filter((item) => fromShopDropOrQuest.has(item.url) && countsForBar(item));
   const label = isLocation ? plural(allItems.length) : `${plural(allItems.length)} from ${shown.length} ${shown.length === 1 ? 'location' : 'locations'}`;
 
   const toggle = el('a', 'aqwt-location-toggle');
@@ -149,13 +157,13 @@ Features.run('locationItems', async () => {
     const fill = counter.querySelector('.aqwt-collection-counter-bar span');
     counter.hidden = !zeroAcItems.length;
     if (!owned.size) {
-      text.textContent = 'Sync your inventory on account.aq.com to see which of the 0 AC drops, merge and quest items here you own.';
+      text.textContent = 'Sync your inventory on account.aq.com to see which of the 0 AC drop, merge and quest items here you own.';
       fill.style.width = '0%';
       return;
     }
     const have = zeroAcItems.filter(isOwned).length;
     const percent = Math.round((have / zeroAcItems.length) * 100);
-    text.innerHTML = `You own <strong>${have}</strong> of <strong>${zeroAcItems.length}</strong> 0 AC drops, merge and quest items here (${percent}%)`;
+    text.innerHTML = `You own <strong>${have}</strong> of <strong>${zeroAcItems.length}</strong> 0 AC drop, merge and quest items here (${percent}%)`;
     fill.style.width = `${percent}%`;
   }
 

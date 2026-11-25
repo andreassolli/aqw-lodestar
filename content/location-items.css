@@ -17,7 +17,9 @@
   margin: 6px 0 10px;
 }
 
-.aqwt-location-counter {
+/* Full width, unlike the collection chests counter it borrows its look from. */
+.aqwt-collection-counter.aqwt-location-counter {
+  max-width: none;
   margin: 4px 0 10px;
 }
 
