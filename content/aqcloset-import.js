@@ -39,7 +39,8 @@
         observer.disconnect();
         resolve(null);
       }, timeoutMs);
-      observer.observe(document.documentElement, { childList: true, subtree: true });
+      // AQCloset shows the form by removing hidden, not by adding it.
+      observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
     });
   }
 
@@ -65,8 +66,11 @@
       return { error: 'no synced inventory yet (use Sync on your account.aq.com Inventory page)' };
     }
 
-    const textarea = await waitForElement('#inventory-text', WAIT_FOR_FORM_MS);
-    if (!textarea) return { error: "AQCloset's inventory form isn't on this page (are you signed in to AQCloset?)" };
+    // The form is on the page signed out too, only hidden.
+    const found = await waitForElement('#inventory-module:not([hidden]) #inventory-text, #signed-out:not([hidden])', WAIT_FOR_FORM_MS);
+    if (!found) return { error: "AQCloset's inventory form isn't on this page (are you signed in to AQCloset?)" };
+    if (found.id === 'signed-out') return { error: 'sign in to AQCloset first' };
+    const textarea = found;
 
     setValue(textarea, toAqclosetJson(inventory));
     const character = document.getElementById('inventory-character');
