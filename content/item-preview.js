@@ -259,8 +259,10 @@ const ItemPreview = (() => {
   }
 
   // The type is part of it, two items in a table can share a name.
-  function previewKey({ url, name, itemType, ac }) {
-    return [url, name || '', itemType || '', ac ?? ''].join('::');
+  // The picture count is in the key, so an AQCloset card whose picture loads
+  // after the first hover gets a new preview instead of the empty one.
+  function previewKey({ url, name, itemType, ac, pageImages }) {
+    return [url, name || '', itemType || '', ac ?? '', pageImages ? pageImages.length : ''].join('::');
   }
 
   // Cached. Calls for the same item share one request.

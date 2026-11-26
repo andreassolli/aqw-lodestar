@@ -3,9 +3,12 @@
 const Aqcloset = (() => {
   const API_BASE = 'https://aqcloset.com/api';
   const DEFAULT_OUTFIT = { g: 'F', hair: 'Alina hair|hair/F/Alina3.swf' };
+  // AQCloset reads the character live from the game (up to 30s). Chrome stops a
+  // service worker whose fetch takes over 30s, so give up before that.
+  const CHARACTER_TIMEOUT_MS = 25000;
 
-  async function fetchJson(url) {
-    const text = await fetchText(url);
+  async function fetchJson(url, timeoutMs) {
+    const text = await fetchText(url, timeoutMs);
     if (!text) return null;
     try {
       return JSON.parse(text);
@@ -21,7 +24,10 @@ const Aqcloset = (() => {
   function searchResults(name) {
     const key = name.toLowerCase();
     if (!searches.has(key)) {
-      const pending = fetchJson(`${API_BASE}/items/search?q=${encodeURIComponent(name)}&limit=20`);
+      // Quoted, so words like "or" and a leading "-" are part of the name, not the
+      // search syntax. A name with its own quotes can't be quoted, so it goes as it is.
+      const query = name.includes('"') ? name : `"${name}"`;
+      const pending = fetchJson(`${API_BASE}/items/search?q=${encodeURIComponent(query)}&limit=20`);
       pending.then((data) => {
         if (!data) searches.delete(key);
       });
@@ -37,10 +43,12 @@ const Aqcloset = (() => {
 
   // An armor and its helm can share a name, so slot (armor, helm, cape...) picks
   // between them. A same-named item in another slot doesn't count.
+  // Items with the same art come as one result, the other names are in its variants.
   function exactMatches(results, name, slot) {
     const lower = name.toLowerCase();
-    const same = results.filter((item) => item.name === name);
-    const exacts = same.length ? same : results.filter((item) => String(item.name).toLowerCase() === lower);
+    const named = (item, test) => test(String(item.name)) || (item.variants || []).some((v) => test(String(v.name)));
+    const same = results.filter((item) => named(item, (n) => n === name));
+    const exacts = same.length ? same : results.filter((item) => named(item, (n) => n.toLowerCase() === lower));
     return slot ? exacts.filter((item) => item.slot === slot) : exacts;
   }
 
@@ -73,10 +81,11 @@ const Aqcloset = (() => {
   async function findItemPreview(name, { verify = false, exact = false, slot = null } = {}) {
     // A picture of the wrong item is worse than the wiki's, so don't guess here.
     const item = await searchItem(name, { exact, slot, unique: true });
-    if (!item || !item.id || !item.file || !item.slot) return { images: [], type: null };
+    if (!item || !item.file || !item.slot) return { images: [], type: null };
 
+    // Items newer than AQCloset's sheet have no id, "unlisted" is its word for that.
     const base =
-      `${API_BASE}/items/thumb/${item.id}.png` +
+      `${API_BASE}/items/thumb/${encodeURIComponent(item.id || 'unlisted')}.png` +
       `?file=${encodeURIComponent(item.file)}&slot=${encodeURIComponent(item.slot)}`;
     const candidates = [`${base}&gender=M`];
     if (item.slot === 'armor') candidates.push(`${base}&gender=F`);
@@ -95,12 +104,15 @@ const Aqcloset = (() => {
   // /api/character), plus an extra item if given.
   async function buildWardrobeUrl(username, extraItem) {
     const params = new URLSearchParams(DEFAULT_OUTFIT);
+    // name|file|link|weapon type, like AQCloset's own share links.
     const setItem = (item) => {
-      if (item && item.slot && item.file) params.set(item.slot, `${item.name}|${item.file}`);
+      if (!item || !item.slot || !item.file) return;
+      const weaponType = item.slot === 'weapon' ? item.wtype || item.wType || '' : '';
+      params.set(item.slot, [item.name, item.file, item.link || '', weaponType].join('|').replace(/\|+$/, ''));
     };
 
     if (username) {
-      const character = await fetchJson(`${API_BASE}/character?name=${encodeURIComponent(username)}`);
+      const character = await fetchJson(`${API_BASE}/character?name=${encodeURIComponent(username)}`, CHARACTER_TIMEOUT_MS);
       const outfit = character && character.outfit;
       if (outfit) {
         if (outfit.gender) params.set('g', outfit.gender);
@@ -129,14 +141,15 @@ const Aqcloset = (() => {
   }
 
   // [slot, name key, file key, cosmetic part]. Cosmetic ("Cust") items are what
-  // the character actually shows, so they win.
+  // the character actually shows, so they win. The game's Misc slot is the
+  // wardrobe's ground.
   const FLASHVAR_SLOTS = [
     ['armor', 'strArmorName', 'strClassFile', 'Armor'],
     ['helm', 'strHelmName', 'strHelmFile', 'Helm'],
     ['cape', 'strCapeName', 'strCapeFile', 'Cape'],
     ['weapon', 'strWeaponName', 'strWeaponFile', 'Weapon'],
     ['pet', 'strPetName', 'strPetFile', 'Pet'],
-    ['misc', 'strMiscName', 'strMiscFile', 'Misc'],
+    ['ground', 'strMiscName', 'strMiscFile', 'Misc'],
   ];
 
   // FlashVars colors are decimal (16764057), the wardrobe wants hex (FFCC99).

@@ -24,10 +24,16 @@ Features.run('aqclosetReorder', () => {
     return Array.from(document.querySelectorAll('main > div'));
   }
 
+  // Panels that never move. A Ruffle player taken out of the page is destroyed,
+  // and the controls are drawn as one box with the preview.
+  const FIXED_MODULES = '#framing-debug-module, #preview-module, .preview-controls, [data-reorder="fixed"]';
+  const PLAYERS = 'ruffle-player, ruffle-object, ruffle-embed';
+
+  const isMovable = (moduleEl) => !moduleEl.matches(FIXED_MODULES) && !moduleEl.querySelector(PLAYERS);
+
+  // Also what a saved order can move, so older saves leave these alone too.
   function getModules(column) {
-    return Array.from(column.querySelectorAll(':scope > .module')).filter(
-      (m) => m.id !== 'framing-debug-module'
-    );
+    return Array.from(column.querySelectorAll(':scope > .module')).filter(isMovable);
   }
 
   let draggingModule = null;
@@ -38,7 +44,8 @@ Features.run('aqclosetReorder', () => {
   let moduleHeight = 0;
 
   function onHandleMouseDown(e, moduleEl) {
-    if (e.button !== 0) return;
+    // A player can show up in a panel after its handle was added.
+    if (e.button !== 0 || !isMovable(moduleEl)) return;
     e.preventDefault();
     e.stopPropagation();
 

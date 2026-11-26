@@ -3,7 +3,6 @@
 (() => {
   const HOVER_DELAY_MS = 100;
   const EXCLUDED_LINK_AREAS = 'sub, #top-bar, #side-bar, #breadcrumbs, [data-aqwt-no-tooltip]';
-  const BADGE_ICON_FILES = ['ac.png', 'legend.png'];
   const ANCHOR_GAP = 8;
   const VIEWPORT_MARGIN = 8;
   const SHRINK_ALLOWED = 24; // cut this much off above before moving it below instead
@@ -39,13 +38,13 @@
     return !checkbox || checkbox.checked;
   }
 
-  // AQCloset already has the images on the page so we just reuse them.
+  // AQCloset already has the images on the page so we just reuse them. Only the
+  // thumbnail, the badges (AC, Legend) are pictures too.
   function getAqclosetObjectImages(object) {
     const images = new Set();
-    object.querySelectorAll('img[src]').forEach((img) => {
+    object.querySelectorAll('.thumb img[src]').forEach((img) => {
       const src = img.currentSrc || img.src;
-      const fileName = src.toLowerCase().split(/[?#]/)[0].split('/').pop();
-      if (src && !BADGE_ICON_FILES.includes(fileName)) images.add(src);
+      if (src) images.add(src);
     });
     return [...images];
   }

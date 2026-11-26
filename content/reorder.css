@@ -11,6 +11,11 @@
   opacity: 1;
 }
 
+/* AQCloset's panel titles already space their children. */
+.module > h2 > .mr-handle {
+  margin-right: 0;
+}
+
 .mr-placeholder {
   box-sizing: border-box;
   border: 2px dashed rgba(128, 128, 128, .6);

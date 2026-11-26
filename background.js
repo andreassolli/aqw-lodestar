@@ -14,6 +14,8 @@ const MENU_ADD_TO_FARM = 'lip-add-to-farm';
 const MENU_TRY_ON = 'try-on-item';
 const SITE_PATTERNS = ['*://aqwwiki.wikidot.com/*', '*://account.aq.com/*', '*://aqcloset.com/*'];
 const WIKI_PATTERNS = ['*://aqwwiki.wikidot.com/*'];
+// AQCloset's item cards link to its wardrobe. farm-context.js finds their wiki page.
+const AQCLOSET_CARD_PATTERNS = ['*://aqcloset.com/wardrobe?*'];
 
 async function timedFetch(url, read, timeoutMs = FETCH_TIMEOUT_MS) {
   const controller = new AbortController();
@@ -28,8 +30,8 @@ async function timedFetch(url, read, timeoutMs = FETCH_TIMEOUT_MS) {
   }
 }
 
-async function fetchText(url) {
-  const text = await timedFetch(url, (res) => (res.ok ? res.text() : null));
+async function fetchText(url, timeoutMs) {
+  const text = await timedFetch(url, (res) => (res.ok ? res.text() : null), timeoutMs);
   return typeof text === 'string' ? text : null;
 }
 
@@ -528,13 +530,14 @@ ext.runtime.onInstalled.addListener(async () => {
     title: 'Add to "Items to farm"',
     contexts: ['link'],
     documentUrlPatterns: SITE_PATTERNS,
-    targetUrlPatterns: WIKI_PATTERNS,
+    targetUrlPatterns: [...WIKI_PATTERNS, ...AQCLOSET_CARD_PATTERNS],
   });
   ext.contextMenus.create({
     id: MENU_TRY_ON,
     title: 'Try on item',
     contexts: ['link'],
     documentUrlPatterns: SITE_PATTERNS,
+    targetUrlPatterns: [...WIKI_PATTERNS, ...AQCLOSET_CARD_PATTERNS],
   });
 });
 
