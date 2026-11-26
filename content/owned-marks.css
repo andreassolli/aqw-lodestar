@@ -36,8 +36,8 @@
   margin: 0 0 0 10px;
 }
 
-/* AQCloset: green border on owned item images. Inset so it doesn't move anything. */
-.object.aqwt-owned-object img:not([src*="/ac.png"]):not([src*="/legend.png"]) {
+/* AQCloset: green border on owned item images, not on the badges. Inset so it doesn't move anything. */
+.object.aqwt-owned-object .thumb img {
   outline: 3px solid #2ecc71;
   outline-offset: -3px;
   border-radius: 6px;
