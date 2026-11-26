@@ -19,6 +19,9 @@
 
   function linkItem(object) {
     if (object.dataset.aqwtLinked === '1') return;
+    // Cards that are links already lead somewhere, and the menus read them
+    // (farm-context.js). A link inside a link would take the click and cancel it.
+    if (object.closest('a[href]')) return;
     const nameEl = object.querySelector('.label .name');
     const url = nameEl && wikiUrlFromName(nameEl.textContent);
     if (!url) return;
@@ -34,6 +37,9 @@
     link.dataset.aqwtGenerated = '1';
     link.style.color = 'inherit';
     link.style.textDecoration = 'inherit';
+    // The card is the button, so no second tab stop and drags stay the card's.
+    link.tabIndex = -1;
+    link.draggable = false;
     // Keep AQCloset's own click, just don't follow the link.
     link.addEventListener('click', (e) => e.preventDefault());
   }

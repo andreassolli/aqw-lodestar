@@ -29,9 +29,17 @@ function wikiUrlFromName(name) {
   return `${WIKI_ORIGIN}/${encodeURIComponent(n)}`;
 }
 
+// AQCloset can put the bare name in data-item-name. Its link cards hold more
+// than the name, its details sheet's wiki button says a sentence under the
+// name's heading, and its chips (AC, Mem) are .tag.
 function getItemLinkLabel(link) {
+  if (link.dataset && link.dataset.itemName) return link.dataset.itemName.trim();
+  const cardName = link.matches('.object') && link.querySelector('.label .name');
+  if (cardName) return cardName.textContent.trim();
+  const sheetName = link.matches('.details-wiki') && link.closest('.item-details')?.querySelector('.details-name');
+  if (sheetName) return sheetName.textContent.trim();
   const clone = link.cloneNode(true);
-  clone.querySelectorAll('.aqwt-rarity, .aqwt-owned, .aqwt-farm-button, .aqwt-try-on-button').forEach((el) => el.remove());
+  clone.querySelectorAll('.aqwt-rarity, .aqwt-owned, .aqwt-farm-button, .aqwt-try-on-button, .tag').forEach((el) => el.remove());
   return clone.textContent.replace(RANK_SUFFIX, '').trim();
 }
 

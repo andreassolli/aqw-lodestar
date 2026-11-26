@@ -27,13 +27,27 @@
     return getItemLinkLabel(lastContextLink) || null;
   }
 
-  async function saveToFarm(linkUrl) {
+  // AQCloset's item cards link to its wardrobe, not the wiki, so the name comes
+  // from the card.
+  function aqclosetCardName(linkUrl) {
+    if (wikiPathOf(linkUrl) !== null || !lastContextLink || lastContextLink.href !== linkUrl) return null;
+    return lastContextLink.matches('.object') && lastContextLink.querySelector('.label .name') ? getItemLinkLabel(lastContextLink) : null;
+  }
+
+  // The wiki page a menu click is about. AQCloset links that aren't item cards
+  // (looks, sets) have none.
+  function pageFor(linkUrl, cardName) {
+    if (cardName) return wikiUrlFromName(cardName);
+    return wikiPathOf(linkUrl) === null ? null : linkUrl;
+  }
+
+  async function saveToFarm(pageUrl, name) {
     try {
-      if (await FarmEntry.contains(linkUrl)) {
+      if (await FarmEntry.contains(pageUrl)) {
         showToast('Already in Items to farm');
         return;
       }
-      const entry = await FarmEntry.build(linkUrl, labelFor(linkUrl));
+      const entry = await FarmEntry.build(pageUrl, name);
       if (!entry) {
         showToast('Could not read that page');
         return;
@@ -57,7 +71,9 @@
 
   ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!message || !message.linkUrl) return;
-    if (message.type === 'SAVE_TO_FARM') saveToFarm(message.linkUrl);
-    if (message.type === 'GET_LINK_TEXT') sendResponse({ text: labelFor(message.linkUrl) });
+    const cardName = aqclosetCardName(message.linkUrl);
+    const pageUrl = pageFor(message.linkUrl, cardName);
+    if (message.type === 'SAVE_TO_FARM' && pageUrl) saveToFarm(pageUrl, cardName || labelFor(message.linkUrl));
+    if (message.type === 'GET_LINK_TEXT') sendResponse({ text: pageUrl ? cardName || labelFor(message.linkUrl) : null });
   });
 })();
